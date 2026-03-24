@@ -1,0 +1,47 @@
+services:
+  gto-playbook:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: gto-playbook
+    restart: unless-stopped
+    ports:
+      - "3010:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DATABASE_URL=postgresql://gto:gto@gto-db:5432/gto
+    env_file:
+      - .env
+    depends_on:
+      gto-db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  gto-db:
+    image: postgres:16-alpine
+    container_name: gto-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:55436:5432"
+    environment:
+      POSTGRES_USER: gto
+      POSTGRES_PASSWORD: gto
+      POSTGRES_DB: gto
+    volumes:
+      - gto-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gto"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - app-network
+
+volumes:
+  gto-db-data:
+
+networks:
+  app-network:
+    external: true
