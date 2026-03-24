@@ -1,5 +1,5 @@
 import { ChartDef, handLabel, inSet, StackDepth } from './helpers';
-import { THREE_BET_ACTIONS } from './actionColors';
+import { THREE_BET_ACTIONS, THREE_BET_FOLD_ACTIONS } from './actionColors';
 
 // 3bet ranges when facing an open from various positions
 
@@ -391,21 +391,21 @@ function charts25bb(depth: StackDepth): ChartDef[] {
       position: 'BTN', situation: '3bet vs Opener', vsPosition: 'UTG', category: '3bet vs Opener',
       description: `BTN 3bet vs UTG open (${depth}bb)`,
       stackDepth: depth,
-      actionTypes: THREE_BET_ACTIONS,
+      actionTypes: THREE_BET_FOLD_ACTIONS,
       ranges: threeBetRange(BTN_3BET_VS_UTG_3BET_25, EMPTY_CALL),
     },
     {
       position: 'BTN', situation: '3bet vs Opener', vsPosition: 'MP', category: '3bet vs Opener',
       description: `BTN 3bet vs MP open (${depth}bb)`,
       stackDepth: depth,
-      actionTypes: THREE_BET_ACTIONS,
+      actionTypes: THREE_BET_FOLD_ACTIONS,
       ranges: threeBetRange(BTN_3BET_VS_MP_3BET_25, EMPTY_CALL),
     },
     {
       position: 'BTN', situation: '3bet vs Opener', vsPosition: 'CO', category: '3bet vs Opener',
       description: `BTN 3bet vs CO open (${depth}bb)`,
       stackDepth: depth,
-      actionTypes: THREE_BET_ACTIONS,
+      actionTypes: THREE_BET_FOLD_ACTIONS,
       ranges: threeBetRange(BTN_3BET_VS_CO_3BET_25, EMPTY_CALL),
     },
     // SB 3bet (jam or fold) vs openers
@@ -413,21 +413,21 @@ function charts25bb(depth: StackDepth): ChartDef[] {
       position: 'SB', situation: '3bet vs Opener', vsPosition: 'UTG', category: '3bet vs Opener',
       description: `SB 3bet vs UTG open (${depth}bb)`,
       stackDepth: depth,
-      actionTypes: THREE_BET_ACTIONS,
+      actionTypes: THREE_BET_FOLD_ACTIONS,
       ranges: threeBetRange(SB_3BET_VS_UTG_3BET_25, EMPTY_CALL),
     },
     {
       position: 'SB', situation: '3bet vs Opener', vsPosition: 'MP', category: '3bet vs Opener',
       description: `SB 3bet vs MP open (${depth}bb)`,
       stackDepth: depth,
-      actionTypes: THREE_BET_ACTIONS,
+      actionTypes: THREE_BET_FOLD_ACTIONS,
       ranges: threeBetRange(SB_3BET_VS_MP_3BET_25, EMPTY_CALL),
     },
     {
       position: 'SB', situation: '3bet vs Opener', vsPosition: 'BTN', category: '3bet vs Opener',
       description: `SB 3bet vs BTN open (${depth}bb)`,
       stackDepth: depth,
-      actionTypes: THREE_BET_ACTIONS,
+      actionTypes: THREE_BET_FOLD_ACTIONS,
       ranges: threeBetRange(SB_3BET_VS_BTN_3BET_25, EMPTY_CALL),
     },
   ];

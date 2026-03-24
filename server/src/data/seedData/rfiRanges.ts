@@ -32,7 +32,7 @@ const CO_MIXED: Record<string, number> = { '44': 0.8, '33': 0.6, 'K8s': 0.5, 'Q8
 const BTN_RAISE = new Set([
   ...CO_RAISE,
   '44', '33', '22',
-  'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s', 'K2s',
+  'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s',
   'Q8s', 'J8s', 'T8s', '97s', '86s', '75s', '64s', '54s',
   'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o',
   'KTo', 'KJo', 'QJo', 'QTo', 'JTo', 'J9o', 'T9o',
@@ -104,11 +104,12 @@ const SB_25_MIXED: Record<string, number> = {};
 
 // ─── 40bb ranges — 100bb pure raise set, mixed tightened by ~30% ───
 
-const UTG_40_MIXED: Record<string, number> = { '88': 0.53, 'A9s': 0.42, 'KTs': 0.35, 'T9s': 0.28, 'AJo': 0.42 };
-const MP_40_MIXED: Record<string, number> = { '66': 0.56, 'A8s': 0.42, 'K9s': 0.35, 'Q9s': 0.28, '87s': 0.28, 'ATo': 0.46, 'KJo': 0.39 };
-const CO_40_MIXED: Record<string, number> = { '44': 0.56, '33': 0.42, 'K8s': 0.35, 'Q8s': 0.32, 'J8s': 0.28, '86s': 0.28, '75s': 0.25, 'QTo': 0.42, 'JTo': 0.35 };
-const BTN_40_MIXED: Record<string, number> = { 'K2s': 0.35, 'Q7s': 0.35, 'J7s': 0.32, 'T7s': 0.28, '96s': 0.32, '85s': 0.28, '74s': 0.25, '53s': 0.25, 'A4o': 0.49, 'A3o': 0.42, 'K9o': 0.39, 'Q9o': 0.32 };
-const SB_40_MIXED: Record<string, number> = { '33': 0.49, '22': 0.35, 'K4s': 0.35, 'Q7s': 0.32, 'J7s': 0.28, 'T7s': 0.28, '96s': 0.28, '85s': 0.25, 'A4o': 0.46, 'A3o': 0.39, 'K8o': 0.35, 'Q9o': 0.32 };
+// 40bb mixed — entries that overlap with jam sets removed (jam takes priority)
+const UTG_40_MIXED: Record<string, number> = { '88': 0.53, 'T9s': 0.28, 'AJo': 0.42 };
+const MP_40_MIXED: Record<string, number> = { '66': 0.56, 'Q9s': 0.28, 'ATo': 0.46, 'KJo': 0.39 };
+const CO_40_MIXED: Record<string, number> = { 'J8s': 0.28, 'QTo': 0.42, 'JTo': 0.35 };
+const BTN_40_MIXED: Record<string, number> = { 'K2s': 0.35, 'A4o': 0.49, 'A3o': 0.42, 'K9o': 0.39, 'Q9o': 0.32 };
+const SB_40_MIXED: Record<string, number> = { 'K4s': 0.35, 'A4o': 0.46, 'A3o': 0.39, 'K8o': 0.35, 'Q9o': 0.32 };
 
 // ─── 60bb ranges — 100bb pure raise set, mixed tightened by ~15% ───
 
@@ -130,14 +131,14 @@ const CO_25_JAM = new Set([
 ]);
 const BTN_25_JAM = new Set([
   '44', '33', '22',
-  'K8s', 'K7s', 'K6s', 'Q8s', 'J8s', 'T8s', '97s', '86s', '65s', '54s',
+  'K8s', 'K7s', 'K6s', 'Q8s', 'J8s', 'T8s', '97s', '86s', '54s',
   'A9o', 'A8o', 'A7o', 'A6o', 'A5o',
   'KTo', 'QTo', 'JTo',
 ]);
 const SB_25_JAM = new Set([
   '33', '22',
   'K5s', 'K4s', 'Q7s', 'J7s', 'T7s', '96s', '85s', '75s', '64s', '53s',
-  'A9o', 'A7o', 'A6o', 'A5o', 'A4o',
+  'A7o', 'A6o', 'A5o', 'A4o',
   'K9o', 'K8o', 'Q9o', 'Q8o',
 ]);
 

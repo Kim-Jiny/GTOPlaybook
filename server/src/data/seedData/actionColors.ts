@@ -63,6 +63,12 @@ export const CALL_SHOVE_ACTIONS: ActionType[] = [
   { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
 ];
 
+// 3bet or fold only (25bb 3bet spots, no calling range)
+export const THREE_BET_FOLD_ACTIONS: ActionType[] = [
+  { key: '3bet', label: '3bet', color: ACTION_COLORS['3bet'] },
+  { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
+];
+
 // Combined actions for medium stacks (raise + jam + fold)
 export const RFI_JAM_ACTIONS: ActionType[] = [
   { key: 'raise', label: 'Raise', color: ACTION_COLORS.raise },
