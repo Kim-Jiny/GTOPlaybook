@@ -280,6 +280,8 @@ function getBbRaiseData(depth: StackDepth): Set<string> {
 // ---------------------------------------------------------------------------
 
 export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
+  if (depth === 7) return []; // 7bb is pure push/fold
+
   // In HU (2 players), SB is the opener — no SB defend charts
   if (maxPlayers === 2) return [];
 

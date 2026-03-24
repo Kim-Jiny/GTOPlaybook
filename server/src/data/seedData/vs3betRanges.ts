@@ -283,6 +283,8 @@ function getFourBetSet(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBe
 }
 
 export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
+  if (depth === 7) return []; // 7bb is pure push/fold
+
   const allPositions = positionsForPlayerCount(maxPlayers);
   // Every position except BB can open
   const openers = allPositions.filter(p => p !== 'BB');

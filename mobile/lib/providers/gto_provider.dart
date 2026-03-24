@@ -37,6 +37,7 @@ class GtoProvider extends ChangeNotifier {
   int get selectedPlayerCount => _selectedPlayerCount;
 
   int _matchTier(int bb) {
+    if (bb <= 10) return 7;
     if (bb <= 17) return 15;
     if (bb <= 32) return 25;
     if (bb <= 49) return 40;

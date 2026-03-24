@@ -382,6 +382,8 @@ function getRangeData25(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData
 // ---------------------------------------------------------------------------
 
 export function getBbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
+  if (depth === 7) return []; // 7bb is pure push/fold
+
   // BB can face opens from every position except BB itself
   const allPositions = positionsForPlayerCount(maxPlayers);
   const openers = allPositions.filter(p => p !== 'BB');

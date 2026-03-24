@@ -326,7 +326,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
   }
 
   Widget _buildTierDots(int selectedTier) {
-    const tiers = [15, 25, 40, 60, 100];
+    const tiers = [7, 15, 25, 40, 60, 100];
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: tiers.map((tier) {
@@ -373,6 +373,8 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
 
   Color _tierColor(int tier) {
     switch (tier) {
+      case 7:
+        return const Color(0xFFB71C1C); // deep red — push/fold zone
       case 15:
         return const Color(0xFFE53935); // red — danger zone
       case 25:

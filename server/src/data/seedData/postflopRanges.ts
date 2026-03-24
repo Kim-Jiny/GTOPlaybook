@@ -171,9 +171,7 @@ function lowConnectedCbet60(row: number, col: number) {
 
 export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   // No postflop cbet ranges at shallow stacks
-  if (depth === 15) return [];
-  if (depth === 25) return [];
-  if (depth === 40) return [];
+  if (depth <= 40) return [];
 
   // Need at least BTN and BB (3+ players)
   if (maxPlayers < 3) return [];

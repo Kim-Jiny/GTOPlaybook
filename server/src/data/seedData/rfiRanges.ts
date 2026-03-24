@@ -582,6 +582,8 @@ function tableSizeLabel(maxPlayers: MaxPlayers): string {
 // ═══════════════════════════════════════════════════════════════════════
 
 export function getRfiCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
+  if (depth === 7) return []; // 7bb is pure push/fold
+
   const positions = rfiPositions(maxPlayers);
   const useJam = depth === 15 || depth === 25 || depth === 40;
   const sizeLabel = tableSizeLabel(maxPlayers);

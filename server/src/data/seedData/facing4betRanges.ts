@@ -244,8 +244,7 @@ function generateCharts(
 
 export function getFacing4betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   // No facing 4bet at push/fold depths
-  if (depth === 15) return [];
-  if (depth === 25) return [];
+  if (depth <= 25) return [];
 
   // HU: no facing 4bet charts (action doesn't typically reach 4bet in simplified HU model)
   if (maxPlayers === 2) return [];

@@ -441,6 +441,8 @@ export function getThreeBetCharts(
   depth: StackDepth,
   maxPlayers: MaxPlayers = 6,
 ): ChartDef[] {
+  if (depth === 7) return []; // 7bb is pure push/fold
+
   // HU (2-max): no 3bet charts — BB defend handles that
   if (maxPlayers === 2) return [];
 

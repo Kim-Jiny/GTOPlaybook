@@ -12,8 +12,8 @@ export function inSet(hand: string, set: Set<string>): boolean {
 
 export type FreqMap = Record<string, number>;
 
-export type StackDepth = 15 | 25 | 40 | 60 | 100;
-export const STACK_TIERS: StackDepth[] = [15, 25, 40, 60, 100];
+export type StackDepth = 7 | 15 | 25 | 40 | 60 | 100;
+export const STACK_TIERS: StackDepth[] = [7, 15, 25, 40, 60, 100];
 
 export type MaxPlayers = 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 export const PLAYER_COUNTS: MaxPlayers[] = [2, 3, 4, 5, 6, 7, 8, 9];
