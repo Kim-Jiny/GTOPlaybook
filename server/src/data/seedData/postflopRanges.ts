@@ -1,14 +1,15 @@
-import { ChartDef, handLabel, RANKS, StackDepth } from './helpers';
+import { ChartDef, MaxPlayers, handLabel, RANKS, StackDepth } from './helpers';
 import { POSTFLOP_CBET_ACTIONS } from './actionColors';
 
 // Postflop Cbet ranges: BTN vs BB (Single Raised Pot)
 // 6 representative flop textures
 // Actions: bet / check (no fold — we are the aggressor with initiative)
+// These ranges are universal regardless of table size (BTN vs BB SRP is the same)
 
 // Helper: classify hands for cbet frequency on different board textures
 // Simplified GTO-approximate Cbet frequencies
 
-// 1. Dry High: A♠7♥2♦ (rainbow) — high cbet frequency (~70%)
+// 1. Dry High: A72r (rainbow) — high cbet frequency (~70%)
 function dryHighCbet(row: number, col: number) {
   const h = handLabel(row, col);
   const r1 = RANKS[row], r2 = RANKS[col];
@@ -28,7 +29,7 @@ function dryHighCbet(row: number, col: number) {
   return { bet: 0.35, check: 0.65 };
 }
 
-// 2. Dry Mid: K♠8♥3♦ (rainbow) — moderate cbet (~55%)
+// 2. Dry Mid: K83r (rainbow) — moderate cbet (~55%)
 function dryMidCbet(row: number, col: number) {
   const h = handLabel(row, col);
   const r1 = RANKS[row], r2 = RANKS[col];
@@ -45,7 +46,7 @@ function dryMidCbet(row: number, col: number) {
   return { bet: 0.3, check: 0.7 };
 }
 
-// 3. Wet Broadway: Q♠J♥T♦ — mostly check (~35% cbet)
+// 3. Wet Broadway: QJT — mostly check (~35% cbet)
 function wetBroadwayCbet(row: number, col: number) {
   const h = handLabel(row, col);
   const r1 = RANKS[row], r2 = RANKS[col];
@@ -66,7 +67,7 @@ function wetBroadwayCbet(row: number, col: number) {
   return { bet: 0.2, check: 0.8 };
 }
 
-// 4. Monotone: 9♣6♣3♣ — mostly check (~30% cbet)
+// 4. Monotone: 963ss — mostly check (~30% cbet)
 function monotoneCbet(row: number, col: number) {
   const h = handLabel(row, col);
   const r1 = RANKS[row], r2 = RANKS[col];
@@ -88,7 +89,7 @@ function monotoneCbet(row: number, col: number) {
   return { bet: 0.15, check: 0.85 };
 }
 
-// 5. Paired: K♠K♥5♦ — high cbet (~65%)
+// 5. Paired: KK5 — high cbet (~65%)
 function pairedCbet(row: number, col: number) {
   const h = handLabel(row, col);
   const r1 = RANKS[row], r2 = RANKS[col];
@@ -110,7 +111,7 @@ function pairedCbet(row: number, col: number) {
   return { bet: 0.3, check: 0.7 };
 }
 
-// 6. Low Connected: 8♠7♥6♦ — mostly check (~30% cbet)
+// 6. Low Connected: 876 — mostly check (~30% cbet)
 function lowConnectedCbet(row: number, col: number) {
   const h = handLabel(row, col);
   const r1 = RANKS[row], r2 = RANKS[col];
@@ -168,11 +169,14 @@ function lowConnectedCbet60(row: number, col: number) {
 
 // --- Chart builder by stack depth ---
 
-export function getPostflopCharts(depth: StackDepth): ChartDef[] {
+export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   // No postflop cbet ranges at shallow stacks
   if (depth === 15) return [];
   if (depth === 25) return [];
   if (depth === 40) return [];
+
+  // Need at least BTN and BB (3+ players)
+  if (maxPlayers < 3) return [];
 
   const is60 = depth === 60;
   const tag = `${depth}bb`;
@@ -183,6 +187,7 @@ export function getPostflopCharts(depth: StackDepth): ChartDef[] {
       description: `BTN Cbet on A72r (Dry High) [${tag}]`,
       flopTexture: 'A72r',
       stackDepth: depth,
+      maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
       ranges: is60 ? dryHighCbet60 : dryHighCbet,
     },
@@ -191,6 +196,7 @@ export function getPostflopCharts(depth: StackDepth): ChartDef[] {
       description: `BTN Cbet on K83r (Dry Mid) [${tag}]`,
       flopTexture: 'K83r',
       stackDepth: depth,
+      maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
       ranges: is60 ? dryMidCbet60 : dryMidCbet,
     },
@@ -199,6 +205,7 @@ export function getPostflopCharts(depth: StackDepth): ChartDef[] {
       description: `BTN Cbet on QJT (Wet Broadway) [${tag}]`,
       flopTexture: 'QJT',
       stackDepth: depth,
+      maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
       ranges: is60 ? wetBroadwayCbet60 : wetBroadwayCbet,
     },
@@ -207,6 +214,7 @@ export function getPostflopCharts(depth: StackDepth): ChartDef[] {
       description: `BTN Cbet on 963ss (Monotone) [${tag}]`,
       flopTexture: '963ss',
       stackDepth: depth,
+      maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
       ranges: is60 ? monotoneCbet60 : monotoneCbet,
     },
@@ -215,6 +223,7 @@ export function getPostflopCharts(depth: StackDepth): ChartDef[] {
       description: `BTN Cbet on KK5 (Paired) [${tag}]`,
       flopTexture: 'KK5',
       stackDepth: depth,
+      maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
       ranges: is60 ? pairedCbet60 : pairedCbet,
     },
@@ -223,6 +232,7 @@ export function getPostflopCharts(depth: StackDepth): ChartDef[] {
       description: `BTN Cbet on 876 (Low Connected) [${tag}]`,
       flopTexture: '876',
       stackDepth: depth,
+      maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
       ranges: is60 ? lowConnectedCbet60 : lowConnectedCbet,
     },

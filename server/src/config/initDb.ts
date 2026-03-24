@@ -35,6 +35,7 @@ const CREATE_TABLES = `
     situation TEXT NOT NULL,
     vs_position TEXT,
     stack_depth INTEGER DEFAULT 100,
+    max_players INTEGER DEFAULT 6,
     description TEXT,
     category TEXT,
     action_types JSONB,
@@ -57,6 +58,7 @@ const CREATE_TABLES = `
 
   CREATE INDEX IF NOT EXISTS idx_gto_ranges_chart_id ON gto_ranges(chart_id);
   CREATE INDEX IF NOT EXISTS idx_gto_charts_stack_depth ON gto_charts(stack_depth);
+  CREATE INDEX IF NOT EXISTS idx_gto_charts_max_players ON gto_charts(max_players);
 
   CREATE TABLE IF NOT EXISTS admin_accounts (
     id SERIAL PRIMARY KEY,

@@ -1,4 +1,4 @@
-import { ChartDef, handLabel, inSet, StackDepth } from './helpers';
+import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, StackDepth } from './helpers';
 import { BB_DEFEND_ACTIONS, BB_DEFEND_JAM_ACTIONS } from './actionColors';
 
 // BB Defend ranges vs each position's open
@@ -15,9 +15,9 @@ const BB_VS_UTG_CALL = new Set([
   'KQs', 'KJs', 'QJs', 'JTs', 'T9s', '98s',
 ]);
 
-// BB vs MP — slightly wider
-const BB_VS_MP_3BET = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const BB_VS_MP_CALL = new Set([
+// BB vs HJ — slightly wider
+const BB_VS_HJ_3BET = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
+const BB_VS_HJ_CALL = new Set([
   'JJ', 'TT', '99', '88', '77',
   'AQs', 'AQo', 'AJs', 'ATs', 'A9s',
   'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s', '87s',
@@ -80,8 +80,8 @@ const BB_VS_UTG_CALL_25 = new Set([
   'KQs',
 ]);
 
-const BB_VS_MP_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs']);
-const BB_VS_MP_CALL_25 = new Set([
+const BB_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs']);
+const BB_VS_HJ_CALL_25 = new Set([
   'JJ', 'TT', '99',
   'AKo', 'AQs', 'AQo', 'AJs',
   'KQs', 'KJs',
@@ -115,7 +115,7 @@ const BB_VS_SB_CALL_25 = new Set([
 
 // 25bb jam sets — hands that 3bet-jam (all-in) instead of standard 3bet
 const BB_VS_UTG_JAM_25 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
-const BB_VS_MP_JAM_25 = new Set(['JJ', 'TT', '99', 'AKo', 'AQs', 'AQo']);
+const BB_VS_HJ_JAM_25 = new Set(['JJ', 'TT', '99', 'AKo', 'AQs', 'AQo']);
 const BB_VS_CO_JAM_25 = new Set(['JJ', 'TT', '99', 'AKo', 'AQs', 'AQo', 'AJs']);
 const BB_VS_BTN_JAM_25 = new Set(['JJ', 'TT', '99', '88', 'AKo', 'AQs', 'AQo', 'AJs', 'ATs', 'KQs']);
 const BB_VS_SB_JAM_25 = new Set(['JJ', 'TT', '99', '88', '77', 'AKo', 'AQs', 'AQo', 'AJs', 'ATs', 'KQs', 'KJs']);
@@ -131,8 +131,8 @@ const BB_VS_UTG_CALL_40 = new Set([
   'KQs', 'KJs', 'QJs', 'JTs',
 ]);
 
-const BB_VS_MP_3BET_40 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const BB_VS_MP_CALL_40 = new Set([
+const BB_VS_HJ_3BET_40 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
+const BB_VS_HJ_CALL_40 = new Set([
   'JJ', 'TT', '99', '88',
   'AQs', 'AQo', 'AJs', 'ATs',
   'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s',
@@ -192,8 +192,8 @@ const BB_VS_UTG_CALL_60 = new Set([
   'KQs', 'KJs', 'QJs', 'JTs', 'T9s',
 ]);
 
-const BB_VS_MP_3BET_60 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const BB_VS_MP_CALL_60 = new Set([
+const BB_VS_HJ_3BET_60 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
+const BB_VS_HJ_CALL_60 = new Set([
   'JJ', 'TT', '99', '88', '77',
   'AQs', 'AQo', 'AJs', 'ATs',
   'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
@@ -261,6 +261,10 @@ const BB_MIXED_40: Record<string, { '3bet': number; call: number; fold: number }
   'AQo': { '3bet': 0.5, call: 0.5, fold: 0 },
 };
 
+// ---------------------------------------------------------------------------
+// Range builder helpers
+// ---------------------------------------------------------------------------
+
 function bbDefendRange(threeBetSet: Set<string>, callSet: Set<string>, useMixed: false | Record<string, { '3bet': number; call: number; fold: number }> = false) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
@@ -282,126 +286,117 @@ function bbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>, callSet
 }
 
 // ---------------------------------------------------------------------------
-// Chart builder per stack depth
+// Range data lookup by opener class and stack depth
 // ---------------------------------------------------------------------------
 
-function make5Charts(
-  depth: StackDepth,
-  depthLabel: string,
-  utg3bet: Set<string>, utgCall: Set<string>,
-  mp3bet: Set<string>, mpCall: Set<string>,
-  co3bet: Set<string>, coCall: Set<string>, coMixed: false | Record<string, { '3bet': number; call: number; fold: number }>,
-  btn3bet: Set<string>, btnCall: Set<string>, btnMixed: false | Record<string, { '3bet': number; call: number; fold: number }>,
-  sb3bet: Set<string>, sbCall: Set<string>, sbMixed: false | Record<string, { '3bet': number; call: number; fold: number }>,
-): ChartDef[] {
-  return [
-    {
-      position: 'BB', situation: 'Defend', vsPosition: 'UTG', category: 'Defend',
-      stackDepth: depth,
-      description: `BB Defend vs UTG open (${depthLabel})`,
-      actionTypes: BB_DEFEND_ACTIONS,
-      ranges: bbDefendRange(utg3bet, utgCall),
-    },
-    {
-      position: 'BB', situation: 'Defend', vsPosition: 'MP', category: 'Defend',
-      stackDepth: depth,
-      description: `BB Defend vs MP open (${depthLabel})`,
-      actionTypes: BB_DEFEND_ACTIONS,
-      ranges: bbDefendRange(mp3bet, mpCall),
-    },
-    {
-      position: 'BB', situation: 'Defend', vsPosition: 'CO', category: 'Defend',
-      stackDepth: depth,
-      description: `BB Defend vs CO open (${depthLabel})`,
-      actionTypes: BB_DEFEND_ACTIONS,
-      ranges: bbDefendRange(co3bet, coCall, coMixed),
-    },
-    {
-      position: 'BB', situation: 'Defend', vsPosition: 'BTN', category: 'Defend',
-      stackDepth: depth,
-      description: `BB Defend vs BTN open (${depthLabel})`,
-      actionTypes: BB_DEFEND_ACTIONS,
-      ranges: bbDefendRange(btn3bet, btnCall, btnMixed),
-    },
-    {
-      position: 'BB', situation: 'Defend', vsPosition: 'SB', category: 'Defend',
-      stackDepth: depth,
-      description: `BB Defend vs SB open (${depthLabel})`,
-      actionTypes: BB_DEFEND_ACTIONS,
-      ranges: bbDefendRange(sb3bet, sbCall, sbMixed),
-    },
-  ];
+type MixedMap = false | Record<string, { '3bet': number; call: number; fold: number }>;
+
+interface RangeData100 {
+  threeBet: Set<string>;
+  call: Set<string>;
+  mixed: MixedMap;
 }
 
-export function getBbDefendCharts(depth: StackDepth): ChartDef[] {
-  switch (depth) {
-    case 15:
-      return []; // handled by shortStackRanges
+interface RangeData25 {
+  threeBet: Set<string>;
+  jam: Set<string>;
+  call: Set<string>;
+}
 
-    case 25:
-      return [
-        {
-          position: 'BB', situation: 'Defend', vsPosition: 'UTG', category: 'Defend',
-          stackDepth: 25 as StackDepth, description: 'BB Defend vs UTG open (25bb)',
-          actionTypes: BB_DEFEND_JAM_ACTIONS,
-          ranges: bbDefendJamRange(BB_VS_UTG_3BET_25, BB_VS_UTG_JAM_25, BB_VS_UTG_CALL_25),
-        },
-        {
-          position: 'BB', situation: 'Defend', vsPosition: 'MP', category: 'Defend',
-          stackDepth: 25 as StackDepth, description: 'BB Defend vs MP open (25bb)',
-          actionTypes: BB_DEFEND_JAM_ACTIONS,
-          ranges: bbDefendJamRange(BB_VS_MP_3BET_25, BB_VS_MP_JAM_25, BB_VS_MP_CALL_25),
-        },
-        {
-          position: 'BB', situation: 'Defend', vsPosition: 'CO', category: 'Defend',
-          stackDepth: 25 as StackDepth, description: 'BB Defend vs CO open (25bb)',
-          actionTypes: BB_DEFEND_JAM_ACTIONS,
-          ranges: bbDefendJamRange(BB_VS_CO_3BET_25, BB_VS_CO_JAM_25, BB_VS_CO_CALL_25),
-        },
-        {
-          position: 'BB', situation: 'Defend', vsPosition: 'BTN', category: 'Defend',
-          stackDepth: 25 as StackDepth, description: 'BB Defend vs BTN open (25bb)',
-          actionTypes: BB_DEFEND_JAM_ACTIONS,
-          ranges: bbDefendJamRange(BB_VS_BTN_3BET_25, BB_VS_BTN_JAM_25, BB_VS_BTN_CALL_25),
-        },
-        {
-          position: 'BB', situation: 'Defend', vsPosition: 'SB', category: 'Defend',
-          stackDepth: 25 as StackDepth, description: 'BB Defend vs SB open (25bb)',
-          actionTypes: BB_DEFEND_JAM_ACTIONS,
-          ranges: bbDefendJamRange(BB_VS_SB_3BET_25, BB_VS_SB_JAM_25, BB_VS_SB_CALL_25),
-        },
-      ];
-
-    case 40:
-      return make5Charts(
-        40, '40bb',
-        BB_VS_UTG_3BET_40, BB_VS_UTG_CALL_40,
-        BB_VS_MP_3BET_40, BB_VS_MP_CALL_40,
-        BB_VS_CO_3BET_40, BB_VS_CO_CALL_40, BB_MIXED_40,
-        BB_VS_BTN_3BET_40, BB_VS_BTN_CALL_40, BB_MIXED_40,
-        BB_VS_SB_3BET_40, BB_VS_SB_CALL_40, BB_MIXED_40,
-      );
-
-    case 60:
-      return make5Charts(
-        60, '60bb',
-        BB_VS_UTG_3BET_60, BB_VS_UTG_CALL_60,
-        BB_VS_MP_3BET_60, BB_VS_MP_CALL_60,
-        BB_VS_CO_3BET_60, BB_VS_CO_CALL_60, BB_MIXED,
-        BB_VS_BTN_3BET_60, BB_VS_BTN_CALL_60, BB_MIXED,
-        BB_VS_SB_3BET_60, BB_VS_SB_CALL_60, BB_MIXED,
-      );
-
-    case 100:
-      return make5Charts(
-        100, '100bb',
-        BB_VS_UTG_3BET, BB_VS_UTG_CALL,
-        BB_VS_MP_3BET, BB_VS_MP_CALL,
-        BB_VS_CO_3BET, BB_VS_CO_CALL, BB_MIXED,
-        BB_VS_BTN_3BET, BB_VS_BTN_CALL, BB_MIXED,
-        BB_VS_SB_3BET, BB_VS_SB_CALL, BB_MIXED,
-      );
+function getRangeData100(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData100 {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: BB_VS_UTG_3BET, call: BB_VS_UTG_CALL, mixed: false };
+    case 'hj':       return { threeBet: BB_VS_HJ_3BET,  call: BB_VS_HJ_CALL,  mixed: false };
+    case 'co':       return { threeBet: BB_VS_CO_3BET,   call: BB_VS_CO_CALL,   mixed: BB_MIXED };
+    case 'btn':      return { threeBet: BB_VS_BTN_3BET,  call: BB_VS_BTN_CALL,  mixed: BB_MIXED };
+    case 'sb':       return { threeBet: BB_VS_SB_3BET,   call: BB_VS_SB_CALL,   mixed: BB_MIXED };
   }
+}
+
+function getRangeData60(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData100 {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: BB_VS_UTG_3BET_60, call: BB_VS_UTG_CALL_60, mixed: false };
+    case 'hj':       return { threeBet: BB_VS_HJ_3BET_60,  call: BB_VS_HJ_CALL_60,  mixed: false };
+    case 'co':       return { threeBet: BB_VS_CO_3BET_60,   call: BB_VS_CO_CALL_60,   mixed: BB_MIXED };
+    case 'btn':      return { threeBet: BB_VS_BTN_3BET_60,  call: BB_VS_BTN_CALL_60,  mixed: BB_MIXED };
+    case 'sb':       return { threeBet: BB_VS_SB_3BET_60,   call: BB_VS_SB_CALL_60,   mixed: BB_MIXED };
+  }
+}
+
+function getRangeData40(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData100 {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: BB_VS_UTG_3BET_40, call: BB_VS_UTG_CALL_40, mixed: false };
+    case 'hj':       return { threeBet: BB_VS_HJ_3BET_40,  call: BB_VS_HJ_CALL_40,  mixed: false };
+    case 'co':       return { threeBet: BB_VS_CO_3BET_40,   call: BB_VS_CO_CALL_40,   mixed: BB_MIXED_40 };
+    case 'btn':      return { threeBet: BB_VS_BTN_3BET_40,  call: BB_VS_BTN_CALL_40,  mixed: BB_MIXED_40 };
+    case 'sb':       return { threeBet: BB_VS_SB_3BET_40,   call: BB_VS_SB_CALL_40,   mixed: BB_MIXED_40 };
+  }
+}
+
+function getRangeData25(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData25 {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: BB_VS_UTG_3BET_25, jam: BB_VS_UTG_JAM_25, call: BB_VS_UTG_CALL_25 };
+    case 'hj':       return { threeBet: BB_VS_HJ_3BET_25,  jam: BB_VS_HJ_JAM_25,  call: BB_VS_HJ_CALL_25 };
+    case 'co':       return { threeBet: BB_VS_CO_3BET_25,   jam: BB_VS_CO_JAM_25,   call: BB_VS_CO_CALL_25 };
+    case 'btn':      return { threeBet: BB_VS_BTN_3BET_25,  jam: BB_VS_BTN_JAM_25,  call: BB_VS_BTN_CALL_25 };
+    case 'sb':       return { threeBet: BB_VS_SB_3BET_25,   jam: BB_VS_SB_JAM_25,   call: BB_VS_SB_CALL_25 };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Chart builder per stack depth — multi-table aware
+// ---------------------------------------------------------------------------
+
+export function getBbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
+  if (depth === 15) return []; // handled by shortStackRanges
+
+  // BB can face opens from every position except BB itself
+  const allPositions = positionsForPlayerCount(maxPlayers);
+  const openers = allPositions.filter(p => p !== 'BB');
+
+  const charts: ChartDef[] = [];
+
+  for (const opener of openers) {
+    // Map opener to range data class
+    const cls = openerClass(opener);
+    // Special: in HU, SB acts as BTN
+    const effectiveCls = (maxPlayers === 2 && opener === 'SB') ? 'btn' : cls;
+
+    if (depth === 25) {
+      const data = getRangeData25(effectiveCls);
+      charts.push({
+        position: 'BB',
+        situation: 'Defend',
+        vsPosition: opener,
+        category: 'Defend',
+        stackDepth: depth,
+        maxPlayers,
+        description: `BB Defend vs ${opener} open (${depth}bb)`,
+        actionTypes: BB_DEFEND_JAM_ACTIONS,
+        ranges: bbDefendJamRange(data.threeBet, data.jam, data.call),
+      });
+    } else {
+      // 40, 60, 100
+      const data = depth === 40
+        ? getRangeData40(effectiveCls)
+        : depth === 60
+          ? getRangeData60(effectiveCls)
+          : getRangeData100(effectiveCls);
+      charts.push({
+        position: 'BB',
+        situation: 'Defend',
+        vsPosition: opener,
+        category: 'Defend',
+        stackDepth: depth,
+        maxPlayers,
+        description: `BB Defend vs ${opener} open (${depth}bb)`,
+        actionTypes: BB_DEFEND_ACTIONS,
+        ranges: bbDefendRange(data.threeBet, data.call, data.mixed),
+      });
+    }
+  }
+
+  return charts;
 }
 
 // Backward compatibility

@@ -1,4 +1,4 @@
-import { ChartDef, STACK_TIERS } from './helpers';
+import { ChartDef, STACK_TIERS, PLAYER_COUNTS } from './helpers';
 import { getShortStackCharts } from './shortStackRanges';
 import { getRfiCharts } from './rfiRanges';
 import { getThreeBetCharts } from './threeBetRanges';
@@ -11,17 +11,19 @@ import { getPostflopCharts } from './postflopRanges';
 export function getAllCharts(): ChartDef[] {
   const all: ChartDef[] = [];
 
-  for (const depth of STACK_TIERS) {
-    all.push(
-      ...getShortStackCharts(depth),
-      ...getRfiCharts(depth),
-      ...getThreeBetCharts(depth),
-      ...getVs3betCharts(depth),
-      ...getBbDefendCharts(depth),
-      ...getSbDefendCharts(depth),
-      ...getFacing4betCharts(depth),
-      ...getPostflopCharts(depth),
-    );
+  for (const maxPlayers of PLAYER_COUNTS) {
+    for (const depth of STACK_TIERS) {
+      all.push(
+        ...getShortStackCharts(depth, maxPlayers),
+        ...getRfiCharts(depth, maxPlayers),
+        ...getThreeBetCharts(depth, maxPlayers),
+        ...getVs3betCharts(depth, maxPlayers),
+        ...getBbDefendCharts(depth, maxPlayers),
+        ...getSbDefendCharts(depth, maxPlayers),
+        ...getFacing4betCharts(depth, maxPlayers),
+        ...getPostflopCharts(depth, maxPlayers),
+      );
+    }
   }
 
   return all;

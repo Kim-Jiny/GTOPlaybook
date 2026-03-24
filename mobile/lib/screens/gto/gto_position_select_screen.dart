@@ -18,11 +18,27 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
   final _chipsController = TextEditingController();
   Timer? _debounce;
 
-  static const _positionOrder = ['UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'];
+  /// Position order per table size
+  static List<String> _positionOrder(int maxPlayers) {
+    switch (maxPlayers) {
+      case 2: return ['SB', 'BB'];
+      case 3: return ['BTN', 'SB', 'BB'];
+      case 4: return ['CO', 'BTN', 'SB', 'BB'];
+      case 5: return ['HJ', 'CO', 'BTN', 'SB', 'BB'];
+      case 6: return ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+      case 7: return ['UTG', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+      case 8: return ['UTG', 'UTG+1', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+      case 9: return ['UTG', 'UTG+1', 'UTG+2', 'MP', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+      default: return ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+    }
+  }
 
   static const _positionColors = {
     'UTG': Color(0xFFE53935),
+    'UTG+1': Color(0xFFD81B60),
+    'UTG+2': Color(0xFFAD1457),
     'MP': Color(0xFFFB8C00),
+    'HJ': Color(0xFFFB8C00),
     'CO': Color(0xFFFDD835),
     'BTN': Color(0xFF43A047),
     'SB': Color(0xFF1E88E5),
@@ -31,12 +47,21 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
 
   static const _positionDescriptions = {
     'UTG': 'Under the Gun',
+    'UTG+1': 'Under the Gun +1',
+    'UTG+2': 'Under the Gun +2',
     'MP': 'Middle Position',
+    'HJ': 'Hijack',
     'CO': 'Cut Off',
     'BTN': 'Button',
     'SB': 'Small Blind',
     'BB': 'Big Blind',
   };
+
+  /// Header label for the selected table size
+  static String _tableLabel(int maxPlayers) {
+    if (maxPlayers == 2) return 'HU';
+    return '$maxPlayers-MAX';
+  }
 
   @override
   void initState() {
@@ -104,9 +129,14 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
       treeMap[ps.position] = ps;
     }
 
+    final positions = _positionOrder(gto.selectedPlayerCount);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
+        // Player count selector
+        _buildPlayerCountSelector(gto),
+        const SizedBox(height: 12),
         _buildBbCalculator(gto),
         const SizedBox(height: 12),
         // Header row
@@ -115,7 +145,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
           child: Row(
             children: [
               Text(
-                '6-MAX',
+                _tableLabel(gto.selectedPlayerCount),
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -148,7 +178,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
           ),
         ),
         // Position cards
-        ..._positionOrder.map((pos) {
+        ...positions.map((pos) {
           final hasSituations = treeMap.containsKey(pos);
           final ps = treeMap[pos];
           final chartCount = hasSituations
@@ -160,8 +190,8 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
 
           return _PositionCard(
             position: pos,
-            description: _positionDescriptions[pos]!,
-            color: _positionColors[pos]!,
+            description: _positionDescriptions[pos] ?? pos,
+            color: _positionColors[pos] ?? const Color(0xFF757575),
             chartCount: chartCount,
             categories: categories,
             onTap: hasSituations
@@ -177,6 +207,51 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildPlayerCountSelector(GtoProvider gto) {
+    return SizedBox(
+      height: 36,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: 8,
+        separatorBuilder: (_, _) => const SizedBox(width: 6),
+        itemBuilder: (context, index) {
+          final count = index + 2; // 2~9
+          final isSelected = count == gto.selectedPlayerCount;
+          final label = count == 2 ? 'HU' : '$count인';
+
+          return GestureDetector(
+            onTap: () => gto.selectPlayerCount(count),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF42A5F5)
+                    : Colors.white.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: isSelected
+                      ? const Color(0xFF42A5F5)
+                      : Colors.white.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white54,
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

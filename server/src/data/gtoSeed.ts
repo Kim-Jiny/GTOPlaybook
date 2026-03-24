@@ -17,6 +17,7 @@ async function seed() {
       ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS category TEXT;
       ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS action_types JSONB;
       ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS flop_texture TEXT;
+      ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS max_players INTEGER DEFAULT 6;
       ALTER TABLE gto_ranges ADD COLUMN IF NOT EXISTS frequencies JSONB;
     EXCEPTION WHEN others THEN NULL;
     END $$;
@@ -28,14 +29,15 @@ async function seed() {
 
   for (const chart of ALL_CHARTS) {
     const chartResult = await pool.query(
-      `INSERT INTO gto_charts (position, situation, vs_position, description, stack_depth, category, action_types, flop_texture)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+      `INSERT INTO gto_charts (position, situation, vs_position, description, stack_depth, max_players, category, action_types, flop_texture)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
       [
         chart.position,
         chart.situation,
         chart.vsPosition || null,
         chart.description,
         chart.stackDepth ?? 100,
+        chart.maxPlayers ?? 6,
         chart.category,
         JSON.stringify(chart.actionTypes),
         chart.flopTexture || null,
@@ -81,7 +83,7 @@ async function seed() {
       params,
     );
 
-    console.log(`Seeded: ${chart.position} ${chart.situation}${chart.vsPosition ? ' vs ' + chart.vsPosition : ''} [${chart.stackDepth ?? 100}bb] (169 hands)`);
+    console.log(`Seeded: ${chart.position} ${chart.situation}${chart.vsPosition ? ' vs ' + chart.vsPosition : ''} [${chart.stackDepth ?? 100}bb, ${chart.maxPlayers ?? 6}-max] (169 hands)`);
   }
 
   console.log(`\nGTO seed complete: ${ALL_CHARTS.length} charts`);

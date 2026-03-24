@@ -1,18 +1,46 @@
-import { ChartDef, StackDepth, handLabel, inSet } from './helpers';
+import {
+  ChartDef, StackDepth, MaxPlayers,
+  handLabel, inSet,
+  positionsForPlayerCount, rfiPositions,
+} from './helpers';
 import { PUSH_FOLD_ACTIONS, CALL_SHOVE_ACTIONS } from './actionColors';
 
 // ── 15bb Push/Fold ranges (all-in or fold) ──
 
-// UTG push range — very tight (~12%)
-const UTG_PUSH = new Set([
+// UTG push range at 6-max — tight (~12%)
+const UTG_6MAX_PUSH = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT', '99',
   'AKs', 'AQs', 'AJs', 'ATs', 'KQs',
   'AKo', 'AQo',
 ]);
 
-// MP push range (~16%)
-const MP_PUSH = new Set([
-  ...UTG_PUSH,
+// UTG at 7+ players — tighter (~10%)
+const UTG_FULL_PUSH = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT',
+  'AKs', 'AQs', 'AJs',
+  'AKo', 'AQo',
+]);
+
+// UTG+1 at 8+ — similar to 6-max UTG (~11%)
+const UTG1_PUSH = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs',
+  'AKo', 'AQo',
+]);
+
+// UTG+2 at 9 — slightly wider (~12%)
+const UTG2_PUSH = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs', 'ATs', 'KQs',
+  'AKo', 'AQo',
+]);
+
+// MP at 7+ players — same as 6-max UTG
+const MP_PUSH = UTG_6MAX_PUSH;
+
+// HJ push range (~16%) — was MP in 6-max
+const HJ_PUSH = new Set([
+  ...UTG_6MAX_PUSH,
   '88', '77',
   'A9s', 'KJs', 'KTs', 'QJs',
   'AJo',
@@ -20,7 +48,7 @@ const MP_PUSH = new Set([
 
 // CO push range (~25%)
 const CO_PUSH = new Set([
-  ...MP_PUSH,
+  ...HJ_PUSH,
   '66', '55',
   'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
   'K9s', 'Q9s', 'JTs', 'T9s', '98s',
@@ -46,24 +74,51 @@ const SB_PUSH = new Set([
   'K9o', 'K8o', 'Q9o', 'Q8o', 'J9o', 'T9o',
 ]);
 
-// BB call vs all-in ranges (based on shover position)
-const BB_CALL_VS_UTG = new Set([
+// HU SB push range (~65%) — very wide
+const HU_SB_PUSH = new Set([
+  ...SB_PUSH,
+  'Q4s', 'Q3s', 'Q2s',
+  'J6s', 'J5s', 'J4s',
+  'T6s', 'T5s',
+  '95s', '94s',
+  '84s', '83s',
+  '74s', '73s',
+  '63s', '62s',
+  '52s', '43s', '42s', '32s',
+  'K7o', 'K6o', 'K5o',
+  'Q7o', 'Q6o', 'Q5o',
+  'J8o', 'J7o',
+  'T8o', 'T7o',
+  '98o', '97o',
+  '87o', '86o',
+  '76o', '75o',
+  '65o', '64o',
+  '54o', '53o',
+]);
+
+// ── BB call vs all-in ranges (based on shover position class) ──
+
+// BB call vs ep-tight (UTG, UTG+1, UTG+2, MP at 7+)
+const BB_CALL_VS_EP = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT',
   'AKs', 'AQs', 'AKo',
 ]);
 
-const BB_CALL_VS_MP = new Set([
-  ...BB_CALL_VS_UTG,
+// BB call vs HJ shove (was BB vs MP in 6-max)
+const BB_CALL_VS_HJ = new Set([
+  ...BB_CALL_VS_EP,
   '99', 'AJs', 'AQo',
 ]);
 
+// BB call vs CO shove
 const BB_CALL_VS_CO = new Set([
-  ...BB_CALL_VS_MP,
+  ...BB_CALL_VS_HJ,
   '88', '77',
   'ATs', 'A9s', 'KQs',
   'AJo', 'ATo', 'KQo',
 ]);
 
+// BB call vs BTN shove
 const BB_CALL_VS_BTN = new Set([
   ...BB_CALL_VS_CO,
   '66', '55',
@@ -71,12 +126,15 @@ const BB_CALL_VS_BTN = new Set([
   'A9o', 'A8o', 'KJo',
 ]);
 
+// BB call vs SB shove (widest)
 const BB_CALL_VS_SB = new Set([
   ...BB_CALL_VS_BTN,
   '44', '33',
   'A6s', 'A4s', 'A3s', 'A2s', 'K9s', 'K8s', 'Q9s', 'QTs', 'JTs', 'T9s',
   'A7o', 'A6o', 'A5o', 'KTo', 'QJo',
 ]);
+
+// ── Range builders ──
 
 function pushFoldRange(pushSet: Set<string>) {
   return (row: number, col: number) => {
@@ -94,89 +152,94 @@ function callShoveRange(callSet: Set<string>) {
   };
 }
 
-export function getShortStackCharts(depth: StackDepth): ChartDef[] {
+// ── Push range lookup by position ──
+
+function getPushRange(position: string, maxPlayers: MaxPlayers): Set<string> {
+  switch (position) {
+    case 'UTG':
+      return maxPlayers >= 7 ? UTG_FULL_PUSH : UTG_6MAX_PUSH;
+    case 'UTG+1':
+      return UTG1_PUSH;
+    case 'UTG+2':
+      return UTG2_PUSH;
+    case 'MP':
+      return MP_PUSH;      // MP only exists at 7+, same as 6-max UTG
+    case 'HJ':
+      return HJ_PUSH;
+    case 'CO':
+      return CO_PUSH;
+    case 'BTN':
+      return BTN_PUSH;
+    case 'SB':
+      return maxPlayers === 2 ? HU_SB_PUSH : SB_PUSH;
+    case 'BB':
+      return SB_PUSH;      // BB push range similar to SB when folded to
+    default:
+      return UTG_6MAX_PUSH;
+  }
+}
+
+// ── BB call range lookup by shover class ──
+
+function getBbCallRange(shoverPosition: string): Set<string> {
+  switch (shoverPosition) {
+    case 'SB':
+      return BB_CALL_VS_SB;
+    case 'BTN':
+      return BB_CALL_VS_BTN;
+    case 'CO':
+      return BB_CALL_VS_CO;
+    case 'HJ':
+      return BB_CALL_VS_HJ;
+    // ep-tight: UTG, UTG+1, UTG+2, MP
+    default:
+      return BB_CALL_VS_EP;
+  }
+}
+
+// ── Public API ──
+
+export function getShortStackCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   if (depth !== 15) return [];
 
-  return [
-    // Push/Fold RFI (6 charts)
-    {
-      position: 'UTG', situation: 'Push/Fold', category: 'Push/Fold',
-      description: 'UTG Push or Fold (15bb)',
-      stackDepth: 15,
-      actionTypes: PUSH_FOLD_ACTIONS,
-      ranges: pushFoldRange(UTG_PUSH),
-    },
-    {
-      position: 'MP', situation: 'Push/Fold', category: 'Push/Fold',
-      description: 'MP Push or Fold (15bb)',
-      stackDepth: 15,
-      actionTypes: PUSH_FOLD_ACTIONS,
-      ranges: pushFoldRange(MP_PUSH),
-    },
-    {
-      position: 'CO', situation: 'Push/Fold', category: 'Push/Fold',
-      description: 'CO Push or Fold (15bb)',
-      stackDepth: 15,
-      actionTypes: PUSH_FOLD_ACTIONS,
-      ranges: pushFoldRange(CO_PUSH),
-    },
-    {
-      position: 'BTN', situation: 'Push/Fold', category: 'Push/Fold',
-      description: 'BTN Push or Fold (15bb)',
-      stackDepth: 15,
-      actionTypes: PUSH_FOLD_ACTIONS,
-      ranges: pushFoldRange(BTN_PUSH),
-    },
-    {
-      position: 'SB', situation: 'Push/Fold', category: 'Push/Fold',
-      description: 'SB Push or Fold (15bb)',
-      stackDepth: 15,
-      actionTypes: PUSH_FOLD_ACTIONS,
-      ranges: pushFoldRange(SB_PUSH),
-    },
-    {
-      position: 'BB', situation: 'Push/Fold', category: 'Push/Fold',
-      description: 'BB Push or Fold (15bb)',
-      stackDepth: 15,
-      actionTypes: PUSH_FOLD_ACTIONS,
-      ranges: pushFoldRange(SB_PUSH), // BB push range similar to SB when folded to
-    },
+  const positions = positionsForPlayerCount(maxPlayers);
+  const rfiPos = rfiPositions(maxPlayers);
+  const charts: ChartDef[] = [];
 
-    // BB Call vs Shove (5 charts)
-    {
-      position: 'BB', situation: 'Call vs Shove', vsPosition: 'UTG', category: 'Call vs Shove',
-      description: 'BB Call vs UTG Shove (15bb)',
+  // Push/Fold charts for every position
+  for (const pos of positions) {
+    const pushRange = getPushRange(pos, maxPlayers);
+    charts.push({
+      position: pos,
+      situation: 'Push/Fold',
+      category: 'Push/Fold',
+      description: `${pos} Push or Fold (15bb)`,
       stackDepth: 15,
-      actionTypes: CALL_SHOVE_ACTIONS,
-      ranges: callShoveRange(BB_CALL_VS_UTG),
-    },
-    {
-      position: 'BB', situation: 'Call vs Shove', vsPosition: 'MP', category: 'Call vs Shove',
-      description: 'BB Call vs MP Shove (15bb)',
-      stackDepth: 15,
-      actionTypes: CALL_SHOVE_ACTIONS,
-      ranges: callShoveRange(BB_CALL_VS_MP),
-    },
-    {
-      position: 'BB', situation: 'Call vs Shove', vsPosition: 'CO', category: 'Call vs Shove',
-      description: 'BB Call vs CO Shove (15bb)',
-      stackDepth: 15,
-      actionTypes: CALL_SHOVE_ACTIONS,
-      ranges: callShoveRange(BB_CALL_VS_CO),
-    },
-    {
-      position: 'BB', situation: 'Call vs Shove', vsPosition: 'BTN', category: 'Call vs Shove',
-      description: 'BB Call vs BTN Shove (15bb)',
-      stackDepth: 15,
-      actionTypes: CALL_SHOVE_ACTIONS,
-      ranges: callShoveRange(BB_CALL_VS_BTN),
-    },
-    {
-      position: 'BB', situation: 'Call vs Shove', vsPosition: 'SB', category: 'Call vs Shove',
-      description: 'BB Call vs SB Shove (15bb)',
-      stackDepth: 15,
-      actionTypes: CALL_SHOVE_ACTIONS,
-      ranges: callShoveRange(BB_CALL_VS_SB),
-    },
-  ];
+      maxPlayers,
+      actionTypes: PUSH_FOLD_ACTIONS,
+      ranges: pushFoldRange(pushRange),
+    });
+  }
+
+  // BB Call vs Shove charts — one for each non-BB position that can shove
+  // (BB only calls vs shoves from other positions, not itself)
+  if (positions.includes('BB')) {
+    const shovers = rfiPos; // everyone except BB
+    for (const shover of shovers) {
+      const callRange = getBbCallRange(shover);
+      charts.push({
+        position: 'BB',
+        situation: 'Call vs Shove',
+        vsPosition: shover,
+        category: 'Call vs Shove',
+        description: `BB Call vs ${shover} Shove (15bb)`,
+        stackDepth: 15,
+        maxPlayers,
+        actionTypes: CALL_SHOVE_ACTIONS,
+        ranges: callShoveRange(callRange),
+      });
+    }
+  }
+
+  return charts;
 }

@@ -27,6 +27,7 @@ class GtoChart {
   final String situation;
   final String? vsPosition;
   final int stackDepth;
+  final int maxPlayers;
   final String? description;
   final String? category;
   final List<ActionType>? actionTypes;
@@ -38,6 +39,7 @@ class GtoChart {
     required this.situation,
     this.vsPosition,
     this.stackDepth = 100,
+    this.maxPlayers = 6,
     this.description,
     this.category,
     this.actionTypes,
@@ -51,6 +53,7 @@ class GtoChart {
       situation: json['situation'] as String,
       vsPosition: json['vs_position'] as String?,
       stackDepth: json['stack_depth'] as int? ?? 100,
+      maxPlayers: json['max_players'] as int? ?? 6,
       description: json['description'] as String?,
       category: json['category'] as String?,
       actionTypes: json['action_types'] != null

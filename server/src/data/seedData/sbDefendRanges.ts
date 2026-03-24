@@ -1,4 +1,4 @@
-import { ChartDef, handLabel, inSet, StackDepth } from './helpers';
+import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, StackDepth } from './helpers';
 import { SB_DEFEND_ACTIONS, SB_DEFEND_JAM_ACTIONS } from './actionColors';
 
 // SB Defend (3bet or fold) vs various openers
@@ -14,8 +14,8 @@ const SB_VS_UTG_3BET = new Set([
   'A5s', 'A4s',
 ]);
 
-// SB vs MP open
-const SB_VS_MP_3BET = new Set([
+// SB vs HJ open
+const SB_VS_HJ_3BET = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs',
   'A5s', 'A4s', 'A3s',
 ]);
@@ -56,8 +56,8 @@ const SB_25_VS_UTG_3BET = new Set([
   'AA', 'KK',
 ]);
 
-// SB vs MP open at 25bb
-const SB_25_VS_MP_3BET = new Set([
+// SB vs HJ open at 25bb
+const SB_25_VS_HJ_3BET = new Set([
   'AA', 'KK', 'QQ',
 ]);
 
@@ -81,7 +81,7 @@ const SB_25_VS_BB_RAISE = new Set([
 
 // 25bb jam sets — hands that jam (all-in) instead of standard 3bet
 const SB_25_VS_UTG_JAM = new Set(['QQ', 'AKs', 'AKo']);
-const SB_25_VS_MP_JAM = new Set(['JJ', 'AKs', 'AKo', 'AQs']);
+const SB_25_VS_HJ_JAM = new Set(['JJ', 'AKs', 'AKo', 'AQs']);
 const SB_25_VS_CO_JAM = new Set(['JJ', 'TT', 'AKo', 'AQs', 'AQo']);
 const SB_25_VS_BTN_JAM = new Set(['TT', '99', 'AQs', 'AQo', 'AJs', 'KQs']);
 
@@ -95,8 +95,8 @@ const SB_40_VS_UTG_3BET = new Set([
   'A5s',
 ]);
 
-// SB vs MP at 40bb — drop JJ and tighten bluffs
-const SB_40_VS_MP_3BET = new Set([
+// SB vs HJ at 40bb — drop JJ and tighten bluffs
+const SB_40_VS_HJ_3BET = new Set([
   'AA', 'KK', 'QQ', 'AKs', 'AKo', 'AQs',
   'A5s', 'A4s',
 ]);
@@ -138,8 +138,8 @@ const SB_60_VS_UTG_3BET = new Set([
   'A5s',
 ]);
 
-// SB vs MP at 60bb — drop one blocker
-const SB_60_VS_MP_3BET = new Set([
+// SB vs HJ at 60bb — drop one blocker
+const SB_60_VS_HJ_3BET = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs',
   'A5s', 'A4s',
 ]);
@@ -172,7 +172,7 @@ const SB_60_VS_BB_RAISE = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// Helper
+// Helpers
 // ---------------------------------------------------------------------------
 
 function sbDefendRange(threeBetSet: Set<string>) {
@@ -193,97 +193,125 @@ function sbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>) {
 }
 
 // ---------------------------------------------------------------------------
-// Depth-based chart builder
+// Range data lookup by opener class and stack depth
 // ---------------------------------------------------------------------------
 
-export function getSbDefendCharts(depth: StackDepth): ChartDef[] {
+function get3betData100(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
+  switch (cls) {
+    case 'ep-tight': return SB_VS_UTG_3BET;
+    case 'hj':       return SB_VS_HJ_3BET;
+    case 'co':       return SB_VS_CO_3BET;
+    case 'btn':      return SB_VS_BTN_3BET;
+  }
+}
+
+function get3betData60(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
+  switch (cls) {
+    case 'ep-tight': return SB_60_VS_UTG_3BET;
+    case 'hj':       return SB_60_VS_HJ_3BET;
+    case 'co':       return SB_60_VS_CO_3BET;
+    case 'btn':      return SB_60_VS_BTN_3BET;
+  }
+}
+
+function get3betData40(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
+  switch (cls) {
+    case 'ep-tight': return SB_40_VS_UTG_3BET;
+    case 'hj':       return SB_40_VS_HJ_3BET;
+    case 'co':       return SB_40_VS_CO_3BET;
+    case 'btn':      return SB_40_VS_BTN_3BET;
+  }
+}
+
+function get25Data(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): { threeBet: Set<string>; jam: Set<string> } {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: SB_25_VS_UTG_3BET, jam: SB_25_VS_UTG_JAM };
+    case 'hj':       return { threeBet: SB_25_VS_HJ_3BET,  jam: SB_25_VS_HJ_JAM };
+    case 'co':       return { threeBet: SB_25_VS_CO_3BET,   jam: SB_25_VS_CO_JAM };
+    case 'btn':      return { threeBet: SB_25_VS_BTN_3BET,  jam: SB_25_VS_BTN_JAM };
+  }
+}
+
+function getBbRaiseData(depth: StackDepth): Set<string> {
+  switch (depth) {
+    case 25:  return SB_25_VS_BB_RAISE;
+    case 40:  return SB_40_VS_BB_RAISE;
+    case 60:  return SB_60_VS_BB_RAISE;
+    case 100: return SB_VS_BB_RAISE;
+    default:  return SB_VS_BB_RAISE;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Depth-based chart builder — multi-table aware
+// ---------------------------------------------------------------------------
+
+export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   if (depth === 15) return [];
 
-  type MatchupDef = {
-    vsPosition: string;
-    threeBetSet: Set<string>;
-    description: string;
-  };
+  // In HU (2 players), SB is the opener — no SB defend charts
+  if (maxPlayers === 2) return [];
 
-  let matchups: MatchupDef[];
+  const allPositions = positionsForPlayerCount(maxPlayers);
+  // SB defends vs all opening positions (not BB, not SB itself)
+  const openers = allPositions.filter(p => p !== 'BB' && p !== 'SB');
 
-  switch (depth) {
-    case 25:
-      return [
-        {
-          position: 'SB', situation: 'SB Defend', vsPosition: 'UTG', category: 'SB Defend',
-          stackDepth: 25 as StackDepth, description: 'SB 3bet/jam vs UTG open (25bb)',
-          actionTypes: SB_DEFEND_JAM_ACTIONS,
-          ranges: sbDefendJamRange(SB_25_VS_UTG_3BET, SB_25_VS_UTG_JAM),
-        },
-        {
-          position: 'SB', situation: 'SB Defend', vsPosition: 'MP', category: 'SB Defend',
-          stackDepth: 25 as StackDepth, description: 'SB 3bet/jam vs MP open (25bb)',
-          actionTypes: SB_DEFEND_JAM_ACTIONS,
-          ranges: sbDefendJamRange(SB_25_VS_MP_3BET, SB_25_VS_MP_JAM),
-        },
-        {
-          position: 'SB', situation: 'SB Defend', vsPosition: 'CO', category: 'SB Defend',
-          stackDepth: 25 as StackDepth, description: 'SB 3bet/jam vs CO open (25bb)',
-          actionTypes: SB_DEFEND_JAM_ACTIONS,
-          ranges: sbDefendJamRange(SB_25_VS_CO_3BET, SB_25_VS_CO_JAM),
-        },
-        {
-          position: 'SB', situation: 'SB Defend', vsPosition: 'BTN', category: 'SB Defend',
-          stackDepth: 25 as StackDepth, description: 'SB 3bet/jam vs BTN open (25bb)',
-          actionTypes: SB_DEFEND_JAM_ACTIONS,
-          ranges: sbDefendJamRange(SB_25_VS_BTN_3BET, SB_25_VS_BTN_JAM),
-        },
-        {
-          position: 'SB', situation: 'SB Defend', vsPosition: 'BB', category: 'SB Defend',
-          stackDepth: 25 as StackDepth, description: 'SB raise vs BB limp (25bb)',
-          actionTypes: SB_DEFEND_ACTIONS,
-          ranges: sbDefendRange(SB_25_VS_BB_RAISE),
-        },
-      ];
+  const charts: ChartDef[] = [];
 
-    case 40:
-      matchups = [
-        { vsPosition: 'UTG', threeBetSet: SB_40_VS_UTG_3BET, description: `SB 3bet or fold vs UTG open (${depth}bb)` },
-        { vsPosition: 'MP',  threeBetSet: SB_40_VS_MP_3BET,  description: `SB 3bet or fold vs MP open (${depth}bb)` },
-        { vsPosition: 'CO',  threeBetSet: SB_40_VS_CO_3BET,  description: `SB 3bet or fold vs CO open (${depth}bb)` },
-        { vsPosition: 'BTN', threeBetSet: SB_40_VS_BTN_3BET, description: `SB 3bet or fold vs BTN open (${depth}bb)` },
-        { vsPosition: 'BB',  threeBetSet: SB_40_VS_BB_RAISE,  description: `SB raise vs BB limp (${depth}bb)` },
-      ];
-      break;
+  for (const opener of openers) {
+    const cls = openerClass(opener);
+    // cls will never be 'sb' here since we filtered SB out;
+    // cast to the narrower type used by SB lookup functions
+    const sbCls = cls as 'ep-tight' | 'hj' | 'co' | 'btn';
 
-    case 60:
-      matchups = [
-        { vsPosition: 'UTG', threeBetSet: SB_60_VS_UTG_3BET, description: `SB 3bet or fold vs UTG open (${depth}bb)` },
-        { vsPosition: 'MP',  threeBetSet: SB_60_VS_MP_3BET,  description: `SB 3bet or fold vs MP open (${depth}bb)` },
-        { vsPosition: 'CO',  threeBetSet: SB_60_VS_CO_3BET,  description: `SB 3bet or fold vs CO open (${depth}bb)` },
-        { vsPosition: 'BTN', threeBetSet: SB_60_VS_BTN_3BET, description: `SB 3bet or fold vs BTN open (${depth}bb)` },
-        { vsPosition: 'BB',  threeBetSet: SB_60_VS_BB_RAISE,  description: `SB raise vs BB limp (${depth}bb)` },
-      ];
-      break;
-
-    case 100:
-    default:
-      matchups = [
-        { vsPosition: 'UTG', threeBetSet: SB_VS_UTG_3BET, description: `SB 3bet or fold vs UTG open (${depth}bb)` },
-        { vsPosition: 'MP',  threeBetSet: SB_VS_MP_3BET,  description: `SB 3bet or fold vs MP open (${depth}bb)` },
-        { vsPosition: 'CO',  threeBetSet: SB_VS_CO_3BET,  description: `SB 3bet or fold vs CO open (${depth}bb)` },
-        { vsPosition: 'BTN', threeBetSet: SB_VS_BTN_3BET, description: `SB 3bet or fold vs BTN open (${depth}bb)` },
-        { vsPosition: 'BB',  threeBetSet: SB_VS_BB_RAISE,  description: `SB raise vs BB limp (${depth}bb)` },
-      ];
-      break;
+    if (depth === 25) {
+      const data = get25Data(sbCls);
+      charts.push({
+        position: 'SB',
+        situation: 'SB Defend',
+        vsPosition: opener,
+        category: 'SB Defend',
+        stackDepth: depth,
+        maxPlayers,
+        description: `SB 3bet/jam vs ${opener} open (${depth}bb)`,
+        actionTypes: SB_DEFEND_JAM_ACTIONS,
+        ranges: sbDefendJamRange(data.threeBet, data.jam),
+      });
+    } else {
+      const threeBetSet = depth === 40
+        ? get3betData40(sbCls)
+        : depth === 60
+          ? get3betData60(sbCls)
+          : get3betData100(sbCls);
+      charts.push({
+        position: 'SB',
+        situation: 'SB Defend',
+        vsPosition: opener,
+        category: 'SB Defend',
+        stackDepth: depth,
+        maxPlayers,
+        description: `SB 3bet or fold vs ${opener} open (${depth}bb)`,
+        actionTypes: SB_DEFEND_ACTIONS,
+        ranges: sbDefendRange(threeBetSet),
+      });
+    }
   }
 
-  return matchups.map((m) => ({
+  // SB raise vs BB limp — only at tables with 3+ players
+  const bbRaiseSet = getBbRaiseData(depth);
+  charts.push({
     position: 'SB',
     situation: 'SB Defend',
-    vsPosition: m.vsPosition,
+    vsPosition: 'BB',
     category: 'SB Defend',
     stackDepth: depth,
-    description: m.description,
+    maxPlayers,
+    description: `SB raise vs BB limp (${depth}bb)`,
     actionTypes: SB_DEFEND_ACTIONS,
-    ranges: sbDefendRange(m.threeBetSet),
-  }));
+    ranges: sbDefendRange(bbRaiseSet),
+  });
+
+  return charts;
 }
 
 // Backward-compatible flat export (100bb)

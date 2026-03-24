@@ -1,4 +1,8 @@
-import { ChartDef, StackDepth, handLabel, inSet } from './helpers';
+import {
+  ChartDef, StackDepth, MaxPlayers,
+  handLabel, inSet,
+  positionsForPlayerCount, openerClass,
+} from './helpers';
 import { FACING_3BET_ACTIONS, PUSH_FOLD_ACTIONS } from './actionColors';
 
 // When facing a 3bet, decisions are: 4bet, call, or fold
@@ -10,15 +14,15 @@ import { FACING_3BET_ACTIONS, PUSH_FOLD_ACTIONS } from './actionColors';
 const UTG_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
 const UTG_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AKo', 'AQs']);
 
-// MP facing 3bet
-const MP_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
-const MP_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AKo', 'AJs']);
+// HJ (old MP) facing 3bet
+const HJ_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
+const HJ_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AKo', 'AJs']);
 
 // CO facing 3bet from BTN/SB/BB — wider continue
 const CO_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs', 'AKo']);
 const CO_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', '99', 'AQs', 'AQo', 'AJs', 'KQs', 'ATs']);
 
-// CO facing 3bet from tight positions (UTG/MP style) — tighter
+// CO facing 3bet from tight positions (UTG/HJ style) — tighter
 const CO_VS_TIGHT_3BET_4BET = new Set(['AA', 'KK']);
 const CO_VS_TIGHT_3BET_CALL = new Set(['QQ', 'JJ', 'AKs', 'AKo']);
 
@@ -30,7 +34,7 @@ const BTN_VS_3BET_CALL = new Set([
   'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s', '87s', '76s',
 ]);
 
-// BTN facing tight 3bet (UTG/MP/CO)
+// BTN facing tight 3bet (UTG/HJ/CO)
 const BTN_VS_TIGHT_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
 const BTN_VS_TIGHT_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AKo', 'AQs', 'AJs']);
 
@@ -45,7 +49,7 @@ const SB_VS_BB_3BET_CALL = new Set([
 // ── 60bb ranges — slightly tighter calls (~15% reduction) ──
 
 const UTG_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', 'AKo']);
-const MP_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AKo']);
+const HJ_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AKo']);
 const CO_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', '99', 'AQs', 'AJs', 'KQs']);
 const CO_VS_TIGHT_3BET_CALL_60 = new Set(['QQ', 'AKs', 'AKo']);
 const BTN_VS_3BET_CALL_60 = new Set([
@@ -63,7 +67,7 @@ const SB_VS_BB_3BET_CALL_60 = new Set([
 // ── 40bb ranges — tighter calls (~30% reduction) ──
 
 const UTG_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'AKo']);
-const MP_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
+const HJ_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
 const CO_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AJs']);
 const CO_VS_TIGHT_3BET_CALL_40 = new Set(['QQ', 'AKs']);
 const BTN_VS_3BET_CALL_40 = new Set([
@@ -80,10 +84,10 @@ const SB_VS_BB_3BET_CALL_40 = new Set([
 
 // ── 25bb ranges — facing 3bet is mostly 4bet-jam or fold ──
 
-const JAM_25_UTG_VS_MP = new Set(['AA', 'KK']);
+const JAM_25_UTG_VS_HJ = new Set(['AA', 'KK']);
 const JAM_25_UTG_VS_BTN = new Set(['AA', 'KK', 'AKs']);
-const JAM_25_MP_VS_CO = new Set(['AA', 'KK']);
-const JAM_25_MP_VS_BTN = new Set(['AA', 'KK', 'AKs']);
+const JAM_25_HJ_VS_CO = new Set(['AA', 'KK']);
+const JAM_25_HJ_VS_BTN = new Set(['AA', 'KK', 'AKs']);
 const JAM_25_CO_VS_BTN = new Set(['AA', 'KK', 'AKs']);
 const JAM_25_CO_VS_SB = new Set(['AA', 'KK', 'AKs']);
 const JAM_25_BTN_VS_SB = new Set(['AA', 'KK', 'QQ', 'AKs']);
@@ -98,6 +102,8 @@ const FACING_3BET_MIXED: Record<string, { '4bet': number; call: number; fold: nu
   'TT': { '4bet': 0.1, call: 0.7, fold: 0.2 },
   '99': { '4bet': 0, call: 0.6, fold: 0.4 },
 };
+
+// ── Range helper functions ──
 
 function facing3betRange(fourBetSet: Set<string>, callSet: Set<string>, useMixed = false) {
   return (row: number, col: number) => {
@@ -117,438 +123,224 @@ function jamOrFoldRange(jamSet: Set<string>) {
   };
 }
 
-// ── Chart builders per depth ──
+// ── Opener data lookup ──
+// Maps opener tightness class to the range data sets for each depth.
+// "ep-tight" openers (UTG, UTG+1, UTG+2, MP) reuse UTG data.
+// "hj" opener reuses old MP data (now renamed HJ).
 
-function charts25bb(): ChartDef[] {
-  const d = 25;
-  return [
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'MP', category: 'Facing 3bet',
-      description: 'UTG vs MP 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_UTG_VS_MP),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'UTG vs BTN 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_UTG_VS_BTN),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'MP vs CO 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_MP_VS_CO),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'MP vs BTN 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_MP_VS_BTN),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'CO vs BTN 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_CO_VS_BTN),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'CO vs SB 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_CO_VS_SB),
-    },
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'BTN vs SB 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_BTN_VS_SB),
-    },
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'BTN vs BB 3bet (25bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: jamOrFoldRange(JAM_25_BTN_VS_BB),
-    },
-  ];
-}
+type RangeSet = {
+  fourBet: Set<string>;
+  call100: Set<string>;
+  call60: Set<string>;
+  call40: Set<string>;
+};
 
-function charts40bb(): ChartDef[] {
-  const d = 40;
-  return [
-    // UTG facing 3bet
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'MP', category: 'Facing 3bet',
-      description: 'UTG vs MP 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_40),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'UTG vs CO 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_40),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'UTG vs BTN 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_40),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'UTG vs SB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_40),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'UTG vs BB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_40),
-    },
+const OPENER_DATA: Record<ReturnType<typeof openerClass>, RangeSet> = {
+  'ep-tight': {
+    fourBet: UTG_VS_3BET_4BET,
+    call100: UTG_VS_3BET_CALL,
+    call60: UTG_VS_3BET_CALL_60,
+    call40: UTG_VS_3BET_CALL_40,
+  },
+  'hj': {
+    fourBet: HJ_VS_3BET_4BET,
+    call100: HJ_VS_3BET_CALL,
+    call60: HJ_VS_3BET_CALL_60,
+    call40: HJ_VS_3BET_CALL_40,
+  },
+  'co': {
+    fourBet: CO_VS_3BET_4BET,
+    call100: CO_VS_3BET_CALL,
+    call60: CO_VS_3BET_CALL_60,
+    call40: CO_VS_3BET_CALL_40,
+  },
+  'btn': {
+    fourBet: BTN_VS_3BET_4BET,
+    call100: BTN_VS_3BET_CALL,
+    call60: BTN_VS_3BET_CALL_60,
+    call40: BTN_VS_3BET_CALL_40,
+  },
+  'sb': {
+    fourBet: SB_VS_BB_3BET_4BET,
+    call100: SB_VS_BB_3BET_CALL,
+    call60: SB_VS_BB_3BET_CALL_60,
+    call40: SB_VS_BB_3BET_CALL_40,
+  },
+};
 
-    // MP facing 3bet
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'MP vs CO 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_40),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'MP vs BTN 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_40),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'MP vs SB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_40),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'MP vs BB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_40),
-    },
+// Tight-variant data for openers facing 3bets from tight positions
+type TightRangeSet = {
+  fourBet: Set<string>;
+  call100: Set<string>;
+  call60: Set<string>;
+  call40: Set<string>;
+};
 
-    // CO facing 3bet
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'CO vs BTN 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL_40),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'CO vs SB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL_40),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'CO vs BB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL_40),
-    },
+const OPENER_TIGHT_DATA: Partial<Record<ReturnType<typeof openerClass>, TightRangeSet>> = {
+  'co': {
+    fourBet: CO_VS_TIGHT_3BET_4BET,
+    call100: CO_VS_TIGHT_3BET_CALL,
+    call60: CO_VS_TIGHT_3BET_CALL_60,
+    call40: CO_VS_TIGHT_3BET_CALL_40,
+  },
+  'btn': {
+    fourBet: BTN_VS_TIGHT_3BET_4BET,
+    call100: BTN_VS_TIGHT_3BET_CALL,
+    call60: BTN_VS_TIGHT_3BET_CALL_60,
+    call40: BTN_VS_TIGHT_3BET_CALL_40,
+  },
+};
 
-    // BTN facing 3bet
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'BTN vs SB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(BTN_VS_3BET_4BET, BTN_VS_3BET_CALL_40),
-    },
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'BTN vs BB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(BTN_VS_3BET_4BET, BTN_VS_3BET_CALL_40),
-    },
+// ── 3bettor classification ──
+// Determines which data variant to use based on 3bettor position.
+// Tight 3bettors (EP positions, HJ) → use "tight" data if available.
+// Late 3bettors (CO, BTN, SB, BB) → use regular (wide) data.
 
-    // SB facing 3bet
-    {
-      position: 'SB', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'SB vs BB 3bet (40bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(SB_VS_BB_3BET_4BET, SB_VS_BB_3BET_CALL_40),
-    },
-  ];
-}
+type ThreeBettorClass = 'tight' | 'co' | 'btn' | 'sb' | 'bb';
 
-function charts60bb(): ChartDef[] {
-  const d = 60;
-  return [
-    // UTG facing 3bet
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'MP', category: 'Facing 3bet',
-      description: 'UTG vs MP 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_60),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'UTG vs CO 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_60),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'UTG vs BTN 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_60),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'UTG vs SB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_60),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'UTG vs BB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL_60),
-    },
-
-    // MP facing 3bet
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'MP vs CO 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_60),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'MP vs BTN 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_60),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'MP vs SB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_60),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'MP vs BB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL_60),
-    },
-
-    // CO facing 3bet
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'CO vs BTN 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL_60, true),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'CO vs SB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL_60),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'CO vs BB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL_60),
-    },
-
-    // BTN facing 3bet
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'BTN vs SB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(BTN_VS_3BET_4BET, BTN_VS_3BET_CALL_60, true),
-    },
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'BTN vs BB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(BTN_VS_3BET_4BET, BTN_VS_3BET_CALL_60, true),
-    },
-
-    // SB facing 3bet
-    {
-      position: 'SB', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'SB vs BB 3bet (60bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(SB_VS_BB_3BET_4BET, SB_VS_BB_3BET_CALL_60, true),
-    },
-  ];
-}
-
-function charts100bb(): ChartDef[] {
-  const d = 100;
-  return [
-    // UTG facing 3bet
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'MP', category: 'Facing 3bet',
-      description: 'UTG vs MP 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'UTG vs CO 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'UTG vs BTN 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'UTG vs SB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL),
-    },
-    {
-      position: 'UTG', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'UTG vs BB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(UTG_VS_3BET_4BET, UTG_VS_3BET_CALL),
-    },
-
-    // MP facing 3bet
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'CO', category: 'Facing 3bet',
-      description: 'MP vs CO 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'MP vs BTN 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'MP vs SB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL),
-    },
-    {
-      position: 'MP', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'MP vs BB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(MP_VS_3BET_4BET, MP_VS_3BET_CALL),
-    },
-
-    // CO facing 3bet
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BTN', category: 'Facing 3bet',
-      description: 'CO vs BTN 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL, true),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'CO vs SB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL),
-    },
-    {
-      position: 'CO', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'CO vs BB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(CO_VS_3BET_4BET, CO_VS_3BET_CALL),
-    },
-
-    // BTN facing 3bet
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'SB', category: 'Facing 3bet',
-      description: 'BTN vs SB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(BTN_VS_3BET_4BET, BTN_VS_3BET_CALL, true),
-    },
-    {
-      position: 'BTN', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'BTN vs BB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(BTN_VS_3BET_4BET, BTN_VS_3BET_CALL, true),
-    },
-
-    // SB facing 3bet
-    {
-      position: 'SB', situation: 'Facing 3bet', vsPosition: 'BB', category: 'Facing 3bet',
-      description: 'SB vs BB 3bet (100bb)',
-      stackDepth: d,
-      actionTypes: FACING_3BET_ACTIONS,
-      ranges: facing3betRange(SB_VS_BB_3BET_4BET, SB_VS_BB_3BET_CALL, true),
-    },
-  ];
-}
-
-export function getVs3betCharts(depth: StackDepth): ChartDef[] {
-  switch (depth) {
-    case 15: return [];
-    case 25: return charts25bb();
-    case 40: return charts40bb();
-    case 60: return charts60bb();
-    case 100: return charts100bb();
+function threeBettorClass(pos: string): ThreeBettorClass {
+  switch (pos) {
+    case 'BB': return 'bb';
+    case 'SB': return 'sb';
+    case 'BTN': return 'btn';
+    case 'CO': return 'co';
+    default: return 'tight'; // HJ, MP, UTG+2, UTG+1, UTG
   }
+}
+
+// Whether this 3bettor class should trigger the "tight" variant for the opener
+function isTight3bettor(cls: ThreeBettorClass): boolean {
+  return cls === 'tight';
+}
+
+// Whether to use mixed frequencies (wide 3bettors at deep stacks)
+function useMixedFor(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass, depth: StackDepth): boolean {
+  if (depth < 60) return false;
+  // CO vs BTN (wide), BTN vs SB/BB (wide), SB vs BB
+  if (opClass === 'co' && tbClass === 'btn') return true;
+  if (opClass === 'btn' && (tbClass === 'sb' || tbClass === 'bb')) return true;
+  if (opClass === 'sb' && tbClass === 'bb') return true;
+  return false;
+}
+
+// ── 25bb jam-or-fold data lookup ──
+
+type JamKey = string; // "opener_vs_3bettor"
+
+const JAM_25_DATA: Record<JamKey, Set<string>> = {
+  'ep-tight_vs_tight': JAM_25_UTG_VS_HJ,
+  'ep-tight_vs_co': JAM_25_UTG_VS_BTN, // UTG vs CO ≈ UTG vs BTN
+  'ep-tight_vs_btn': JAM_25_UTG_VS_BTN,
+  'ep-tight_vs_sb': JAM_25_UTG_VS_BTN, // UTG vs SB ≈ UTG vs BTN
+  'ep-tight_vs_bb': JAM_25_UTG_VS_BTN,
+  'hj_vs_co': JAM_25_HJ_VS_CO,
+  'hj_vs_btn': JAM_25_HJ_VS_BTN,
+  'hj_vs_sb': JAM_25_HJ_VS_BTN,  // HJ vs SB ≈ HJ vs BTN
+  'hj_vs_bb': JAM_25_HJ_VS_BTN,
+  'co_vs_btn': JAM_25_CO_VS_BTN,
+  'co_vs_sb': JAM_25_CO_VS_SB,
+  'co_vs_bb': JAM_25_CO_VS_SB,    // CO vs BB ≈ CO vs SB
+  'btn_vs_sb': JAM_25_BTN_VS_SB,
+  'btn_vs_bb': JAM_25_BTN_VS_BB,
+};
+
+// ── Chart generation ──
+
+function getCallSet(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass, depth: StackDepth): Set<string> | null {
+  const isTight = isTight3bettor(tbClass);
+
+  // If tight 3bettor and we have tight-specific data, use it
+  if (isTight && OPENER_TIGHT_DATA[opClass]) {
+    const td = OPENER_TIGHT_DATA[opClass]!;
+    switch (depth) {
+      case 100: return td.call100;
+      case 60: return td.call60;
+      case 40: return td.call40;
+      default: return null;
+    }
+  }
+
+  // Use regular data
+  const d = OPENER_DATA[opClass];
+  if (!d) return null;
+  switch (depth) {
+    case 100: return d.call100;
+    case 60: return d.call60;
+    case 40: return d.call40;
+    default: return null;
+  }
+}
+
+function getFourBetSet(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass): Set<string> | null {
+  const isTight = isTight3bettor(tbClass);
+
+  if (isTight && OPENER_TIGHT_DATA[opClass]) {
+    return OPENER_TIGHT_DATA[opClass]!.fourBet;
+  }
+
+  const d = OPENER_DATA[opClass];
+  return d ? d.fourBet : null;
+}
+
+export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
+  if (depth === 15) return [];
+
+  const allPositions = positionsForPlayerCount(maxPlayers);
+  // Every position except BB can open
+  const openers = allPositions.filter(p => p !== 'BB');
+  const charts: ChartDef[] = [];
+
+  for (const opener of openers) {
+    const openerIdx = allPositions.indexOf(opener);
+    // 3bettors are all positions after the opener
+    const threeBettors = allPositions.slice(openerIdx + 1);
+
+    const opClass = openerClass(opener);
+
+    for (const threeBettor of threeBettors) {
+      const tbClass = threeBettorClass(threeBettor);
+
+      if (depth === 25) {
+        // 25bb: jam or fold
+        const jamKey = `${opClass}_vs_${tbClass}`;
+        const jamSet = JAM_25_DATA[jamKey];
+        if (!jamSet) continue; // no data for this matchup
+
+        charts.push({
+          position: opener,
+          situation: 'Facing 3bet',
+          vsPosition: threeBettor,
+          category: 'Facing 3bet',
+          description: `${opener} vs ${threeBettor} 3bet (${depth}bb)`,
+          stackDepth: depth,
+          maxPlayers,
+          actionTypes: FACING_3BET_ACTIONS,
+          ranges: jamOrFoldRange(jamSet),
+        });
+      } else {
+        // 40bb, 60bb, 100bb: 4bet / call / fold
+        const fourBetSet = getFourBetSet(opClass, tbClass);
+        const callSet = getCallSet(opClass, tbClass, depth);
+        if (!fourBetSet || !callSet) continue;
+
+        const mixed = useMixedFor(opClass, tbClass, depth);
+
+        charts.push({
+          position: opener,
+          situation: 'Facing 3bet',
+          vsPosition: threeBettor,
+          category: 'Facing 3bet',
+          description: `${opener} vs ${threeBettor} 3bet (${depth}bb)`,
+          stackDepth: depth,
+          maxPlayers,
+          actionTypes: FACING_3BET_ACTIONS,
+          ranges: facing3betRange(fourBetSet, callSet, mixed),
+        });
+      }
+    }
+  }
+
+  return charts;
 }
 
 // Backward compatibility

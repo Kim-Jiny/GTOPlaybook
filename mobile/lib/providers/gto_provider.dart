@@ -19,6 +19,9 @@ class GtoProvider extends ChangeNotifier {
   int _effectiveBb = 0;
   int _selectedTier = 100;
 
+  // Player count state
+  int _selectedPlayerCount = 6;
+
   GtoProvider(this._apiService);
 
   List<GtoChart> get charts => _charts;
@@ -31,6 +34,7 @@ class GtoProvider extends ChangeNotifier {
   int get chipCount => _chipCount;
   int get effectiveBb => _effectiveBb;
   int get selectedTier => _selectedTier;
+  int get selectedPlayerCount => _selectedPlayerCount;
 
   int _matchTier(int bb) {
     if (bb <= 17) return 15;
@@ -65,6 +69,7 @@ class GtoProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _oneBbValue = prefs.getInt('gto_one_bb') ?? 0;
     _chipCount = prefs.getInt('gto_chips') ?? 0;
+    _selectedPlayerCount = prefs.getInt('gto_player_count') ?? 6;
 
     if (_oneBbValue > 0 && _chipCount > 0) {
       _effectiveBb = (_chipCount / _oneBbValue).floor();
@@ -92,6 +97,16 @@ class GtoProvider extends ChangeNotifier {
     await loadPositionTree();
   }
 
+  Future<void> selectPlayerCount(int count) async {
+    _selectedPlayerCount = count;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('gto_player_count', count);
+
+    notifyListeners();
+    await loadPositionTree();
+  }
+
   Future<void> loadPositionTree() async {
     _isLoading = true;
     _error = null;
@@ -100,7 +115,10 @@ class GtoProvider extends ChangeNotifier {
     try {
       final data = await _apiService.get(
         '/api/gto/positions',
-        params: {'stack_depth': _selectedTier.toString()},
+        params: {
+          'stack_depth': _selectedTier.toString(),
+          'max_players': _selectedPlayerCount.toString(),
+        },
       );
       _positionTree = (data as List)
           .map((j) => PositionSituations.fromJson(j))
@@ -121,6 +139,7 @@ class GtoProvider extends ChangeNotifier {
     try {
       final params = <String, String>{
         'stack_depth': _selectedTier.toString(),
+        'max_players': _selectedPlayerCount.toString(),
       };
       if (position != null) params['position'] = position;
       if (situation != null) params['situation'] = situation;

@@ -8,10 +8,11 @@ const router = Router();
 router.get('/positions', requireAuth, async (req, res) => {
   try {
     const stackDepth = parseInt(req.query.stack_depth as string) || 100;
+    const maxPlayers = parseInt(req.query.max_players as string) || 6;
     const result = await pool.query(
       `SELECT id, position, situation, vs_position, description, category, action_types
-       FROM gto_charts WHERE stack_depth = $1 ORDER BY position, category, vs_position`,
-      [stackDepth],
+       FROM gto_charts WHERE stack_depth = $1 AND max_players = $2 ORDER BY position, category, vs_position`,
+      [stackDepth, maxPlayers],
     );
 
     // Group by position → category → charts
@@ -49,10 +50,11 @@ router.get('/positions', requireAuth, async (req, res) => {
 // GET /api/gto/charts — list all charts with optional filters
 router.get('/charts', requireAuth, async (req, res) => {
   try {
-    const { position, situation, vs_position, stack_depth } = req.query;
+    const { position, situation, vs_position, stack_depth, max_players } = req.query;
     const sd = parseInt(stack_depth as string) || 100;
-    let query = 'SELECT * FROM gto_charts WHERE stack_depth = $1';
-    const params: (string | number)[] = [sd];
+    const mp = parseInt(max_players as string) || 6;
+    let query = 'SELECT * FROM gto_charts WHERE stack_depth = $1 AND max_players = $2';
+    const params: (string | number)[] = [sd, mp];
 
     if (position) {
       params.push(position as string);
