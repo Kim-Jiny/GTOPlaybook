@@ -1,4 +1,5 @@
 import pool from './db';
+import bcrypt from 'bcrypt';
 
 const CREATE_TABLES = `
   CREATE TABLE IF NOT EXISTS users (
@@ -57,11 +58,27 @@ const CREATE_TABLES = `
   CREATE INDEX IF NOT EXISTS idx_gto_ranges_chart_id ON gto_ranges(chart_id);
   CREATE INDEX IF NOT EXISTS idx_gto_charts_stack_depth ON gto_charts(stack_depth);
 
+  CREATE TABLE IF NOT EXISTS admin_accounts (
+    id SERIAL PRIMARY KEY,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
 `;
 
 export async function initDatabase(): Promise<void> {
   try {
     await pool.query(CREATE_TABLES);
+
+    // Seed default admin account jiny/1204
+    const hash = await bcrypt.hash('1204', 10);
+    await pool.query(
+      `INSERT INTO admin_accounts (username, password_hash)
+       VALUES ($1, $2)
+       ON CONFLICT (username) DO NOTHING`,
+      ['jiny', hash],
+    );
+
     console.log('Database tables initialized');
   } catch (err) {
     console.error('Failed to initialize database:', err);
