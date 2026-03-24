@@ -42,7 +42,7 @@ const MP_PUSH = UTG_6MAX_PUSH;
 const HJ_PUSH = new Set([
   ...UTG_6MAX_PUSH,
   '88', '77',
-  'A9s', 'KJs', 'KTs', 'QJs',
+  'A9s', 'KJs', 'KTs', 'QJs', 'QTs',
   'AJo',
 ]);
 
