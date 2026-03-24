@@ -22,7 +22,7 @@ services:
     container_name: gto-db
     restart: unless-stopped
     ports:
-      - "127.0.0.1:55436:5432"
+      - "127.0.0.1:55437:5432"
     environment:
       POSTGRES_USER: gto
       POSTGRES_PASSWORD: ${DB_PASSWORD}
