@@ -43,10 +43,10 @@ class Inquiry {
   String get statusLabel {
     switch (status) {
       case 'replied':
-        return '답변완료';
+        return 'Replied';
       case 'pending':
       default:
-        return '대기중';
+        return 'Pending';
     }
   }
 }

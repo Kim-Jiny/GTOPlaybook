@@ -56,7 +56,7 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
             const SizedBox(height: 8),
             _StatusBadge(status: inquiry.status, label: inquiry.statusLabel),
             const SizedBox(height: 16),
-            const Text('문의 내용',
+            const Text('Inquiry Detail',
                 style: TextStyle(
                     color: Colors.white70, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
@@ -64,7 +64,7 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
                 style: const TextStyle(color: Colors.white)),
             if (inquiry.adminReply != null) ...[
               const SizedBox(height: 24),
-              const Text('관리자 답변',
+              const Text('Admin Reply',
                   style: TextStyle(
                       color: Color(0xFF4CAF50),
                       fontWeight: FontWeight.w600)),
@@ -91,14 +91,14 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('내 문의 내역'),
+        title: const Text('My Inquiries'),
         centerTitle: true,
       ),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : provider.myInquiries.isEmpty
               ? const Center(
-                  child: Text('문의 내역이 없습니다',
+                  child: Text('No inquiries yet',
                       style: TextStyle(color: Colors.white54)))
               : RefreshIndicator(
                   onRefresh: () => provider.loadMyInquiries(),

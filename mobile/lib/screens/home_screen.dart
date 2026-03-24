@@ -59,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
           NavigationDestination(
             icon: Icon(Icons.person),
             selectedIcon: Icon(Icons.person, color: Color(0xFF4CAF50)),
-            label: '마이페이지',
+            label: 'My Page',
           ),
         ],
       ),

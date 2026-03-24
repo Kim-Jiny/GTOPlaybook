@@ -39,7 +39,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             TextField(
               controller: controller,
               decoration: const InputDecoration(
-                labelText: '답변 내용',
+                labelText: 'Reply',
                 border: OutlineInputBorder(),
               ),
               maxLines: 4,
@@ -49,7 +49,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('취소'),
+            child: const Text('Cancel'),
           ),
           FilledButton(
             onPressed: () async {
@@ -66,7 +66,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 provider.loadAdminStats();
               }
             },
-            child: const Text('답변하기'),
+            child: const Text('Send Reply'),
           ),
         ],
       ),
@@ -85,7 +85,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('관리자 페이지'),
+        title: const Text('Admin'),
         centerTitle: true,
       ),
       body: provider.isLoading && stats == null
@@ -102,13 +102,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Row(
                     children: [
                       _StatCard(
-                          label: '총 유저', value: '$totalUsers', flex: 1),
+                          label: 'Users', value: '$totalUsers', flex: 1),
                       const SizedBox(width: 8),
                       _StatCard(
-                          label: '총 문의', value: '$totalInquiries', flex: 1),
+                          label: 'Inquiries', value: '$totalInquiries', flex: 1),
                       const SizedBox(width: 8),
                       _StatCard(
-                        label: '대기중',
+                        label: 'Pending',
                         value: '$pendingCount',
                         flex: 1,
                         valueColor: pendingCount > 0
@@ -120,7 +120,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 24),
 
                   // Daily signups
-                  const Text('최근 30일 가입자',
+                  const Text('Signups (Last 30 Days)',
                       style: TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -129,7 +129,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   if (dailySignups.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text('데이터 없음',
+                      child: Text('No data',
                           style: TextStyle(color: Colors.white38)),
                     )
                   else
@@ -142,7 +142,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               Text('${d['date']}'.substring(0, 10),
                                   style: const TextStyle(
                                       color: Colors.white70)),
-                              Text('${d['count']}명',
+                              Text('${d['count']}',
                                   style: const TextStyle(
                                       color: Color(0xFF4CAF50),
                                       fontWeight: FontWeight.w600)),
@@ -155,14 +155,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Row(
                     children: [
                       const Expanded(
-                        child: Text('문의 관리',
+                        child: Text('Inquiry Management',
                             style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold)),
                       ),
                       ChoiceChip(
-                        label: const Text('전체'),
+                        label: const Text('All'),
                         selected: _statusFilter == null,
                         onSelected: (_) {
                           setState(() => _statusFilter = null);
@@ -171,7 +171,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(width: 4),
                       ChoiceChip(
-                        label: const Text('대기중'),
+                        label: const Text('Pending'),
                         selected: _statusFilter == 'pending',
                         onSelected: (_) {
                           setState(() => _statusFilter = 'pending');
@@ -180,7 +180,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(width: 4),
                       ChoiceChip(
-                        label: const Text('답변완료'),
+                        label: const Text('Replied'),
                         selected: _statusFilter == 'replied',
                         onSelected: (_) {
                           setState(() => _statusFilter = 'replied');
@@ -195,7 +195,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       child: Center(
-                          child: Text('문의가 없습니다',
+                          child: Text('No inquiries',
                               style: TextStyle(color: Colors.white38))),
                     )
                   else

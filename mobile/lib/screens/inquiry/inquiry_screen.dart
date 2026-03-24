@@ -33,12 +33,12 @@ class _InquiryScreenState extends State<InquiryScreen> {
     if (!mounted) return;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('문의가 접수되었습니다')),
+        const SnackBar(content: Text('Inquiry submitted successfully')),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error ?? '문의 접수에 실패했습니다')),
+        SnackBar(content: Text(provider.error ?? 'Failed to submit inquiry')),
       );
     }
   }
@@ -49,7 +49,7 @@ class _InquiryScreenState extends State<InquiryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('문의하기'),
+        title: const Text('Contact Us'),
         centerTitle: true,
       ),
       body: Padding(
@@ -61,18 +61,18 @@ class _InquiryScreenState extends State<InquiryScreen> {
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: '제목',
+                  labelText: 'Title',
                   border: OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    v == null || v.trim().isEmpty ? '제목을 입력해주세요' : null,
+                    v == null || v.trim().isEmpty ? 'Please enter a title' : null,
               ),
               const SizedBox(height: 16),
               Expanded(
                 child: TextFormField(
                   controller: _contentController,
                   decoration: const InputDecoration(
-                    labelText: '내용',
+                    labelText: 'Content',
                     border: OutlineInputBorder(),
                     alignLabelWithHint: true,
                   ),
@@ -80,7 +80,7 @@ class _InquiryScreenState extends State<InquiryScreen> {
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
                   validator: (v) =>
-                      v == null || v.trim().isEmpty ? '내용을 입력해주세요' : null,
+                      v == null || v.trim().isEmpty ? 'Please enter content' : null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -95,7 +95,7 @@ class _InquiryScreenState extends State<InquiryScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('접수하기'),
+                      : const Text('Submit'),
                 ),
               ),
             ],

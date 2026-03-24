@@ -15,7 +15,7 @@ class ProfileScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('마이페이지'),
+        title: const Text('My Page'),
         centerTitle: true,
       ),
       body: ListView(
@@ -72,7 +72,7 @@ class ProfileScreen extends StatelessWidget {
           // Menu items
           _MenuTile(
             icon: Icons.edit_note,
-            title: '문의하기',
+            title: 'Contact Us',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const InquiryScreen()),
@@ -80,7 +80,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           _MenuTile(
             icon: Icons.list_alt,
-            title: '내 문의 내역',
+            title: 'My Inquiries',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyInquiriesScreen()),
@@ -89,7 +89,7 @@ class ProfileScreen extends StatelessWidget {
           if (auth.isAdmin)
             _MenuTile(
               icon: Icons.admin_panel_settings,
-              title: '관리자 페이지',
+              title: 'Admin',
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -99,7 +99,7 @@ class ProfileScreen extends StatelessWidget {
           const Divider(height: 32),
           _MenuTile(
             icon: Icons.logout,
-            title: '로그아웃',
+            title: 'Sign Out',
             iconColor: Colors.redAccent,
             onTap: () => auth.signOut(),
           ),
