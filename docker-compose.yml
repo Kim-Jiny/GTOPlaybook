@@ -6,7 +6,7 @@ services:
     container_name: gto-playbook
     restart: unless-stopped
     ports:
-      - "3006:3000"
+      - "3007:3000"
     env_file:
       - ./server/.env
     environment:
