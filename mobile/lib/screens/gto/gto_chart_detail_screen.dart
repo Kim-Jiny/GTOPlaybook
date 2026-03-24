@@ -39,31 +39,50 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
               padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
-                  // Legend
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _LegendItem(color: Colors.red.shade700, label: 'Raise'),
-                      const SizedBox(width: 16),
-                      _LegendItem(color: Colors.green.shade700, label: 'Call'),
-                      const SizedBox(width: 16),
-                      _LegendItem(color: Colors.grey.shade700, label: 'Fold'),
-                    ],
-                  ),
+                  // Dynamic legend based on actionTypes
+                  _buildLegend(chart),
                   const SizedBox(height: 12),
-                  // GTO Grid
+                  // GTO Grid with dynamic action colors
                   GtoGrid(
                     ranges: chart.ranges ?? [],
+                    actionTypes: chart.actionTypes,
                     onCellTap: (range) {
                       setState(() => _selectedRange = range);
                     },
                   ),
                   const SizedBox(height: 16),
                   // Selected hand detail
-                  if (_selectedRange != null) _HandDetail(range: _selectedRange!),
+                  if (_selectedRange != null)
+                    _HandDetail(
+                      range: _selectedRange!,
+                      actionTypes: chart.actionTypes,
+                    ),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildLegend(GtoChart chart) {
+    if (chart.actionTypes != null && chart.actionTypes!.isNotEmpty) {
+      return Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 16,
+        children: chart.actionTypes!
+            .map((at) => _LegendItem(color: at.toColor(), label: at.label))
+            .toList(),
+      );
+    }
+    // Fallback legacy legend
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _LegendItem(color: Colors.red.shade700, label: 'Raise'),
+        const SizedBox(width: 16),
+        _LegendItem(color: Colors.green.shade700, label: 'Call'),
+        const SizedBox(width: 16),
+        _LegendItem(color: Colors.grey.shade700, label: 'Fold'),
+      ],
     );
   }
 }
@@ -76,6 +95,7 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 16,
@@ -94,7 +114,8 @@ class _LegendItem extends StatelessWidget {
 
 class _HandDetail extends StatelessWidget {
   final HandRange range;
-  const _HandDetail({required this.range});
+  final List<ActionType>? actionTypes;
+  const _HandDetail({required this.range, this.actionTypes});
 
   @override
   Widget build(BuildContext context) {
@@ -113,11 +134,22 @@ class _HandDetail extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _FreqBar(label: 'Raise', freq: range.raiseFreq, color: Colors.red.shade700),
-            const SizedBox(height: 8),
-            _FreqBar(label: 'Call', freq: range.callFreq, color: Colors.green.shade700),
-            const SizedBox(height: 8),
-            _FreqBar(label: 'Fold', freq: range.foldFreq, color: Colors.grey.shade600),
+            // Dynamic frequency bars based on actionTypes or frequencies map
+            if (actionTypes != null && range.frequencies.isNotEmpty)
+              ...actionTypes!.map((at) {
+                final freq = range.frequencies[at.key] ?? 0.0;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _FreqBar(label: at.label, freq: freq, color: at.toColor()),
+                );
+              })
+            else ...[
+              _FreqBar(label: 'Raise', freq: range.raiseFreq, color: Colors.red.shade700),
+              const SizedBox(height: 8),
+              _FreqBar(label: 'Call', freq: range.callFreq, color: Colors.green.shade700),
+              const SizedBox(height: 8),
+              _FreqBar(label: 'Fold', freq: range.foldFreq, color: Colors.grey.shade600),
+            ],
           ],
         ),
       ),

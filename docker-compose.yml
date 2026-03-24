@@ -6,13 +6,11 @@ services:
     container_name: gto-playbook
     restart: unless-stopped
     ports:
-      - "3010:3000"
+      - "3006:3000"
+    env_file:
+      - ./server/.env
     environment:
       - NODE_ENV=production
-      - PORT=3000
-      - DATABASE_URL=postgresql://gto:gto@gto-db:5432/gto
-    env_file:
-      - .env
     depends_on:
       gto-db:
         condition: service_healthy
@@ -27,15 +25,15 @@ services:
       - "127.0.0.1:55436:5432"
     environment:
       POSTGRES_USER: gto
-      POSTGRES_PASSWORD: gto
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: gto
     volumes:
       - gto-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U gto"]
+      test: ["CMD-SHELL", "pg_isready -U gto -d gto"]
       interval: 5s
       timeout: 3s
-      retries: 5
+      retries: 10
     networks:
       - app-network
 

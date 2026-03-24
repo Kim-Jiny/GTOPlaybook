@@ -1,21 +1,38 @@
 #!/bin/bash
 set -e
 
-DEPLOY_DIR="/opt/services/gto-playbook"
+BASE_DIR=/opt/services/gto
+APP_DIR=$BASE_DIR/app
+REPO_URL="https://github.com/Kim-Jiny/GTOPlaybook.git"
+BRANCH="main"
 
-echo "=== GTOPlaybook Deploy ==="
+mkdir -p "$APP_DIR"
 
-cd "$DEPLOY_DIR"
+if [ ! -d "$APP_DIR/.git" ]; then
+  git clone -b "$BRANCH" "$REPO_URL" "$APP_DIR"
+else
+  cd "$APP_DIR"
+  git fetch origin
+  git checkout "$BRANCH"
+  git pull origin "$BRANCH"
+fi
 
-echo "Pulling latest changes..."
-git pull origin main
+echo "[check files]"
+ls -al "$APP_DIR"
 
-echo "Building and starting containers..."
-docker compose build --no-cache
-docker compose up -d
+if [ -f "$APP_DIR/docker-compose.yml" ] || [ -f "$APP_DIR/compose.yaml" ]; then
+  cd "$APP_DIR"
+  docker compose up -d --build
+elif [ -f "$APP_DIR/server/docker-compose.yml" ] || [ -f "$APP_DIR/server/compose.yaml" ]; then
+  cd "$APP_DIR/server"
+  docker compose up -d --build
+else
+  echo "No docker compose file found (app root / app/server)"
+  exit 1
+fi
 
-echo "Waiting for health check..."
-sleep 5
-curl -sf http://localhost:3010/health && echo " ✓ Server is healthy" || echo " ✗ Health check failed"
+if [ -f /opt/services/proxy/conf/gto.conf.off ]; then
+  mv /opt/services/proxy/conf/gto.conf.off /opt/services/proxy/conf/gto.conf
+fi
 
-echo "=== Deploy complete ==="
+docker exec nginx nginx -s reload || true

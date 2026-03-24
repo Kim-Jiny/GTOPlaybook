@@ -10,7 +10,17 @@ class PlayingCard {
     return PlayingCard(rank: s[0], suit: s[1]);
   }
 
-  String get display => '$rank${suitSymbol}';
+  static const ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+  static const suits = ['s', 'h', 'd', 'c'];
+
+  static List<PlayingCard> deck() {
+    return [
+      for (final r in ranks)
+        for (final s in suits) PlayingCard(rank: r, suit: s),
+    ];
+  }
+
+  String get display => '$rank$suitSymbol';
 
   String get suitSymbol {
     switch (suit) {
@@ -38,4 +48,15 @@ class PlayingCard {
   }
 
   bool get isRed => suit == 'h' || suit == 'd';
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PlayingCard && rank == other.rank && suit == other.suit;
+
+  @override
+  int get hashCode => rank.hashCode ^ suit.hashCode;
+
+  @override
+  String toString() => '$rank$suit';
 }

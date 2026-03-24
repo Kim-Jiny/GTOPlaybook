@@ -3,15 +3,13 @@ dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
-import http from 'http';
 import { initDatabase } from './config/initDb';
-import { setupSocket } from './socket';
 import gtoRoutes from './routes/gto';
 import userRoutes from './routes/user';
-import gameRoutes from './routes/game';
+import inquiryRoutes from './routes/inquiry';
+import adminRoutes from './routes/admin';
 
 const app = express();
-const server = http.createServer(app);
 
 app.use(cors());
 app.use(express.json());
@@ -24,16 +22,14 @@ app.get('/health', (_req, res) => {
 // API routes
 app.use('/api/gto', gtoRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/games', gameRoutes);
-
-// Socket.IO
-setupSocket(server);
+app.use('/api/inquiries', inquiryRoutes);
+app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 3000;
 
 async function start() {
   await initDatabase();
-  server.listen(PORT, () => {
+  app.listen(PORT, () => {
     console.log(`GTOPlaybook server running on port ${PORT}`);
   });
 }

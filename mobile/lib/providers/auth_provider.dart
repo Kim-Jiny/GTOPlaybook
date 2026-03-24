@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
-import '../services/socket_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -11,6 +10,7 @@ class AuthProvider extends ChangeNotifier {
   User? _user;
   bool _isLoading = false;
   String? _error;
+  bool _isAdmin = false;
 
   AuthProvider(this._apiService) {
     _authService.authStateChanges.listen(_onAuthStateChanged);
@@ -20,6 +20,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
   String? get error => _error;
+  bool get isAdmin => _isAdmin;
 
   Future<void> _onAuthStateChanged(User? user) async {
     _user = user;
@@ -27,13 +28,15 @@ class AuthProvider extends ChangeNotifier {
       final token = await _authService.getIdToken();
       if (token != null) {
         _apiService.setToken(token);
-        SocketService().connect(token);
         // Sync user to backend
         try {
           await _apiService.post('/api/users/sync', body: {
             'displayName': user.displayName,
             'photoUrl': user.photoURL,
           });
+          // Fetch admin status
+          final me = await _apiService.get('/api/users/me');
+          _isAdmin = me['is_admin'] == true;
         } catch (e) {
           debugPrint('Failed to sync user: $e');
         }
@@ -69,7 +72,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    SocketService().disconnect();
+    _isAdmin = false;
     await _authService.signOut();
   }
 

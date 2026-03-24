@@ -4,12 +4,55 @@ import { requireAuth } from '../middleware/auth';
 
 const router = Router();
 
+// GET /api/gto/positions — position tree with situation categories
+router.get('/positions', requireAuth, async (req, res) => {
+  try {
+    const stackDepth = parseInt(req.query.stack_depth as string) || 100;
+    const result = await pool.query(
+      `SELECT id, position, situation, vs_position, description, category, action_types
+       FROM gto_charts WHERE stack_depth = $1 ORDER BY position, category, vs_position`,
+      [stackDepth],
+    );
+
+    // Group by position → category → charts
+    const positionMap: Record<string, Record<string, any[]>> = {};
+    for (const row of result.rows) {
+      const pos = row.position;
+      const cat = row.category || row.situation;
+      if (!positionMap[pos]) positionMap[pos] = {};
+      if (!positionMap[pos][cat]) positionMap[pos][cat] = [];
+      positionMap[pos][cat].push({
+        id: row.id,
+        situation: row.situation,
+        vsPosition: row.vs_position,
+        description: row.description,
+        actionTypes: row.action_types,
+      });
+    }
+
+    // Convert to array format
+    const positions = Object.entries(positionMap).map(([position, categories]) => ({
+      position,
+      categories: Object.entries(categories).map(([category, charts]) => ({
+        category,
+        charts,
+      })),
+    }));
+
+    res.json(positions);
+  } catch (err) {
+    console.error('Error fetching positions:', err);
+    res.status(500).json({ error: 'Failed to fetch positions' });
+  }
+});
+
 // GET /api/gto/charts — list all charts with optional filters
 router.get('/charts', requireAuth, async (req, res) => {
   try {
-    const { position, situation, vs_position } = req.query;
-    let query = 'SELECT * FROM gto_charts WHERE 1=1';
-    const params: string[] = [];
+    const { position, situation, vs_position, stack_depth } = req.query;
+    const sd = parseInt(stack_depth as string) || 100;
+    let query = 'SELECT * FROM gto_charts WHERE stack_depth = $1';
+    const params: (string | number)[] = [sd];
 
     if (position) {
       params.push(position as string);

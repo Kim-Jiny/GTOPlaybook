@@ -6,9 +6,27 @@ const CREATE_TABLES = `
     email TEXT NOT NULL,
     display_name TEXT,
     photo_url TEXT,
+    is_admin BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
   );
+
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+
+  CREATE TABLE IF NOT EXISTS inquiries (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    admin_reply TEXT,
+    replied_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_inquiries_user_id ON inquiries(user_id);
+  CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);
 
   CREATE TABLE IF NOT EXISTS gto_charts (
     id SERIAL PRIMARY KEY,
@@ -17,6 +35,9 @@ const CREATE_TABLES = `
     vs_position TEXT,
     stack_depth INTEGER DEFAULT 100,
     description TEXT,
+    category TEXT,
+    action_types JSONB,
+    flop_texture TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
 
@@ -29,45 +50,13 @@ const CREATE_TABLES = `
     action TEXT NOT NULL DEFAULT 'fold',
     raise_freq REAL DEFAULT 0,
     call_freq REAL DEFAULT 0,
-    fold_freq REAL DEFAULT 0
+    fold_freq REAL DEFAULT 0,
+    frequencies JSONB
   );
 
   CREATE INDEX IF NOT EXISTS idx_gto_ranges_chart_id ON gto_ranges(chart_id);
+  CREATE INDEX IF NOT EXISTS idx_gto_charts_stack_depth ON gto_charts(stack_depth);
 
-  CREATE TABLE IF NOT EXISTS game_rooms (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    max_players INTEGER DEFAULT 6,
-    small_blind INTEGER DEFAULT 10,
-    big_blind INTEGER DEFAULT 20,
-    status TEXT DEFAULT 'waiting',
-    created_by TEXT REFERENCES users(id),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  );
-
-  CREATE TABLE IF NOT EXISTS game_hands (
-    id SERIAL PRIMARY KEY,
-    room_id TEXT REFERENCES game_rooms(id),
-    hand_number INTEGER NOT NULL,
-    community_cards TEXT[],
-    pot INTEGER DEFAULT 0,
-    winners TEXT[],
-    summary JSONB,
-    played_at TIMESTAMPTZ DEFAULT NOW()
-  );
-
-  CREATE TABLE IF NOT EXISTS player_stats (
-    id SERIAL PRIMARY KEY,
-    user_id TEXT NOT NULL REFERENCES users(id),
-    hands_played INTEGER DEFAULT 0,
-    hands_won INTEGER DEFAULT 0,
-    total_winnings INTEGER DEFAULT 0,
-    biggest_pot INTEGER DEFAULT 0,
-    vpip_hands INTEGER DEFAULT 0,
-    pfr_hands INTEGER DEFAULT 0,
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(user_id)
-  );
 `;
 
 export async function initDatabase(): Promise<void> {

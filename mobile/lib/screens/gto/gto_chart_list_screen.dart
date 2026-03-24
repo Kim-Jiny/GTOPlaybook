@@ -17,14 +17,6 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
   final _positions = ['All', 'UTG', 'MP', 'CO', 'BTN', 'SB', 'BB'];
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GtoProvider>().loadCharts();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final gto = context.watch<GtoProvider>();
 
@@ -71,13 +63,34 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
           Expanded(
             child: gto.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : gto.charts.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No charts available',
-                          style: TextStyle(color: Colors.white54),
+                : gto.error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(gto.error!, style: const TextStyle(color: Colors.redAccent)),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: () => gto.loadCharts(position: _selectedPosition),
+                              child: const Text('Retry'),
+                            ),
+                          ],
                         ),
                       )
+                    : gto.charts.isEmpty
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('No charts available', style: TextStyle(color: Colors.white54)),
+                                const SizedBox(height: 12),
+                                ElevatedButton(
+                                  onPressed: () => gto.loadCharts(position: _selectedPosition),
+                                  child: const Text('Reload'),
+                                ),
+                              ],
+                            ),
+                          )
                     : ListView.builder(
                         padding: const EdgeInsets.all(12),
                         itemCount: gto.charts.length,

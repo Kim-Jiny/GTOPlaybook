@@ -21,12 +21,6 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res) => {
       [uid, email, displayName || null, photoUrl || null],
     );
 
-    // Ensure player_stats row exists
-    await pool.query(
-      `INSERT INTO player_stats (user_id) VALUES ($1) ON CONFLICT (user_id) DO NOTHING`,
-      [uid],
-    );
-
     res.json({ success: true });
   } catch (err) {
     console.error('Error syncing user:', err);
@@ -34,15 +28,11 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// GET /api/users/me — current user profile + stats
+// GET /api/users/me — current user profile
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   try {
     const result = await pool.query(
-      `SELECT u.*, ps.hands_played, ps.hands_won, ps.total_winnings,
-              ps.biggest_pot, ps.vpip_hands, ps.pfr_hands
-       FROM users u
-       LEFT JOIN player_stats ps ON ps.user_id = u.id
-       WHERE u.id = $1`,
+      'SELECT * FROM users WHERE id = $1',
       [req.uid],
     );
 
