@@ -73,23 +73,23 @@ const BB_VS_SB_CALL = new Set([
 // 15bb ranges — mostly reshove-or-fold, very small call range
 // ---------------------------------------------------------------------------
 
-const BB_VS_UTG_3BET_15 = new Set(['QQ', 'AKs']);
+const BB_VS_UTG_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
 const BB_VS_UTG_CALL_15 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
 const BB_VS_UTG_JAM_15 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
 
-const BB_VS_HJ_3BET_15 = new Set(['QQ', 'AKs', 'AKo']);
+const BB_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
 const BB_VS_HJ_CALL_15 = new Set(['JJ', 'TT', 'AQs']);
 const BB_VS_HJ_JAM_15 = new Set(['JJ', 'TT', 'AQs', 'AQo']);
 
-const BB_VS_CO_3BET_15 = new Set(['QQ', 'JJ', 'AKs', 'AKo']);
+const BB_VS_CO_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
 const BB_VS_CO_CALL_15 = new Set(['TT', '99', 'AQs', 'AQo', 'KQs']);
 const BB_VS_CO_JAM_15 = new Set(['TT', '99', 'AQs', 'AQo', 'AJs', 'KQs']);
 
-const BB_VS_BTN_3BET_15 = new Set(['QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs']);
+const BB_VS_BTN_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs']);
 const BB_VS_BTN_CALL_15 = new Set(['99', '88', 'AQo', 'AJs', 'ATs', 'KQs', 'KJs']);
 const BB_VS_BTN_JAM_15 = new Set(['99', '88', 'AQo', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs']);
 
-const BB_VS_SB_3BET_15 = new Set(['QQ', 'JJ', 'TT', '99', 'AKs', 'AKo', 'AQs', 'AQo']);
+const BB_VS_SB_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'TT', '99', 'AKs', 'AKo', 'AQs', 'AQo']);
 const BB_VS_SB_CALL_15 = new Set(['88', '77', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs', 'JTs']);
 const BB_VS_SB_JAM_15 = new Set(['88', '77', 'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'QJs', 'JTs']);
 

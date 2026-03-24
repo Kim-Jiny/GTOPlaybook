@@ -143,7 +143,7 @@ const UTG_25_MIXED: Record<string, number> = {};
 // HJ 25bb (was MP) — UTG premiums + a few broadways
 const HJ_25_RAISE = new Set([
   ...UTG_25_RAISE,
-  '88', '77',
+  '99', '88', '77',
   'AJs', 'KQs',
 ]);
 const HJ_25_MIXED: Record<string, number> = {};
