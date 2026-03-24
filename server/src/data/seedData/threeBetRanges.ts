@@ -144,6 +144,22 @@ const SB_3BET_VS_UTG_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
 const SB_3BET_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
 const SB_3BET_VS_BTN_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
 
+// ---------------------------------------------------------------------------
+// 15bb ranges — reshove-or-fold (wider than 25bb due to more fold equity)
+// ---------------------------------------------------------------------------
+
+const BTN_3BET_VS_UTG_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
+const BTN_3BET_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
+const BTN_3BET_VS_CO_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs']);
+const SB_3BET_VS_UTG_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
+const SB_3BET_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
+const SB_3BET_VS_CO_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
+const SB_3BET_VS_BTN_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs']);
+// HJ/CO at 15bb — reshove the tightest range
+const HJ_3BET_VS_UTG_3BET_15 = new Set(['AA', 'KK']);
+const CO_3BET_VS_UTG_3BET_15 = new Set(['AA', 'KK', 'QQ']);
+const CO_3BET_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
+
 const EMPTY_CALL = new Set<string>();
 
 // ---------------------------------------------------------------------------
@@ -203,6 +219,9 @@ function get3betRangeData(
   // Determine which reference 3bettor's data to use
   const refSeat = threeBettorRefSeat(threeBettor);
 
+  if (depth === 15) {
+    return get15bbRange(refSeat, oClass);
+  }
   if (depth === 25) {
     return get25bbRange(refSeat, oClass);
   }
@@ -221,6 +240,43 @@ function threeBettorRefSeat(pos: string): 'HJ' | 'CO' | 'BTN' | 'SB' {
     case 'CO': return 'CO';
     default: return 'HJ'; // HJ, MP, UTG+2, UTG+1, UTG
   }
+}
+
+// ---------------------------------------------------------------------------
+// 15bb reshove-or-fold ranges
+// ---------------------------------------------------------------------------
+
+function get15bbRange(
+  refSeat: 'HJ' | 'CO' | 'BTN' | 'SB',
+  oClass: ReturnType<typeof openerClass>,
+): RangeResult {
+  if (refSeat === 'HJ') {
+    if (oClass === 'ep-tight') return threeBetFoldRange(HJ_3BET_VS_UTG_3BET_15);
+    return null;
+  }
+  if (refSeat === 'CO') {
+    if (oClass === 'ep-tight') return threeBetFoldRange(CO_3BET_VS_UTG_3BET_15);
+    if (oClass === 'hj') return threeBetFoldRange(CO_3BET_VS_HJ_3BET_15);
+    return null;
+  }
+  if (refSeat === 'BTN') {
+    switch (oClass) {
+      case 'ep-tight': return threeBetFoldRange(BTN_3BET_VS_UTG_3BET_15);
+      case 'hj':       return threeBetFoldRange(BTN_3BET_VS_HJ_3BET_15);
+      case 'co':       return threeBetFoldRange(BTN_3BET_VS_CO_3BET_15);
+      default:         return null;
+    }
+  }
+  if (refSeat === 'SB') {
+    switch (oClass) {
+      case 'ep-tight': return threeBetFoldRange(SB_3BET_VS_UTG_3BET_15);
+      case 'hj':       return threeBetFoldRange(SB_3BET_VS_HJ_3BET_15);
+      case 'co':       return threeBetFoldRange(SB_3BET_VS_CO_3BET_15);
+      case 'btn':      return threeBetFoldRange(SB_3BET_VS_BTN_3BET_15);
+      default:         return null;
+    }
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -385,8 +441,6 @@ export function getThreeBetCharts(
   depth: StackDepth,
   maxPlayers: MaxPlayers = 6,
 ): ChartDef[] {
-  if (depth === 15) return [];
-
   // HU (2-max): no 3bet charts — BB defend handles that
   if (maxPlayers === 2) return [];
 
@@ -408,7 +462,7 @@ export function getThreeBetCharts(
           stackDepth: depth,
           maxPlayers,
           description: `${threeBettor} 3bet vs ${opener} open (${depth}bb, ${maxPlayers}-max)`,
-          actionTypes: depth === 25 ? THREE_BET_FOLD_ACTIONS : THREE_BET_ACTIONS,
+          actionTypes: (depth === 15 || depth === 25) ? THREE_BET_FOLD_ACTIONS : THREE_BET_ACTIONS,
           ranges: rangeData,
         });
       }

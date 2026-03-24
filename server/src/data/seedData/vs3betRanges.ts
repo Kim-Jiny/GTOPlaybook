@@ -283,8 +283,6 @@ function getFourBetSet(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBe
 }
 
 export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
-  if (depth === 15) return [];
-
   const allPositions = positionsForPlayerCount(maxPlayers);
   // Every position except BB can open
   const openers = allPositions.filter(p => p !== 'BB');
@@ -300,8 +298,8 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
     for (const threeBettor of threeBettors) {
       const tbClass = threeBettorClass(threeBettor);
 
-      if (depth === 25) {
-        // 25bb: jam or fold
+      if (depth === 15 || depth === 25) {
+        // 15-25bb: jam or fold
         const jamKey = `${opClass}_vs_${tbClass}`;
         const jamSet = JAM_25_DATA[jamKey];
         if (!jamSet) continue; // no data for this matchup

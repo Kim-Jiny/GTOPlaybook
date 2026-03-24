@@ -272,6 +272,100 @@ const HU_SB_25_JAM = new Set([
 ]);
 
 // ═══════════════════════════════════════════════════════════════════════
+//  15bb ranges — mostly open-jam, only premiums min-raise (trap)
+// ═══════════════════════════════════════════════════════════════════════
+
+const UTG_15_RAISE = new Set(['AA']);
+const UTG_15_JAM = new Set([
+  'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs', 'ATs', 'KQs',
+  'AKo', 'AQo',
+]);
+
+const HJ_15_RAISE = new Set(['AA']);
+const HJ_15_JAM = new Set([
+  'KK', 'QQ', 'JJ', 'TT', '99', '88',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'QJs', 'QTs',
+  'AKo', 'AQo', 'AJo',
+]);
+
+const CO_15_RAISE = new Set(['AA', 'KK']);
+const CO_15_JAM = new Set([
+  'QQ', 'JJ', 'TT', '99', '88', '77', '66',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
+  'AKo', 'AQo', 'AJo', 'ATo', 'KQo', 'KJo',
+]);
+
+const BTN_15_RAISE = new Set(['AA', 'KK']);
+const BTN_15_JAM = new Set([
+  'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s',
+  'QJs', 'QTs', 'Q9s', 'Q8s', 'JTs', 'J9s', 'J8s', 'T9s', 'T8s', '98s', '97s', '87s', '76s', '65s', '54s',
+  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o',
+  'KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'JTo',
+]);
+
+const SB_15_RAISE = new Set(['AA', 'KK']);
+const SB_15_JAM = new Set([
+  'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s',
+  'QJs', 'QTs', 'Q9s', 'Q8s', 'Q7s',
+  'JTs', 'J9s', 'J8s', 'J7s', 'T9s', 'T8s', 'T7s', '98s', '97s', '96s', '87s', '86s', '85s', '76s', '75s', '65s', '64s', '54s', '53s',
+  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o',
+  'KQo', 'KJo', 'KTo', 'K9o', 'K8o',
+  'QJo', 'QTo', 'Q9o', 'JTo', 'J9o', 'T9o',
+]);
+
+const UTG_9MAX_15_RAISE = new Set(['AA']);
+const UTG_9MAX_15_JAM = new Set([
+  'KK', 'QQ', 'JJ', 'TT',
+  'AKs', 'AQs', 'AJs',
+  'AKo', 'AQo',
+]);
+
+const UTG1_15_RAISE = new Set(['AA']);
+const UTG1_15_JAM = new Set([
+  'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs',
+  'AKo', 'AQo',
+]);
+
+const UTG2_15_RAISE = new Set(['AA']);
+const UTG2_15_JAM = new Set([
+  'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs', 'ATs', 'KQs',
+  'AKo', 'AQo',
+]);
+
+const HU_SB_15_RAISE = new Set(['AA', 'KK']);
+const HU_SB_15_JAM = new Set([
+  'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s', 'K2s',
+  'QJs', 'QTs', 'Q9s', 'Q8s', 'Q7s', 'Q6s', 'Q5s', 'Q4s', 'Q3s', 'Q2s',
+  'JTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s',
+  'T9s', 'T8s', 'T7s', 'T6s', 'T5s',
+  '98s', '97s', '96s', '95s', '94s',
+  '87s', '86s', '85s', '84s', '83s',
+  '76s', '75s', '74s', '73s',
+  '65s', '64s', '63s', '62s',
+  '54s', '53s', '52s', '43s', '42s', '32s',
+  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
+  'KQo', 'KJo', 'KTo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o',
+  'QJo', 'QTo', 'Q9o', 'Q8o', 'Q7o', 'Q6o', 'Q5o',
+  'JTo', 'J9o', 'J8o', 'J7o',
+  'T9o', 'T8o', 'T7o',
+  '98o', '97o',
+  '87o', '86o',
+  '76o', '75o',
+  '65o', '64o',
+  '54o', '53o',
+]);
+
+// ═══════════════════════════════════════════════════════════════════════
 //  40bb ranges — 100bb pure raise set, mixed tightened by ~30%
 // ═══════════════════════════════════════════════════════════════════════
 
@@ -375,6 +469,7 @@ function rangeDataFor(position: string, depth: StackDepth, maxPlayers: MaxPlayer
   const key = resolveRangeKey(position, maxPlayers);
 
   switch (depth) {
+    case 15: return rangeData15(key);
     case 25: return rangeData25(key);
     case 40: return rangeData40(key);
     case 60: return rangeData60(key);
@@ -397,6 +492,20 @@ function resolveRangeKey(position: string, maxPlayers: MaxPlayers): RangeKey {
   if (position === 'UTG+1') return 'utg1';
   if (position === 'UTG+2') return 'utg2';
   return 'utg'; // fallback
+}
+
+function rangeData15(key: RangeKey): RangeData {
+  switch (key) {
+    case 'utg9max': return { raise: UTG_9MAX_15_RAISE, jam: UTG_9MAX_15_JAM, mixed: {} };
+    case 'utg1':    return { raise: UTG1_15_RAISE,     jam: UTG1_15_JAM,     mixed: {} };
+    case 'utg2':    return { raise: UTG2_15_RAISE,     jam: UTG2_15_JAM,     mixed: {} };
+    case 'utg':     return { raise: UTG_15_RAISE,      jam: UTG_15_JAM,      mixed: {} };
+    case 'hj':      return { raise: HJ_15_RAISE,       jam: HJ_15_JAM,       mixed: {} };
+    case 'co':      return { raise: CO_15_RAISE,       jam: CO_15_JAM,       mixed: {} };
+    case 'btn':     return { raise: BTN_15_RAISE,      jam: BTN_15_JAM,      mixed: {} };
+    case 'sb':      return { raise: SB_15_RAISE,       jam: SB_15_JAM,       mixed: {} };
+    case 'hu_sb':   return { raise: HU_SB_15_RAISE,    jam: HU_SB_15_JAM,    mixed: {} };
+  }
 }
 
 function rangeData100(key: RangeKey): RangeData {
@@ -473,10 +582,8 @@ function tableSizeLabel(maxPlayers: MaxPlayers): string {
 // ═══════════════════════════════════════════════════════════════════════
 
 export function getRfiCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
-  if (depth === 15) return [];
-
   const positions = rfiPositions(maxPlayers);
-  const useJam = depth === 25 || depth === 40;
+  const useJam = depth === 15 || depth === 25 || depth === 40;
   const sizeLabel = tableSizeLabel(maxPlayers);
 
   return positions.map((pos) => {

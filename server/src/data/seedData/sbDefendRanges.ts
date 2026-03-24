@@ -48,6 +48,29 @@ const SB_VS_BB_RAISE = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// 15bb ranges — SB reshove-or-fold (wider jams than 25bb)
+// ---------------------------------------------------------------------------
+
+const SB_15_VS_UTG_3BET = new Set(['AA', 'KK']);
+const SB_15_VS_UTG_JAM = new Set(['QQ', 'AKs', 'AKo']);
+
+const SB_15_VS_HJ_3BET = new Set(['AA', 'KK']);
+const SB_15_VS_HJ_JAM = new Set(['QQ', 'JJ', 'AKs', 'AKo', 'AQs']);
+
+const SB_15_VS_CO_3BET = new Set(['AA', 'KK']);
+const SB_15_VS_CO_JAM = new Set(['QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs', 'AQo']);
+
+const SB_15_VS_BTN_3BET = new Set(['AA', 'KK']);
+const SB_15_VS_BTN_JAM = new Set(['QQ', 'JJ', 'TT', '99', 'AKs', 'AKo', 'AQs', 'AQo', 'AJs', 'KQs']);
+
+const SB_15_VS_BB_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88',
+  'AKs', 'AQs', 'AJs', 'ATs',
+  'KQs',
+  'AKo', 'AQo', 'AJo',
+]);
+
+// ---------------------------------------------------------------------------
 // 25bb ranges — SB is mostly 3bet-all-in or fold, very tight
 // ---------------------------------------------------------------------------
 
@@ -223,6 +246,15 @@ function get3betData40(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
   }
 }
 
+function get15Data(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): { threeBet: Set<string>; jam: Set<string> } {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: SB_15_VS_UTG_3BET, jam: SB_15_VS_UTG_JAM };
+    case 'hj':       return { threeBet: SB_15_VS_HJ_3BET,  jam: SB_15_VS_HJ_JAM };
+    case 'co':       return { threeBet: SB_15_VS_CO_3BET,   jam: SB_15_VS_CO_JAM };
+    case 'btn':      return { threeBet: SB_15_VS_BTN_3BET,  jam: SB_15_VS_BTN_JAM };
+  }
+}
+
 function get25Data(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): { threeBet: Set<string>; jam: Set<string> } {
   switch (cls) {
     case 'ep-tight': return { threeBet: SB_25_VS_UTG_3BET, jam: SB_25_VS_UTG_JAM };
@@ -234,6 +266,7 @@ function get25Data(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): { threeBet: Set<strin
 
 function getBbRaiseData(depth: StackDepth): Set<string> {
   switch (depth) {
+    case 15:  return SB_15_VS_BB_RAISE;
     case 25:  return SB_25_VS_BB_RAISE;
     case 40:  return SB_40_VS_BB_RAISE;
     case 60:  return SB_60_VS_BB_RAISE;
@@ -247,8 +280,6 @@ function getBbRaiseData(depth: StackDepth): Set<string> {
 // ---------------------------------------------------------------------------
 
 export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
-  if (depth === 15) return [];
-
   // In HU (2 players), SB is the opener — no SB defend charts
   if (maxPlayers === 2) return [];
 
@@ -264,8 +295,8 @@ export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
     // cast to the narrower type used by SB lookup functions
     const sbCls = cls as 'ep-tight' | 'hj' | 'co' | 'btn';
 
-    if (depth === 25) {
-      const data = get25Data(sbCls);
+    if (depth === 15 || depth === 25) {
+      const data = depth === 15 ? get15Data(sbCls) : get25Data(sbCls);
       charts.push({
         position: 'SB',
         situation: 'SB Defend',

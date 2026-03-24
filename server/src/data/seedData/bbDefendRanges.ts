@@ -70,6 +70,30 @@ const BB_VS_SB_CALL = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
+// 15bb ranges — mostly reshove-or-fold, very small call range
+// ---------------------------------------------------------------------------
+
+const BB_VS_UTG_3BET_15 = new Set(['QQ', 'AKs']);
+const BB_VS_UTG_CALL_15 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
+const BB_VS_UTG_JAM_15 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
+
+const BB_VS_HJ_3BET_15 = new Set(['QQ', 'AKs', 'AKo']);
+const BB_VS_HJ_CALL_15 = new Set(['JJ', 'TT', 'AQs']);
+const BB_VS_HJ_JAM_15 = new Set(['JJ', 'TT', 'AQs', 'AQo']);
+
+const BB_VS_CO_3BET_15 = new Set(['QQ', 'JJ', 'AKs', 'AKo']);
+const BB_VS_CO_CALL_15 = new Set(['TT', '99', 'AQs', 'AQo', 'KQs']);
+const BB_VS_CO_JAM_15 = new Set(['TT', '99', 'AQs', 'AQo', 'AJs', 'KQs']);
+
+const BB_VS_BTN_3BET_15 = new Set(['QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs']);
+const BB_VS_BTN_CALL_15 = new Set(['99', '88', 'AQo', 'AJs', 'ATs', 'KQs', 'KJs']);
+const BB_VS_BTN_JAM_15 = new Set(['99', '88', 'AQo', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs']);
+
+const BB_VS_SB_3BET_15 = new Set(['QQ', 'JJ', 'TT', '99', 'AKs', 'AKo', 'AQs', 'AQo']);
+const BB_VS_SB_CALL_15 = new Set(['88', '77', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs', 'JTs']);
+const BB_VS_SB_JAM_15 = new Set(['88', '77', 'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'QJs', 'JTs']);
+
+// ---------------------------------------------------------------------------
 // 25bb ranges — much tighter, premiums only
 // ---------------------------------------------------------------------------
 
@@ -333,6 +357,16 @@ function getRangeData40(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData
   }
 }
 
+function getRangeData15(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData25 {
+  switch (cls) {
+    case 'ep-tight': return { threeBet: BB_VS_UTG_3BET_15, jam: BB_VS_UTG_JAM_15, call: BB_VS_UTG_CALL_15 };
+    case 'hj':       return { threeBet: BB_VS_HJ_3BET_15,  jam: BB_VS_HJ_JAM_15,  call: BB_VS_HJ_CALL_15 };
+    case 'co':       return { threeBet: BB_VS_CO_3BET_15,   jam: BB_VS_CO_JAM_15,   call: BB_VS_CO_CALL_15 };
+    case 'btn':      return { threeBet: BB_VS_BTN_3BET_15,  jam: BB_VS_BTN_JAM_15,  call: BB_VS_BTN_CALL_15 };
+    case 'sb':       return { threeBet: BB_VS_SB_3BET_15,   jam: BB_VS_SB_JAM_15,   call: BB_VS_SB_CALL_15 };
+  }
+}
+
 function getRangeData25(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData25 {
   switch (cls) {
     case 'ep-tight': return { threeBet: BB_VS_UTG_3BET_25, jam: BB_VS_UTG_JAM_25, call: BB_VS_UTG_CALL_25 };
@@ -348,8 +382,6 @@ function getRangeData25(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb'): RangeData
 // ---------------------------------------------------------------------------
 
 export function getBbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
-  if (depth === 15) return []; // handled by shortStackRanges
-
   // BB can face opens from every position except BB itself
   const allPositions = positionsForPlayerCount(maxPlayers);
   const openers = allPositions.filter(p => p !== 'BB');
@@ -362,8 +394,8 @@ export function getBbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
     // Special: in HU, SB acts as BTN
     const effectiveCls = (maxPlayers === 2 && opener === 'SB') ? 'btn' : cls;
 
-    if (depth === 25) {
-      const data = getRangeData25(effectiveCls);
+    if (depth === 15 || depth === 25) {
+      const data = depth === 15 ? getRangeData15(effectiveCls) : getRangeData25(effectiveCls);
       charts.push({
         position: 'BB',
         situation: 'Defend',
