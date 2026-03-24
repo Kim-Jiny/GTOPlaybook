@@ -43,6 +43,12 @@ const CREATE_TABLES = `
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
 
+  -- Migration: add columns for existing DBs
+  ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS max_players INTEGER DEFAULT 6;
+  ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS category TEXT;
+  ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS action_types JSONB;
+  ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS flop_texture TEXT;
+
   CREATE TABLE IF NOT EXISTS gto_ranges (
     id SERIAL PRIMARY KEY,
     chart_id INTEGER NOT NULL REFERENCES gto_charts(id) ON DELETE CASCADE,
@@ -55,6 +61,8 @@ const CREATE_TABLES = `
     fold_freq REAL DEFAULT 0,
     frequencies JSONB
   );
+
+  ALTER TABLE gto_ranges ADD COLUMN IF NOT EXISTS frequencies JSONB;
 
   CREATE INDEX IF NOT EXISTS idx_gto_ranges_chart_id ON gto_ranges(chart_id);
   CREATE INDEX IF NOT EXISTS idx_gto_charts_stack_depth ON gto_charts(stack_depth);
