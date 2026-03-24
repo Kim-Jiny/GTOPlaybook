@@ -22,3 +22,4 @@ mobile/*.iml
 # macOS
 .DS_Store
 *.swp
+.claude/
