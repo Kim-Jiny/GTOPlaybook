@@ -8,10 +8,12 @@ export const ACTION_COLORS: Record<string, string> = {
   raise: '#D32F2F',
   '3bet': '#F57C00',
   '4bet': '#7B1FA2',
+  '5bet': '#D50000',
   call: '#388E3C',
   fold: '#616161',
-  squeeze: '#E64A19',
   allin: '#D50000',
+  bet: '#1976D2',
+  check: '#757575',
 };
 
 export const RFI_ACTIONS: ActionType[] = [
@@ -43,14 +45,14 @@ export const SB_DEFEND_ACTIONS: ActionType[] = [
 ];
 
 export const FACING_4BET_ACTIONS: ActionType[] = [
-  { key: '5bet', label: '5bet', color: '#D50000' },
+  { key: '5bet', label: '5bet', color: ACTION_COLORS['5bet'] },
   { key: 'call', label: 'Call', color: ACTION_COLORS.call },
   { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
 ];
 
 export const POSTFLOP_CBET_ACTIONS: ActionType[] = [
-  { key: 'bet', label: 'Bet', color: '#1976D2' },
-  { key: 'check', label: 'Check', color: '#757575' },
+  { key: 'bet', label: 'Bet', color: ACTION_COLORS.bet },
+  { key: 'check', label: 'Check', color: ACTION_COLORS.check },
 ];
 
 export const PUSH_FOLD_ACTIONS: ActionType[] = [
@@ -60,6 +62,12 @@ export const PUSH_FOLD_ACTIONS: ActionType[] = [
 
 export const CALL_SHOVE_ACTIONS: ActionType[] = [
   { key: 'call', label: 'Call', color: ACTION_COLORS.call },
+  { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
+];
+
+// Facing 3bet jam-or-fold (15bb — no calling range)
+export const FACING_3BET_JAM_ACTIONS: ActionType[] = [
+  { key: 'allin', label: 'All-in', color: ACTION_COLORS.allin },
   { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
 ];
 

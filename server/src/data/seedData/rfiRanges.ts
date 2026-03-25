@@ -1,4 +1,4 @@
-import { ChartDef, handLabel, inSet, StackDepth, MaxPlayers, rfiPositions } from './helpers';
+import { ChartDef, handLabel, inSet, smoothFrequencies, StackDepth, MaxPlayers, rfiPositions } from './helpers';
 import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -9,43 +9,91 @@ import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
 
 const UTG_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT', '99',
-  'AKs', 'AQs', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs', 'JTs',
+  'AKs', 'AQs', 'AJs', 'ATs', 'KQs', 'KJs', 'JTs',
   'AKo', 'AQo',
 ]);
-const UTG_MIXED: Record<string, number> = { '88': 0.75, 'A9s': 0.6, 'KTs': 0.5, 'T9s': 0.4, 'AJo': 0.6 };
+const UTG_MIXED: Record<string, number> = {
+  '88': 0.75,
+  'A9s': 0.58,
+  'KTs': 0.42,
+  'QJs': 0.55,
+  'T9s': 0.34,
+  'AJo': 0.52,
+};
 
 // ─── HJ (was "MP" in 6-max) — ~19% ──────────────────────────────────
 
 const HJ_RAISE = new Set([
   ...UTG_RAISE,
-  '88', '77', 'A9s', 'KTs', 'QTs', 'JTs', 'T9s', '98s',
-  'AJo', 'KQo',
+  '88', '77', 'A9s', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
+  'AJo',
 ]);
-const HJ_MIXED: Record<string, number> = { '66': 0.8, 'A8s': 0.6, 'K9s': 0.5, 'Q9s': 0.4, '87s': 0.4, 'ATo': 0.65, 'KJo': 0.55 };
+const HJ_MIXED: Record<string, number> = {
+  '66': 0.76,
+  'A8s': 0.58,
+  'K9s': 0.46,
+  'Q9s': 0.36,
+  '87s': 0.32,
+  'ATo': 0.58,
+  'KJo': 0.48,
+  'KQo': 0.82,
+};
 
 // ─── CO — ~27% ──────────────────────────────────────────────────────
 
 const CO_RAISE = new Set([
   ...HJ_RAISE,
   '66', '55', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'K9s', 'Q9s', 'J9s', 'T9s', '98s', '87s', '76s', '65s',
-  'ATo', 'KJo', 'KTo', 'QJo',
+  'K9s', 'Q9s', 'J9s', 'T9s', '98s', '87s', '76s',
+  'ATo', 'KJo', 'QJo', 'KQo',
 ]);
-const CO_MIXED: Record<string, number> = { '44': 0.8, '33': 0.6, 'K8s': 0.5, 'Q8s': 0.45, 'J8s': 0.4, '86s': 0.4, '75s': 0.35, 'QTo': 0.6, 'JTo': 0.5 };
+const CO_MIXED: Record<string, number> = {
+  '44': 0.76,
+  '33': 0.54,
+  'K8s': 0.44,
+  'Q8s': 0.38,
+  'J8s': 0.32,
+  '86s': 0.28,
+  '75s': 0.24,
+  '65s': 0.72,
+  'KTo': 0.62,
+  'QTo': 0.5,
+  'JTo': 0.42,
+};
 
 // ─── BTN — ~43% ─────────────────────────────────────────────────────
 
 const BTN_RAISE = new Set([
   ...CO_RAISE,
   '44', '33', '22',
-  'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s',
-  'Q8s', 'J8s', 'T8s', '97s', '86s', '75s', '64s', '54s',
-  'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o',
-  'KTo', 'KJo', 'QJo', 'QTo', 'JTo', 'J9o', 'T9o',
+  'K8s', 'K7s', 'K6s', 'K5s',
+  'Q8s', 'J8s', 'T8s', '97s', '86s', '75s', '65s', '64s', '54s',
+  'A9o', 'A8o', 'A7o', 'A6o',
+  'KJo', 'QJo', 'JTo',
 ]);
-const BTN_MIXED: Record<string, number> = { 'K2s': 0.5, 'Q7s': 0.5, 'J7s': 0.45, 'T7s': 0.4, '96s': 0.45, '85s': 0.4, '74s': 0.35, '53s': 0.35, 'A4o': 0.7, 'A3o': 0.6, 'K9o': 0.55, 'Q9o': 0.45 };
+const BTN_MIXED: Record<string, number> = {
+  'K4s': 0.72,
+  'K3s': 0.56,
+  'K2s': 0.42,
+  'Q7s': 0.44,
+  'J7s': 0.38,
+  'T7s': 0.32,
+  '96s': 0.38,
+  '85s': 0.32,
+  '74s': 0.24,
+  '53s': 0.22,
+  'A5o': 0.82,
+  'A4o': 0.62,
+  'A3o': 0.48,
+  'KTo': 0.76,
+  'K9o': 0.44,
+  'QTo': 0.66,
+  'Q9o': 0.34,
+  'J9o': 0.52,
+  'T9o': 0.72,
+};
 
-// ─── SB (multiway, 3+ players) — ~40% ──────────────────────────────
+// ─── SB (multiway, 3+ players) — ~42% ──────────────────────────────
 
 const SB_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44',
@@ -55,9 +103,23 @@ const SB_RAISE = new Set([
   'JTs', 'J9s', 'J8s', 'T9s', 'T8s', '98s', '97s', '87s', '86s', '76s', '75s', '65s', '64s', '54s',
   'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o',
   'KQo', 'KJo', 'KTo', 'K9o',
-  'QJo', 'QTo', 'JTo', 'J9o', 'T9o',
+  'QJo', 'QTo', 'JTo', 'T9o',
 ]);
-const SB_MIXED: Record<string, number> = { '33': 0.7, '22': 0.5, 'K4s': 0.5, 'Q7s': 0.45, 'J7s': 0.4, 'T7s': 0.4, '96s': 0.4, '85s': 0.35, 'A4o': 0.65, 'A3o': 0.55, 'K8o': 0.5, 'Q9o': 0.45 };
+const SB_MIXED: Record<string, number> = {
+  '33': 0.58,
+  '22': 0.38,
+  'K4s': 0.62,
+  'Q7s': 0.42,
+  'J7s': 0.34,
+  'T7s': 0.3,
+  '96s': 0.3,
+  '85s': 0.24,
+  'A4o': 0.58,
+  'A3o': 0.44,
+  'K8o': 0.42,
+  'Q9o': 0.34,
+  'J9o': 0.58,
+};
 
 // ─── UTG 9-max (~11% - very tight) ─────────────────────────────────
 
@@ -86,7 +148,7 @@ const UTG2_RAISE = new Set([
 ]);
 const UTG2_MIXED: Record<string, number> = { '77': 0.6, 'A9s': 0.45, 'KTs': 0.45, 'T9s': 0.35, 'AJo': 0.5 };
 
-// ─── HU SB (~80% - very wide) ──────────────────────────────────────
+// ─── HU SB (~78% - very wide) ──────────────────────────────────────
 
 const HU_SB_RAISE = new Set([
   // All pocket pairs
@@ -97,36 +159,44 @@ const HU_SB_RAISE = new Set([
   'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s', 'K3s', 'K2s',
   // All suited Qx
   'QJs', 'QTs', 'Q9s', 'Q8s', 'Q7s', 'Q6s', 'Q5s', 'Q4s', 'Q3s', 'Q2s',
-  // Suited Jx down to J5s
-  'JTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s',
-  // Suited Tx down to T6s
-  'T9s', 'T8s', 'T7s', 'T6s',
-  // Suited 9x down to 95s
-  '98s', '97s', '96s', '95s',
-  // Suited 8x down to 84s
-  '87s', '86s', '85s', '84s',
-  // Suited 7x down to 73s
-  '76s', '75s', '74s', '73s',
-  // Suited 6x down to 63s
-  '65s', '64s', '63s',
-  // Low suited connectors
-  '54s', '53s', '43s',
+  // All suited Jx
+  'JTs', 'J9s', 'J8s', 'J7s', 'J6s', 'J5s', 'J4s', 'J3s', 'J2s',
+  // Suited Tx down to T3s
+  'T9s', 'T8s', 'T7s', 'T6s', 'T5s', 'T4s', 'T3s',
+  // Suited 9x down to 93s
+  '98s', '97s', '96s', '95s', '94s', '93s',
+  // Suited 8x down to 82s
+  '87s', '86s', '85s', '84s', '83s', '82s',
+  // Suited 7x down to 72s
+  '76s', '75s', '74s', '73s', '72s',
+  // Suited 6x down to 62s
+  '65s', '64s', '63s', '62s',
+  // Low suited
+  '54s', '53s', '52s', '43s', '42s', '32s',
   // Offsuit Ax all
   'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
-  // Offsuit Kx down to K5o
-  'KQo', 'KJo', 'KTo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o',
-  // Offsuit Qx down to Q8o
-  'QJo', 'QTo', 'Q9o', 'Q8o',
-  // Offsuit Jx down to J8o
-  'JTo', 'J9o', 'J8o',
-  // Offsuit Tx down to T8o
-  'T9o', 'T8o',
-  // Offsuit 9x
-  '98o',
-  // Offsuit 8x
-  '87o',
+  // Offsuit Kx down to K2o
+  'KQo', 'KJo', 'KTo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o', 'K4o', 'K3o', 'K2o',
+  // Offsuit Qx down to Q3o
+  'QJo', 'QTo', 'Q9o', 'Q8o', 'Q7o', 'Q6o', 'Q5o', 'Q4o', 'Q3o',
+  // Offsuit Jx down to J4o
+  'JTo', 'J9o', 'J8o', 'J7o', 'J6o', 'J5o', 'J4o',
+  // Offsuit Tx down to T5o
+  'T9o', 'T8o', 'T7o', 'T6o', 'T5o',
+  // Offsuit 9x down to 95o
+  '98o', '97o', '96o', '95o',
+  // Offsuit 8x down to 85o
+  '87o', '86o', '85o',
+  // Offsuit 7x down to 74o
+  '76o', '75o', '74o',
+  // Offsuit 6x
+  '65o', '64o',
+  // Offsuit 5x
+  '54o', '53o',
 ]);
-const HU_SB_MIXED: Record<string, number> = { 'J4s': 0.5, 'T5s': 0.5, '94s': 0.4, '83s': 0.4, '72s': 0.3, '62s': 0.3, 'K4o': 0.6, 'K3o': 0.5, 'Q7o': 0.5, 'J7o': 0.4, 'T7o': 0.35, '97o': 0.3, '76o': 0.3 };
+const HU_SB_MIXED: Record<string, number> = {
+  'Q2o': 0.35, 'J3o': 0.3, 'T4o': 0.28, '94o': 0.22, '84o': 0.2, '73o': 0.2, '63o': 0.18, '52o': 0.15, '43o': 0.15,
+};
 
 // ═══════════════════════════════════════════════════════════════════════
 //  25bb ranges (tight push/fold-adjacent)
@@ -135,93 +205,128 @@ const HU_SB_MIXED: Record<string, number> = { 'J4s': 0.5, 'T5s': 0.5, '94s': 0.4
 // UTG 25bb — only premiums
 const UTG_25_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT',
-  'AKs', 'AQs',
-  'AKo',
+  'AKs', 'AQs', 'AKo', 'AQo',
 ]);
-const UTG_25_MIXED: Record<string, number> = {};
+const UTG_25_MIXED: Record<string, number> = { '99': 0.42, 'AJs': 0.36, 'KQs': 0.28 };
 
 // HJ 25bb (was MP) — UTG premiums + a few broadways
 const HJ_25_RAISE = new Set([
   ...UTG_25_RAISE,
   '99', '88', '77',
-  'AJs', 'KQs',
+  'AJs', 'KQs', 'AQo',
 ]);
-const HJ_25_MIXED: Record<string, number> = {};
+const HJ_25_MIXED: Record<string, number> = { '66': 0.48, 'ATs': 0.44, 'KJs': 0.38, 'QJs': 0.3, 'AJo': 0.42 };
 
 // CO 25bb
 const CO_25_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77',
   'AKs', 'AQs', 'AJs', 'ATs', 'A9s',
-  'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
-  'AKo', 'AQo', 'AJo', 'KQo',
+  'KQs', 'JTs', 'T9s', '98s',
+  'AKo', 'AQo',
 ]);
-const CO_25_MIXED: Record<string, number> = {};
+const CO_25_MIXED: Record<string, number> = {
+  '66': 0.52,
+  '55': 0.34,
+  'A8s': 0.44,
+  'A7s': 0.32,
+  'KJs': 0.72,
+  'KTs': 0.54,
+  'QJs': 0.66,
+  'QTs': 0.46,
+  'AJo': 0.7,
+  'KQo': 0.58,
+};
 
 // BTN 25bb
 const BTN_25_RAISE = new Set([
   ...CO_25_RAISE,
-  '66', '55',
-  'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'K9s', 'Q9s', 'J9s', '87s', '76s', '65s',
-  'ATo', 'KJo', 'KTo', 'QJo',
+  '66',
+  'A8s', 'A7s', 'A6s', 'A3s', 'A2s',
+  '76s', '65s',
 ]);
-const BTN_25_MIXED: Record<string, number> = {};
+const BTN_25_MIXED: Record<string, number> = {
+  '55': 0.52,
+  '44': 0.32,
+  'A5s': 0.62,
+  'A4s': 0.48,
+  'K9s': 0.42,
+  'Q9s': 0.34,
+  'J9s': 0.28,
+  '87s': 0.34,
+  'ATo': 0.64,
+  'KJo': 0.54,
+  'KTo': 0.42,
+  'QJo': 0.46,
+};
 
 // SB 25bb (multiway)
 const SB_25_RAISE = new Set([
-  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s',
-  'QJs', 'QTs', 'Q9s', 'Q8s',
-  'JTs', 'J9s', 'T9s', 'T8s', '98s', '97s', '87s', '86s', '76s', '65s', '54s',
-  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o',
-  'KQo', 'KJo', 'KTo',
-  'QJo', 'QTo', 'JTo',
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A3s', 'A2s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'K7s', 'K6s',
+  'QJs', 'QTs', 'Q9s',
+  'JTs', 'J9s', 'T9s', '98s', '97s', '87s', '86s', '76s', '65s', '54s',
+  'AKo', 'AQo', 'AJo', 'ATo', 'A9o',
+  'KQo', 'KTo',
+  'QJo',
 ]);
-const SB_25_MIXED: Record<string, number> = {};
+const SB_25_MIXED: Record<string, number> = {
+  '44': 0.56,
+  '33': 0.38,
+  'A5s': 0.68,
+  'A4s': 0.52,
+  'K8s': 0.44,
+  'Q8s': 0.36,
+  'T8s': 0.32,
+  'A8o': 0.64,
+  'KJo': 0.58,
+  'QTo': 0.48,
+  'JTo': 0.38,
+};
 
 // UTG 9-max 25bb — very tight
 const UTG_9MAX_25_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ',
   'AKs',
-  'AKo',
+  'AKo', 'AQo',
 ]);
-const UTG_9MAX_25_MIXED: Record<string, number> = {};
+const UTG_9MAX_25_MIXED: Record<string, number> = { '99': 0.34, 'AJs': 0.28, 'KQs': 0.22 };
 
 // UTG+1 25bb
 const UTG1_25_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT',
   'AKs',
-  'AKo',
+  'AKo', 'AQo',
 ]);
-const UTG1_25_MIXED: Record<string, number> = {};
+const UTG1_25_MIXED: Record<string, number> = { '99': 0.42, 'AJs': 0.32, 'KQs': 0.26 };
 
 // UTG+2 25bb
 const UTG2_25_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT',
   'AKs', 'AQs',
-  'AKo',
+  'AKo', 'AQo',
 ]);
-const UTG2_25_MIXED: Record<string, number> = {};
+const UTG2_25_MIXED: Record<string, number> = { '88': 0.42, 'ATs': 0.34, 'AJo': 0.3 };
 
 // HU SB 25bb — very wide push/fold
 const HU_SB_25_RAISE = new Set([
   ...SB_25_RAISE,
-  '33', '22',
-  'K5s', 'K4s', 'K3s', 'K2s',
-  'Q7s', 'Q6s', 'Q5s',
+  '44', '33', '22',
+  'A5s', 'A4s',
+  'K8s', 'K5s', 'K4s', 'K3s', 'K2s',
+  'Q8s', 'Q7s', 'Q6s', 'Q5s',
   'J7s', 'J6s',
-  'T7s', 'T6s',
+  'T8s', 'T7s', 'T6s',
   '96s', '95s',
   '85s', '84s',
   '75s', '74s',
   '64s', '63s',
   '53s', '43s',
-  'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
-  'K9o', 'K8o', 'K7o', 'K6o', 'K5o',
-  'Q9o', 'Q8o',
-  'J9o', 'J8o',
-  'T8o', 'T9o',
+  'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
+  'KJo', 'K9o', 'K8o', 'K7o', 'K6o', 'K5o',
+  'QTo', 'Q9o', 'Q8o',
+  'JTo', 'J9o', 'J8o',
+  'T9o', 'T8o',
   '98o', '87o',
 ]);
 const HU_SB_25_MIXED: Record<string, number> = {};
@@ -230,25 +335,25 @@ const HU_SB_25_MIXED: Record<string, number> = {};
 //  25bb jam sets (hands that open-jam instead of raise)
 // ═══════════════════════════════════════════════════════════════════════
 
-const UTG_25_JAM = new Set(['99', '88', 'AJs', 'ATs', 'KQs']);
-const HJ_25_JAM = new Set(['66', '55', 'ATs', 'A9s', 'KJs', 'QJs', 'JTs']);
+const UTG_25_JAM = new Set(['88', 'ATs']);
+const HJ_25_JAM = new Set(['55', 'A9s', 'JTs']);
 const CO_25_JAM = new Set([
-  '66', '55', '44',
-  'A8s', 'A7s', 'A6s', 'A5s', 'A4s',
-  'K9s', 'Q9s', 'J9s', '87s', '76s',
-  'ATo', 'KJo',
+  '44',
+  'A6s', 'A5s', 'A4s',
+  'Q9s', 'J9s', '87s', '76s',
+  'ATo',
 ]);
 const BTN_25_JAM = new Set([
-  '44', '33', '22',
-  'K8s', 'K7s', 'K6s', 'Q8s', 'J8s', 'T8s', '97s', '86s', '54s',
-  'A9o', 'A8o', 'A7o', 'A6o', 'A5o',
-  'KTo', 'QTo', 'JTo',
+  '33', '22',
+  'K7s', 'K6s', 'Q8s', 'J8s', 'T8s', '97s', '86s', '54s',
+  'A8o', 'A7o', 'A6o', 'A5o',
+  'QTo', 'JTo',
 ]);
 const SB_25_JAM = new Set([
-  '33', '22',
+  '22',
   'K5s', 'K4s', 'Q7s', 'J7s', 'T7s', '96s', '85s', '75s', '64s', '53s',
   'A7o', 'A6o', 'A5o', 'A4o',
-  'K9o', 'K8o', 'Q9o', 'Q8o',
+  'K8o', 'Q8o',
 ]);
 
 const UTG_9MAX_25_JAM = new Set(['TT', '99', 'AQs', 'AJs']);
@@ -275,69 +380,92 @@ const HU_SB_25_JAM = new Set([
 //  15bb ranges — mostly open-jam, only premiums min-raise (trap)
 // ═══════════════════════════════════════════════════════════════════════
 
-const UTG_15_RAISE = new Set(['AA']);
+const UTG_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'AKs', 'AKo',
+]);
 const UTG_15_JAM = new Set([
-  'KK', 'QQ', 'JJ', 'TT', '99',
-  'AKs', 'AQs', 'AJs', 'ATs', 'KQs',
-  'AKo', 'AQo',
+  'JJ', 'TT', '99',
+  'AQs', 'AJs', 'ATs', 'KQs',
+  'AQo',
 ]);
 
-const HJ_15_RAISE = new Set(['AA']);
+const HJ_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AQs', 'AKo',
+]);
 const HJ_15_JAM = new Set([
-  'KK', 'QQ', 'JJ', 'TT', '99', '88',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'QJs', 'QTs',
-  'AKo', 'AQo', 'AJo',
+  'TT', '99', '88',
+  'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'QJs', 'QTs',
+  'AQo', 'AJo',
 ]);
 
-const CO_15_RAISE = new Set(['AA', 'KK']);
+const CO_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT',
+  'AKs', 'AQs', 'AJs', 'AKo', 'AQo',
+  'KQs',
+]);
 const CO_15_JAM = new Set([
-  'QQ', 'JJ', 'TT', '99', '88', '77', '66',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s',
-  'KQs', 'KJs', 'KTs', 'K9s', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
-  'AKo', 'AQo', 'AJo', 'ATo', 'KQo', 'KJo',
+  '99', '88', '77', '66',
+  'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s',
+  'KJs', 'KTs', 'K9s', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
+  'AJo', 'ATo', 'KQo', 'KJo',
 ]);
 
-const BTN_15_RAISE = new Set(['AA', 'KK']);
+const BTN_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'AKo', 'AQo', 'AJo',
+  'KQs', 'KJs', 'QJs',
+]);
 const BTN_15_JAM = new Set([
-  'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s',
-  'QJs', 'QTs', 'Q9s', 'Q8s', 'JTs', 'J9s', 'J8s', 'T9s', 'T8s', '98s', '97s', '87s', '76s', '65s', '54s',
-  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o',
+  '88', '77', '66', '55', '44', '33', '22',
+  'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KTs', 'K9s', 'K8s', 'K7s', 'K6s',
+  'QTs', 'Q9s', 'Q8s', 'JTs', 'J9s', 'J8s', 'T9s', 'T8s', '98s', '97s', '87s', '76s', '65s', '54s',
+  'ATo', 'A9o', 'A8o', 'A7o',
   'KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'JTo',
 ]);
 
-const SB_15_RAISE = new Set(['AA', 'KK']);
+const SB_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s',
+  'AKo', 'AQo', 'AJo',
+  'KQs', 'KJs', 'QJs',
+]);
 const SB_15_JAM = new Set([
-  'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55', '44', '33', '22',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s',
-  'QJs', 'QTs', 'Q9s', 'Q8s', 'Q7s',
+  '88', '77', '66', '55', '44', '33', '22',
+  'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s',
+  'QTs', 'Q9s', 'Q8s', 'Q7s',
   'JTs', 'J9s', 'J8s', 'J7s', 'T9s', 'T8s', 'T7s', '98s', '97s', '96s', '87s', '86s', '85s', '76s', '75s', '65s', '64s', '54s', '53s',
-  'AKo', 'AQo', 'AJo', 'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o',
+  'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o',
   'KQo', 'KJo', 'KTo', 'K9o', 'K8o',
   'QJo', 'QTo', 'Q9o', 'JTo', 'J9o', 'T9o',
 ]);
 
-const UTG_9MAX_15_RAISE = new Set(['AA']);
+const UTG_9MAX_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'AKs', 'AKo',
+]);
 const UTG_9MAX_15_JAM = new Set([
-  'KK', 'QQ', 'JJ', 'TT',
-  'AKs', 'AQs', 'AJs',
-  'AKo', 'AQo',
+  'JJ', 'TT',
+  'AQs', 'AJs',
+  'AQo',
 ]);
 
-const UTG1_15_RAISE = new Set(['AA']);
+const UTG1_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'AKs', 'AQs', 'AKo',
+]);
 const UTG1_15_JAM = new Set([
-  'KK', 'QQ', 'JJ', 'TT', '99',
-  'AKs', 'AQs', 'AJs',
-  'AKo', 'AQo',
+  'JJ', 'TT', '99',
+  'AJs',
+  'AQo',
 ]);
 
-const UTG2_15_RAISE = new Set(['AA']);
+const UTG2_15_RAISE = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AQs', 'AKo',
+]);
 const UTG2_15_JAM = new Set([
-  'KK', 'QQ', 'JJ', 'TT', '99',
-  'AKs', 'AQs', 'AJs', 'ATs', 'KQs',
-  'AKo', 'AQo',
+  'TT', '99',
+  'AJs', 'ATs', 'KQs',
+  'AQo',
 ]);
 
 const HU_SB_15_RAISE = new Set(['AA', 'KK']);
@@ -369,11 +497,11 @@ const HU_SB_15_JAM = new Set([
 //  40bb ranges — 100bb pure raise set, mixed tightened by ~30%
 // ═══════════════════════════════════════════════════════════════════════
 
-const UTG_40_MIXED: Record<string, number> = { '88': 0.53, 'T9s': 0.28, 'AJo': 0.42 };
-const HJ_40_MIXED: Record<string, number> = { '66': 0.56, 'Q9s': 0.28, 'ATo': 0.46, 'KJo': 0.39 };
-const CO_40_MIXED: Record<string, number> = { 'J8s': 0.28, 'QTo': 0.42, 'JTo': 0.35 };
-const BTN_40_MIXED: Record<string, number> = { 'K2s': 0.35, 'A4o': 0.49, 'A3o': 0.42, 'K9o': 0.39, 'Q9o': 0.32 };
-const SB_40_MIXED: Record<string, number> = { 'K4s': 0.35, 'A4o': 0.46, 'A3o': 0.39, 'K8o': 0.35, 'Q9o': 0.32 };
+const UTG_40_MIXED: Record<string, number> = { '88': 0.53, 'QJs': 0.46, 'T9s': 0.24, 'AJo': 0.38 };
+const HJ_40_MIXED: Record<string, number> = { '66': 0.52, 'Q9s': 0.24, 'ATo': 0.42, 'KJo': 0.34, 'KQo': 0.74 };
+const CO_40_MIXED: Record<string, number> = { '44': 0.58, 'KTo': 0.52, 'J8s': 0.24, 'QTo': 0.36, 'JTo': 0.3 };
+const BTN_40_MIXED: Record<string, number> = { 'K4s': 0.58, 'K3s': 0.42, 'K2s': 0.28, 'A5o': 0.7, 'A4o': 0.42, 'A3o': 0.34, 'KTo': 0.64, 'K9o': 0.33, 'QTo': 0.54, 'Q9o': 0.24 };
+const SB_40_MIXED: Record<string, number> = { '44': 0.62, 'K5s': 0.68, 'K4s': 0.3, 'A5o': 0.74, 'A4o': 0.4, 'A3o': 0.32, 'K9o': 0.6, 'K8o': 0.3, 'QTo': 0.58, 'Q9o': 0.24 };
 
 const UTG_9MAX_40_MIXED: Record<string, number> = { '88': 0.4, 'T9s': 0.2 };
 const UTG1_40_MIXED: Record<string, number> = { '88': 0.45, 'T9s': 0.25, 'AJo': 0.35 };
@@ -386,7 +514,7 @@ const HU_SB_40_MIXED: Record<string, number> = { 'K4o': 0.42, 'K3o': 0.35, 'Q7o'
 
 const UTG_40_JAM = new Set(['A9s', 'KTs']);
 const HJ_40_JAM = new Set(['A8s', 'K9s', '87s']);
-const CO_40_JAM = new Set(['44', '33', 'K8s', 'Q8s', '86s', '75s']);
+const CO_40_JAM = new Set(['33', 'K8s', 'Q8s', '86s', '75s']);
 const BTN_40_JAM = new Set(['Q7s', 'J7s', 'T7s', '96s', '85s', '74s', '53s']);
 const SB_40_JAM = new Set(['33', '22', 'Q7s', 'J7s', 'T7s', '96s', '85s']);
 
@@ -396,18 +524,17 @@ const UTG2_40_JAM = new Set(['A9s', 'KTs', 'KJs']);
 
 const HU_SB_40_JAM = new Set([
   'J4s', 'T5s', '94s', '83s', '72s', '62s',
-  'K4o', 'Q7o', 'J7o', 'T7o',
 ]);
 
 // ═══════════════════════════════════════════════════════════════════════
 //  60bb ranges — 100bb pure raise set, mixed tightened by ~15%
 // ═══════════════════════════════════════════════════════════════════════
 
-const UTG_60_MIXED: Record<string, number> = { '88': 0.64, 'A9s': 0.51, 'KTs': 0.43, 'T9s': 0.34, 'AJo': 0.51 };
-const HJ_60_MIXED: Record<string, number> = { '66': 0.68, 'A8s': 0.51, 'K9s': 0.43, 'Q9s': 0.34, '87s': 0.34, 'ATo': 0.55, 'KJo': 0.47 };
-const CO_60_MIXED: Record<string, number> = { '44': 0.68, '33': 0.51, 'K8s': 0.43, 'Q8s': 0.38, 'J8s': 0.34, '86s': 0.34, '75s': 0.30, 'QTo': 0.51, 'JTo': 0.43 };
-const BTN_60_MIXED: Record<string, number> = { 'K2s': 0.43, 'Q7s': 0.43, 'J7s': 0.38, 'T7s': 0.34, '96s': 0.38, '85s': 0.34, '74s': 0.30, '53s': 0.30, 'A4o': 0.60, 'A3o': 0.51, 'K9o': 0.47, 'Q9o': 0.38 };
-const SB_60_MIXED: Record<string, number> = { '33': 0.60, '22': 0.43, 'K4s': 0.43, 'Q7s': 0.38, 'J7s': 0.34, 'T7s': 0.34, '96s': 0.34, '85s': 0.30, 'A4o': 0.55, 'A3o': 0.47, 'K8o': 0.43, 'Q9o': 0.38 };
+const UTG_60_MIXED: Record<string, number> = { '88': 0.64, 'A9s': 0.49, 'KTs': 0.39, 'QJs': 0.5, 'T9s': 0.3, 'AJo': 0.47 };
+const HJ_60_MIXED: Record<string, number> = { '66': 0.66, 'A8s': 0.49, 'K9s': 0.39, 'Q9s': 0.3, '87s': 0.28, 'ATo': 0.51, 'KJo': 0.42, 'KQo': 0.78 };
+const CO_60_MIXED: Record<string, number> = { '44': 0.66, '33': 0.47, 'K8s': 0.39, 'Q8s': 0.34, 'J8s': 0.3, '86s': 0.28, '75s': 0.24, '65s': 0.64, 'KTo': 0.56, 'QTo': 0.47, 'JTo': 0.39 };
+const BTN_60_MIXED: Record<string, number> = { 'K4s': 0.66, 'K3s': 0.5, 'K2s': 0.36, 'Q7s': 0.39, 'J7s': 0.34, 'T7s': 0.3, '96s': 0.34, '85s': 0.28, '74s': 0.24, '53s': 0.22, 'A5o': 0.76, 'A4o': 0.54, 'A3o': 0.45, 'KTo': 0.7, 'K9o': 0.42, 'QTo': 0.6, 'Q9o': 0.32, 'J9o': 0.46, 'T9o': 0.66 };
+const SB_60_MIXED: Record<string, number> = { '44': 0.7, '33': 0.56, '22': 0.38, 'K5s': 0.76, 'K4s': 0.38, 'Q8s': 0.68, 'Q7s': 0.34, 'J8s': 0.64, 'J7s': 0.3, 'T8s': 0.6, 'T7s': 0.28, '96s': 0.28, '85s': 0.24, 'A5o': 0.8, 'A4o': 0.5, 'A3o': 0.42, 'K9o': 0.66, 'K8o': 0.38, 'QTo': 0.64, 'Q9o': 0.32, 'J9o': 0.5, 'T9o': 0.7 };
 
 const UTG_9MAX_60_MIXED: Record<string, number> = { '88': 0.45, 'KJs': 0.4, 'T9s': 0.25 };
 const UTG1_60_MIXED: Record<string, number> = { '88': 0.55, 'A9s': 0.4, 'KTs': 0.35, 'T9s': 0.3 };
@@ -423,8 +550,11 @@ const HU_SB_60_MIXED: Record<string, number> = { 'J4s': 0.43, 'T5s': 0.43, '94s'
 function rfiRange(raiseSet: Set<string>, mixedMap: Record<string, number>) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, raiseSet)) return { raise: 1.0, fold: 0 };
     if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, fold: 1 - f }; }
+    const currentKey = inSet(h, raiseSet) ? 'raise' : 'fold';
+    const smooth = smoothFrequencies(row, col, currentKey, [{ key: 'raise', set: raiseSet }]);
+    if (smooth) return smooth;
+    if (inSet(h, raiseSet)) return { raise: 1.0, fold: 0 };
     return { raise: 0, fold: 1.0 };
   };
 }
@@ -432,9 +562,15 @@ function rfiRange(raiseSet: Set<string>, mixedMap: Record<string, number>) {
 function rfiJamRange(raiseSet: Set<string>, jamSet: Set<string>, mixedMap: Record<string, number>) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
+    if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, allin: 0, fold: 1 - f }; }
+    const currentKey = inSet(h, jamSet) ? 'allin' : inSet(h, raiseSet) ? 'raise' : 'fold';
+    const smooth = smoothFrequencies(row, col, currentKey, [
+      { key: 'raise', set: raiseSet },
+      { key: 'allin', set: jamSet },
+    ], 0.88, 0.1);
+    if (smooth) return smooth;
     if (inSet(h, raiseSet)) return { raise: 1.0, allin: 0, fold: 0 };
     if (inSet(h, jamSet)) return { raise: 0, allin: 1.0, fold: 0 };
-    if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, allin: 0, fold: 1 - f }; }
     return { raise: 0, allin: 0, fold: 1.0 };
   };
 }
@@ -459,7 +595,8 @@ type RangeData = {
  *  - 'CO'                      → CO data
  *  - 'HJ'                      → HJ data (was "MP" in old 6-max file)
  *  - 'UTG'   at maxPlayers<=6  → UTG data (original 6-max UTG)
- *  - 'MP'    at maxPlayers>=7  → UTG data (same ~15% range)
+ *  - 'MP'    at 7-max          → UTG data
+ *  - 'MP'    at 8-9max         → UTG+2 data
  *  - 'UTG'   at maxPlayers>=7  → UTG_9MAX data (~11%)
  *  - 'UTG+1'                   → UTG1 data (~12%)
  *  - 'UTG+2'                   → UTG2 data (~13%)
@@ -486,7 +623,8 @@ function resolveRangeKey(position: string, maxPlayers: MaxPlayers): RangeKey {
   if (position === 'BTN') return 'btn';
   if (position === 'CO') return 'co';
   if (position === 'HJ') return 'hj';
-  if (position === 'MP') return 'utg';          // MP at 7+ uses the same ~15% range as 6-max UTG
+  if (position === 'MP' && maxPlayers >= 8) return 'utg2';
+  if (position === 'MP') return 'utg';
   if (position === 'UTG' && maxPlayers >= 7) return 'utg9max';
   if (position === 'UTG') return 'utg';          // UTG at 6-max or fewer
   if (position === 'UTG+1') return 'utg1';
@@ -525,32 +663,36 @@ function rangeData100(key: RangeKey): RangeData {
 function rangeData60(key: RangeKey): RangeData {
   // 60bb uses the 100bb raise set with tightened mixed
   const base = rangeData100(key);
+  const tightenedRaise = (mixed: Record<string, number>) =>
+    new Set([...base.raise].filter((hand) => !(hand in mixed)));
   switch (key) {
-    case 'utg9max': return { raise: base.raise, mixed: UTG_9MAX_60_MIXED };
-    case 'utg1':    return { raise: base.raise, mixed: UTG1_60_MIXED };
-    case 'utg2':    return { raise: base.raise, mixed: UTG2_60_MIXED };
-    case 'utg':     return { raise: base.raise, mixed: UTG_60_MIXED };
-    case 'hj':      return { raise: base.raise, mixed: HJ_60_MIXED };
-    case 'co':      return { raise: base.raise, mixed: CO_60_MIXED };
-    case 'btn':     return { raise: base.raise, mixed: BTN_60_MIXED };
-    case 'sb':      return { raise: base.raise, mixed: SB_60_MIXED };
-    case 'hu_sb':   return { raise: base.raise, mixed: HU_SB_60_MIXED };
+    case 'utg9max': return { raise: tightenedRaise(UTG_9MAX_60_MIXED), mixed: UTG_9MAX_60_MIXED };
+    case 'utg1':    return { raise: tightenedRaise(UTG1_60_MIXED), mixed: UTG1_60_MIXED };
+    case 'utg2':    return { raise: tightenedRaise(UTG2_60_MIXED), mixed: UTG2_60_MIXED };
+    case 'utg':     return { raise: tightenedRaise(UTG_60_MIXED), mixed: UTG_60_MIXED };
+    case 'hj':      return { raise: tightenedRaise(HJ_60_MIXED), mixed: HJ_60_MIXED };
+    case 'co':      return { raise: tightenedRaise(CO_60_MIXED), mixed: CO_60_MIXED };
+    case 'btn':     return { raise: tightenedRaise(BTN_60_MIXED), mixed: BTN_60_MIXED };
+    case 'sb':      return { raise: tightenedRaise(SB_60_MIXED), mixed: SB_60_MIXED };
+    case 'hu_sb':   return { raise: tightenedRaise(HU_SB_60_MIXED), mixed: HU_SB_60_MIXED };
   }
 }
 
 function rangeData40(key: RangeKey): RangeData {
   // 40bb uses 100bb raise set + jam set + tightened mixed
   const base = rangeData100(key);
+  const adjustedRaise = (jam: Set<string>, mixed: Record<string, number>) =>
+    new Set([...base.raise].filter((hand) => !jam.has(hand) && !(hand in mixed)));
   switch (key) {
-    case 'utg9max': return { raise: base.raise, jam: UTG_9MAX_40_JAM, mixed: UTG_9MAX_40_MIXED };
-    case 'utg1':    return { raise: base.raise, jam: UTG1_40_JAM,     mixed: UTG1_40_MIXED };
-    case 'utg2':    return { raise: base.raise, jam: UTG2_40_JAM,     mixed: UTG2_40_MIXED };
-    case 'utg':     return { raise: base.raise, jam: UTG_40_JAM,      mixed: UTG_40_MIXED };
-    case 'hj':      return { raise: base.raise, jam: HJ_40_JAM,       mixed: HJ_40_MIXED };
-    case 'co':      return { raise: base.raise, jam: CO_40_JAM,       mixed: CO_40_MIXED };
-    case 'btn':     return { raise: base.raise, jam: BTN_40_JAM,      mixed: BTN_40_MIXED };
-    case 'sb':      return { raise: base.raise, jam: SB_40_JAM,       mixed: SB_40_MIXED };
-    case 'hu_sb':   return { raise: base.raise, jam: HU_SB_40_JAM,    mixed: HU_SB_40_MIXED };
+    case 'utg9max': return { raise: adjustedRaise(UTG_9MAX_40_JAM, UTG_9MAX_40_MIXED), jam: UTG_9MAX_40_JAM, mixed: UTG_9MAX_40_MIXED };
+    case 'utg1':    return { raise: adjustedRaise(UTG1_40_JAM, UTG1_40_MIXED), jam: UTG1_40_JAM, mixed: UTG1_40_MIXED };
+    case 'utg2':    return { raise: adjustedRaise(UTG2_40_JAM, UTG2_40_MIXED), jam: UTG2_40_JAM, mixed: UTG2_40_MIXED };
+    case 'utg':     return { raise: adjustedRaise(UTG_40_JAM, UTG_40_MIXED), jam: UTG_40_JAM, mixed: UTG_40_MIXED };
+    case 'hj':      return { raise: adjustedRaise(HJ_40_JAM, HJ_40_MIXED), jam: HJ_40_JAM, mixed: HJ_40_MIXED };
+    case 'co':      return { raise: adjustedRaise(CO_40_JAM, CO_40_MIXED), jam: CO_40_JAM, mixed: CO_40_MIXED };
+    case 'btn':     return { raise: adjustedRaise(BTN_40_JAM, BTN_40_MIXED), jam: BTN_40_JAM, mixed: BTN_40_MIXED };
+    case 'sb':      return { raise: adjustedRaise(SB_40_JAM, SB_40_MIXED), jam: SB_40_JAM, mixed: SB_40_MIXED };
+    case 'hu_sb':   return { raise: adjustedRaise(HU_SB_40_JAM, HU_SB_40_MIXED), jam: HU_SB_40_JAM, mixed: HU_SB_40_MIXED };
   }
 }
 

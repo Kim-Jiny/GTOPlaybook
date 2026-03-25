@@ -174,8 +174,11 @@ const UTG2_PUSH = new Set([
   'AKo', 'AQo',
 ]);
 
-// MP at 7+ players — same as 6-max UTG
-const MP_PUSH = UTG_6MAX_PUSH;
+// MP at 7+ players — wider than UTG+2, tighter than HJ
+const MP_PUSH = new Set([
+  ...UTG2_PUSH,
+  '99', 'A9s', 'KJs',
+]);
 
 // HJ push range (~16%) — was MP in 6-max
 const HJ_PUSH = new Set([
@@ -235,6 +238,47 @@ const HU_SB_PUSH = new Set([
   '54o', '53o',
 ]);
 
+// ── BB push ranges (wider than SB — already posted blind) ──
+
+// BB 15bb push (~60%) — wider than SB (~50%)
+const BB_PUSH = new Set([
+  ...SB_PUSH,
+  'Q4s', 'Q3s',
+  'J6s', 'J5s',
+  'T7s', 'T6s',
+  '96s', '95s',
+  '84s', '83s',
+  '74s', '73s',
+  '63s', '62s',
+  '52s', '43s',
+  'A4o', 'A3o', 'A2o',
+  'K7o', 'K6o',
+  'Q7o', 'Q6o',
+  'J8o', 'T8o', '98o', '87o',
+]);
+
+// BB 7bb push (~75%) — wider than SB (~65%)
+const BB_7BB_PUSH = new Set([
+  ...SB_7BB_PUSH,
+  'Q2s',
+  'J4s', 'J3s', 'J2s',
+  'T5s', 'T4s',
+  '95s', '94s',
+  '84s', '83s',
+  '73s', '72s',
+  '63s', '62s',
+  '52s', '42s', '32s',
+  'K5o', 'K4o',
+  'Q5o', 'Q4o',
+  'J7o', 'J6o',
+  'T7o', 'T6o',
+  '97o', '96o',
+  '86o', '85o',
+  '76o', '75o',
+  '65o', '64o',
+  '54o', '53o',
+]);
+
 // ── BB call vs all-in ranges (based on shover position class) ──
 
 // BB call vs ep-tight (UTG, UTG+1, UTG+2, MP at 7+)
@@ -273,6 +317,26 @@ const BB_CALL_VS_SB = new Set([
   'A7o', 'A6o', 'A5o', 'KTo', 'QJo',
 ]);
 
+// ── SB call vs BB shove ranges ──
+
+// SB call vs BB shove 15bb — BB pushes wide, SB calls with decent range
+const SB_CALL_VS_BB_15 = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s',
+  'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs',
+  'AKo', 'AQo', 'AJo', 'ATo', 'A9o',
+  'KQo', 'KJo',
+]);
+
+// SB call vs BB shove 7bb — wider due to better pot odds
+const SB_CALL_VS_BB_7 = new Set([
+  ...SB_CALL_VS_BB_15,
+  '66', '55',
+  'A7s', 'A6s', 'A5s', 'K9s', 'K8s', 'Q9s', 'J9s', 'T9s', '98s',
+  'A8o', 'A7o', 'A6o', 'A5o',
+  'KTo', 'QJo', 'QTo',
+]);
+
 // ── Range builders ──
 
 function pushFoldRange(pushSet: Set<string>) {
@@ -309,7 +373,7 @@ function getPushRange7bb(position: string, maxPlayers: MaxPlayers): Set<string> 
     case 'CO':   return CO_7BB_PUSH;
     case 'BTN':  return BTN_7BB_PUSH;
     case 'SB':   return maxPlayers === 2 ? HU_SB_7BB_PUSH : SB_7BB_PUSH;
-    case 'BB':   return SB_7BB_PUSH;
+    case 'BB':   return BB_7BB_PUSH;
     default:     return UTG_7BB_PUSH;
   }
 }
@@ -325,7 +389,7 @@ function getPushRange15bb(position: string, maxPlayers: MaxPlayers): Set<string>
     case 'CO':   return CO_PUSH;
     case 'BTN':  return BTN_PUSH;
     case 'SB':   return maxPlayers === 2 ? HU_SB_PUSH : SB_PUSH;
-    case 'BB':   return SB_PUSH;
+    case 'BB':   return BB_PUSH;
     default:     return UTG_6MAX_PUSH;
   }
 }
@@ -353,8 +417,16 @@ function getBbCallRange15bb(shoverPosition: string): Set<string> {
     case 'BTN': return BB_CALL_VS_BTN;
     case 'CO':  return BB_CALL_VS_CO;
     case 'HJ':  return BB_CALL_VS_HJ;
+    case 'UTG+2':
+    case 'MP':  return BB_CALL_VS_HJ;
     default:    return BB_CALL_VS_EP;
   }
+}
+
+// ── SB call range lookup vs BB shove ──
+
+function getSbCallVsBbRange(depth: 7 | 15): Set<string> {
+  return depth === 7 ? SB_CALL_VS_BB_7 : SB_CALL_VS_BB_15;
 }
 
 // ── Public API ──
@@ -399,6 +471,22 @@ export function getShortStackCharts(depth: StackDepth, maxPlayers: MaxPlayers = 
         ranges: callShoveRange(callRange),
       });
     }
+  }
+
+  // SB Call vs BB Shove chart
+  if (positions.includes('SB') && positions.includes('BB')) {
+    const callRange = getSbCallVsBbRange(pushDepth);
+    charts.push({
+      position: 'SB',
+      situation: 'Call vs Shove',
+      vsPosition: 'BB',
+      category: 'Call vs Shove',
+      description: `SB Call vs BB Shove (${depth}bb)`,
+      stackDepth: depth,
+      maxPlayers,
+      actionTypes: CALL_SHOVE_ACTIONS,
+      ranges: callShoveRange(callRange),
+    });
   }
 
   return charts;

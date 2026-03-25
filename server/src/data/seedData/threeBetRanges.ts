@@ -2,10 +2,12 @@ import {
   ChartDef,
   handLabel,
   inSet,
+  smoothFrequencies,
   StackDepth,
   MaxPlayers,
   positionsForPlayerCount,
   openerClass,
+  shallowOpenerClass,
 } from './helpers';
 import { THREE_BET_ACTIONS, THREE_BET_FOLD_ACTIONS } from './actionColors';
 
@@ -134,15 +136,32 @@ const SB_3BET_VS_BTN_CALL_40 = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// 25bb ranges — jam-or-fold style (no calling range)
+// 25bb ranges — still aggressive, but not pure jam/fold
 // ---------------------------------------------------------------------------
 
+const HJ_3BET_VS_UTG_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs']);
+const HJ_3BET_VS_UTG_CALL_25 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
+
+const CO_3BET_VS_UTG_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs']);
+const CO_3BET_VS_UTG_CALL_25 = new Set(['JJ', 'TT', 'AKo', 'AQs']);
+const CO_3BET_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
+const CO_3BET_VS_HJ_CALL_25 = new Set(['JJ', 'TT', '99', 'AQs', 'AQo', 'AJs']);
+
 const BTN_3BET_VS_UTG_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const BTN_3BET_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const BTN_3BET_VS_CO_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
+const BTN_3BET_VS_UTG_CALL_25 = new Set(['JJ', 'TT', 'AQs', 'AJs', 'KQs']);
+const BTN_3BET_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
+const BTN_3BET_VS_HJ_CALL_25 = new Set(['TT', '99', 'AQs', 'AQo', 'AJs', 'ATs', 'KQs']);
+const BTN_3BET_VS_CO_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs', 'A5s']);
+const BTN_3BET_VS_CO_CALL_25 = new Set(['TT', '99', '88', 'AQo', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs', 'JTs', 'T9s']);
+
 const SB_3BET_VS_UTG_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const SB_3BET_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const SB_3BET_VS_BTN_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
+const SB_3BET_VS_UTG_CALL_25 = new Set(['JJ', 'TT', 'AQs', 'AJs']);
+const SB_3BET_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo']);
+const SB_3BET_VS_HJ_CALL_25 = new Set(['TT', '99', 'AQs', 'AQo', 'AJs', 'KQs']);
+const SB_3BET_VS_CO_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs', 'A5s']);
+const SB_3BET_VS_CO_CALL_25 = new Set(['TT', '99', '88', 'AJs', 'ATs', 'KQs', 'KJs', 'QJs', 'JTs', 'T9s']);
+const SB_3BET_VS_BTN_3BET_25 = new Set(['AA', 'KK', 'QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs', 'A5s', 'A4s']);
+const SB_3BET_VS_BTN_CALL_25 = new Set(['99', '88', '77', 'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'KTs', 'QJs', 'JTs', 'T9s', '98s']);
 
 // ---------------------------------------------------------------------------
 // 15bb ranges — reshove-or-fold (wider than 25bb due to more fold equity)
@@ -159,8 +178,6 @@ const SB_3BET_VS_BTN_3BET_15 = new Set(['AA', 'KK', 'QQ', 'JJ', 'TT', 'AKs', 'AK
 const HJ_3BET_VS_UTG_3BET_15 = new Set(['AA', 'KK']);
 const CO_3BET_VS_UTG_3BET_15 = new Set(['AA', 'KK', 'QQ']);
 const CO_3BET_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
-
-const EMPTY_CALL = new Set<string>();
 
 type ThreeBetMixedMap = false | Record<string, { '3bet': number; call: number; fold: number }>;
 
@@ -184,6 +201,15 @@ const THREE_BET_MIXED_40: Record<string, { '3bet': number; call: number; fold: n
   'KQs': { '3bet': 0.24, call: 0.56, fold: 0.2 },
 };
 
+const THREE_BET_MIXED_25: Record<string, { '3bet': number; call: number; fold: number }> = {
+  'JJ': { '3bet': 0.65, call: 0.35, fold: 0 },
+  'TT': { '3bet': 0.5, call: 0.5, fold: 0 },
+  'AQs': { '3bet': 0.55, call: 0.45, fold: 0 },
+  'AQo': { '3bet': 0.4, call: 0.35, fold: 0.25 },
+  'AJs': { '3bet': 0.35, call: 0.4, fold: 0.25 },
+  'KQs': { '3bet': 0.3, call: 0.4, fold: 0.3 },
+};
+
 // ---------------------------------------------------------------------------
 // threeBetRange helper
 // ---------------------------------------------------------------------------
@@ -195,8 +221,14 @@ function threeBetRange(
 ) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, threeBetSet)) return { '3bet': 1.0, call: 0, fold: 0 };
     if (mixedMap && h in mixedMap) return mixedMap[h];
+    const currentKey = inSet(h, threeBetSet) ? '3bet' : inSet(h, callSet) ? 'call' : 'fold';
+    const smooth = smoothFrequencies(row, col, currentKey, [
+      { key: '3bet', set: threeBetSet },
+      { key: 'call', set: callSet },
+    ]);
+    if (smooth) return smooth;
+    if (inSet(h, threeBetSet)) return { '3bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '3bet': 0, call: 1.0, fold: 0 };
     return { '3bet': 0, call: 0, fold: 1.0 };
   };
@@ -240,8 +272,9 @@ function get3betRangeData(
   threeBettor: string,
   opener: string,
   depth: StackDepth,
+  maxPlayers: MaxPlayers,
 ): RangeResult {
-  const oClass = openerClass(opener);
+  const oClass = depth <= 25 ? shallowOpenerClass(opener, maxPlayers) : openerClass(opener);
 
   // Determine which reference 3bettor's data to use
   const refSeat = threeBettorRefSeat(threeBettor);
@@ -314,25 +347,32 @@ function get25bbRange(
   refSeat: 'HJ' | 'CO' | 'BTN' | 'SB',
   oClass: ReturnType<typeof openerClass>,
 ): RangeResult {
-  // At 25bb only BTN and SB have 3bet data
+  if (refSeat === 'HJ') {
+    if (oClass === 'ep-tight') return threeBetRange(HJ_3BET_VS_UTG_3BET_25, HJ_3BET_VS_UTG_CALL_25, THREE_BET_MIXED_25);
+    return null;
+  }
+  if (refSeat === 'CO') {
+    if (oClass === 'ep-tight') return threeBetRange(CO_3BET_VS_UTG_3BET_25, CO_3BET_VS_UTG_CALL_25, THREE_BET_MIXED_25);
+    if (oClass === 'hj') return threeBetRange(CO_3BET_VS_HJ_3BET_25, CO_3BET_VS_HJ_CALL_25, THREE_BET_MIXED_25);
+    return null;
+  }
   if (refSeat === 'BTN') {
     switch (oClass) {
-      case 'ep-tight': return threeBetFoldRange(BTN_3BET_VS_UTG_3BET_25);
-      case 'hj':       return threeBetFoldRange(BTN_3BET_VS_HJ_3BET_25);
-      case 'co':       return threeBetFoldRange(BTN_3BET_VS_CO_3BET_25);
+      case 'ep-tight': return threeBetRange(BTN_3BET_VS_UTG_3BET_25, BTN_3BET_VS_UTG_CALL_25, THREE_BET_MIXED_25);
+      case 'hj':       return threeBetRange(BTN_3BET_VS_HJ_3BET_25, BTN_3BET_VS_HJ_CALL_25, THREE_BET_MIXED_25);
+      case 'co':       return threeBetRange(BTN_3BET_VS_CO_3BET_25, BTN_3BET_VS_CO_CALL_25, THREE_BET_MIXED_25);
       default:         return null;
     }
   }
   if (refSeat === 'SB') {
     switch (oClass) {
-      case 'ep-tight': return threeBetFoldRange(SB_3BET_VS_UTG_3BET_25);
-      case 'hj':       return threeBetFoldRange(SB_3BET_VS_HJ_3BET_25);
-      case 'co':       return threeBetFoldRange(SB_3BET_VS_UTG_3BET_25); // tight, reuse vs UTG
-      case 'btn':      return threeBetFoldRange(SB_3BET_VS_BTN_3BET_25);
+      case 'ep-tight': return threeBetRange(SB_3BET_VS_UTG_3BET_25, SB_3BET_VS_UTG_CALL_25, THREE_BET_MIXED_25);
+      case 'hj':       return threeBetRange(SB_3BET_VS_HJ_3BET_25, SB_3BET_VS_HJ_CALL_25, THREE_BET_MIXED_25);
+      case 'co':       return threeBetRange(SB_3BET_VS_CO_3BET_25, SB_3BET_VS_CO_CALL_25, THREE_BET_MIXED_25);
+      case 'btn':      return threeBetRange(SB_3BET_VS_BTN_3BET_25, SB_3BET_VS_BTN_CALL_25, THREE_BET_MIXED_25);
       default:         return null;
     }
   }
-  // HJ/CO at 25bb: no 3bet chart data (shove-or-fold handled in short stack)
   return null;
 }
 
@@ -558,7 +598,7 @@ export function getThreeBetCharts(
     // 3bettor can 3bet any position before it in the order
     for (let j = 0; j < i; j++) {
       const opener = positions[j];
-      const rangeData = get3betRangeData(threeBettor, opener, depth);
+      const rangeData = get3betRangeData(threeBettor, opener, depth, maxPlayers);
       if (rangeData) {
         charts.push({
           position: threeBettor,
@@ -568,7 +608,7 @@ export function getThreeBetCharts(
           stackDepth: depth,
           maxPlayers,
           description: `${threeBettor} 3bet vs ${opener} open (${depth}bb, ${maxPlayers}-max)`,
-          actionTypes: (depth === 15 || depth === 25) ? THREE_BET_FOLD_ACTIONS : THREE_BET_ACTIONS,
+          actionTypes: depth === 15 ? THREE_BET_FOLD_ACTIONS : THREE_BET_ACTIONS,
           ranges: rangeData,
         });
       }

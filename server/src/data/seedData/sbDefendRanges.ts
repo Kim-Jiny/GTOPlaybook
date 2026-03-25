@@ -1,4 +1,4 @@
-import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, StackDepth } from './helpers';
+import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, smoothFrequencies, StackDepth } from './helpers';
 import { SB_DEFEND_ACTIONS, SB_DEFEND_JAM_ACTIONS } from './actionColors';
 
 // SB Defend (3bet or fold) vs various openers
@@ -71,42 +71,40 @@ const SB_15_VS_BB_RAISE = new Set([
 ]);
 
 // ---------------------------------------------------------------------------
-// 25bb ranges — SB is mostly 3bet-all-in or fold, very tight
+// 25bb ranges — SB remains polarized, but not premium-only
 // ---------------------------------------------------------------------------
 
-// SB vs UTG open at 25bb — only premiums
 const SB_25_VS_UTG_3BET = new Set([
-  'AA', 'KK',
-]);
-
-// SB vs HJ open at 25bb
-const SB_25_VS_HJ_3BET = new Set([
-  'AA', 'KK', 'QQ',
-]);
-
-// SB vs CO open at 25bb
-const SB_25_VS_CO_3BET = new Set([
   'AA', 'KK', 'QQ', 'AKs',
 ]);
 
-// SB vs BTN open at 25bb
+const SB_25_VS_HJ_3BET = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'AKs', 'A5s',
+]);
+
+const SB_25_VS_CO_3BET = new Set([
+  'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'AQs', 'A5s', 'A4s',
+]);
+
 const SB_25_VS_BTN_3BET = new Set([
-  'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo',
+  'AA', 'KK', 'QQ', 'JJ', 'TT', 'AKs', 'AKo', 'AQs', 'AJs', 'A5s', 'A4s', 'K9s',
 ]);
 
 // SB vs BB limp at 25bb — wider since BB is weaker
 const SB_25_VS_BB_RAISE = new Set([
-  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88',
-  'AKs', 'AQs', 'AJs', 'ATs',
-  'KQs',
-  'AKo', 'AQo', 'AJo',
+  'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'K8s',
+  'QJs', 'QTs', 'Q9s', 'JTs', 'J9s', 'T9s', '98s', '87s', '76s',
+  'AKo', 'AQo', 'AJo', 'ATo',
+  'KQo', 'KJo', 'QJo',
 ]);
 
 // 25bb jam sets — hands that jam (all-in) instead of standard 3bet
-const SB_25_VS_UTG_JAM = new Set(['QQ', 'AKs', 'AKo']);
-const SB_25_VS_HJ_JAM = new Set(['JJ', 'AKs', 'AKo', 'AQs']);
-const SB_25_VS_CO_JAM = new Set(['JJ', 'TT', 'AKo', 'AQs', 'AQo']);
-const SB_25_VS_BTN_JAM = new Set(['TT', '99', 'AQs', 'AQo', 'AJs', 'KQs']);
+const SB_25_VS_UTG_JAM = new Set(['JJ', 'AKo']);
+const SB_25_VS_HJ_JAM = new Set(['QQ', 'AKo', 'AQs']);
+const SB_25_VS_CO_JAM = new Set(['TT', '99', 'AQo', 'A5s']);
+const SB_25_VS_BTN_JAM = new Set(['99', '88', 'AQo', 'ATs', 'KQs', 'QJs']);
 
 // ---------------------------------------------------------------------------
 // 40bb ranges — ~20-25% tighter 3bet sets than 100bb
@@ -236,8 +234,11 @@ const SB_DEFEND_MIXED_40: Record<string, { '3bet': number; fold: number }> = {
 function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, threeBetSet)) return { '3bet': 1.0, fold: 0 };
     if (mixedMap && h in mixedMap) return mixedMap[h];
+    const currentKey = inSet(h, threeBetSet) ? '3bet' : 'fold';
+    const smooth = smoothFrequencies(row, col, currentKey, [{ key: '3bet', set: threeBetSet }]);
+    if (smooth) return smooth;
+    if (inSet(h, threeBetSet)) return { '3bet': 1.0, fold: 0 };
     return { '3bet': 0, fold: 1.0 };
   };
 }
@@ -245,8 +246,14 @@ function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {
 function sbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, threeBetSet)) return { '3bet': 1.0, allin: 0, fold: 0 };
+    const currentKey = inSet(h, jamSet) ? 'allin' : inSet(h, threeBetSet) ? '3bet' : 'fold';
+    const smooth = smoothFrequencies(row, col, currentKey, [
+      { key: '3bet', set: threeBetSet },
+      { key: 'allin', set: jamSet },
+    ], 0.88, 0.1);
+    if (smooth) return smooth;
     if (inSet(h, jamSet)) return { '3bet': 0, allin: 1.0, fold: 0 };
+    if (inSet(h, threeBetSet)) return { '3bet': 1.0, allin: 0, fold: 0 };
     return { '3bet': 0, allin: 0, fold: 1.0 };
   };
 }
@@ -389,7 +396,7 @@ export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
   const charts: ChartDef[] = [];
 
   for (const opener of openers) {
-    const cls = openerClass(opener);
+    const cls = depth <= 25 ? shallowOpenerClass(opener, maxPlayers) : openerClass(opener);
     // cls will never be 'sb' here since we filtered SB out;
     // cast to the narrower type used by SB lookup functions
     const sbCls = cls as 'ep-tight' | 'hj' | 'co' | 'btn';

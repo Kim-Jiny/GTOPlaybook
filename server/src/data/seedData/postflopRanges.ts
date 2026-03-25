@@ -9,68 +9,75 @@ import { POSTFLOP_CBET_ACTIONS } from './actionColors';
 // Helper: classify hands for cbet frequency on different board textures
 // Simplified GTO-approximate Cbet frequencies
 
+function gap(row: number, col: number) {
+  return Math.abs(row - col);
+}
+
+function isBroadway(row: number, col: number) {
+  return row <= 4 && col <= 4;
+}
+
+function hasAce(row: number, col: number) {
+  return row === 0 || col === 0;
+}
+
+function hasKing(row: number, col: number) {
+  return row === 1 || col === 1;
+}
+
 // 1. Dry High: A72r (rainbow) — high cbet frequency (~70%)
 function dryHighCbet(row: number, col: number) {
-  const h = handLabel(row, col);
-  const r1 = RANKS[row], r2 = RANKS[col];
   const isPair = row === col;
   const isSuited = row < col;
 
   // Bet with: any Ace, overpairs, good draws
-  if (r1 === 'A' || r2 === 'A') return { bet: 0.85, check: 0.15 };
+  if (hasAce(row, col)) return { bet: 0.86, check: 0.14 };
   if (isPair && row <= 5) return { bet: 0.9, check: 0.1 }; // overpairs KK-88
   if (isPair && row >= 6) return { bet: 0.3, check: 0.7 }; // underpairs
-  // Broadway hands
-  if (row <= 3 && col <= 3) return { bet: 0.65, check: 0.35 };
+  if (isBroadway(row, col)) return { bet: 0.64, check: 0.36 };
   // Suited connectors — sometimes bet as bluff
-  if (isSuited && Math.abs(row - col) === 1) return { bet: 0.45, check: 0.55 };
-  // High cards
-  if (r1 === 'K' || r2 === 'K') return { bet: 0.6, check: 0.4 };
-  return { bet: 0.35, check: 0.65 };
+  if (isSuited && gap(row, col) === 1) return { bet: 0.45, check: 0.55 };
+  if (isSuited && gap(row, col) === 2) return { bet: 0.48, check: 0.52 };
+  if (hasKing(row, col)) return { bet: 0.58, check: 0.42 };
+  return { bet: 0.32, check: 0.68 };
 }
 
 // 2. Dry Mid: K83r (rainbow) — moderate cbet (~55%)
 function dryMidCbet(row: number, col: number) {
-  const h = handLabel(row, col);
-  const r1 = RANKS[row], r2 = RANKS[col];
   const isPair = row === col;
   const isSuited = row < col;
 
-  if (r1 === 'K' || r2 === 'K') return { bet: 0.8, check: 0.2 };
-  if (r1 === 'A' || r2 === 'A') return { bet: 0.7, check: 0.3 };
+  if (hasKing(row, col)) return { bet: 0.8, check: 0.2 };
+  if (hasAce(row, col)) return { bet: 0.68, check: 0.32 };
   if (isPair && row <= 4) return { bet: 0.75, check: 0.25 };
   if (isPair && row === 5) return { bet: 0.6, check: 0.4 }; // 88 on K83
   if (isPair) return { bet: 0.25, check: 0.75 };
-  if (row <= 2 && col <= 2) return { bet: 0.5, check: 0.5 };
-  if (isSuited && Math.abs(row - col) <= 2) return { bet: 0.4, check: 0.6 };
-  return { bet: 0.3, check: 0.7 };
+  if (row <= 2 && col <= 2) return { bet: 0.52, check: 0.48 };
+  if (isSuited && gap(row, col) <= 2) return { bet: 0.42, check: 0.58 };
+  return { bet: 0.28, check: 0.72 };
 }
 
 // 3. Wet Broadway: QJT — mostly check (~35% cbet)
 function wetBroadwayCbet(row: number, col: number) {
-  const h = handLabel(row, col);
-  const r1 = RANKS[row], r2 = RANKS[col];
   const isPair = row === col;
-  const isSuited = row < col;
 
   // Sets and two pair — bet for value
   if (isPair && (row === 2 || row === 3 || row === 4)) return { bet: 0.85, check: 0.15 };
   // Straights (AK, K9, 98)
-  if ((r1 === 'A' && r2 === 'K') || (r1 === 'K' && r2 === 'A')) return { bet: 0.8, check: 0.2 };
-  if ((r1 === 'K' || r2 === 'K') && (r1 === '9' || r2 === '9')) return { bet: 0.75, check: 0.25 };
+  if ((row === 0 && col === 1) || (row === 1 && col === 0)) return { bet: 0.8, check: 0.2 };
+  if ((hasKing(row, col)) && (RANKS[row] === '9' || RANKS[col] === '9')) return { bet: 0.75, check: 0.25 };
   // Overpairs
   if (isPair && row <= 1) return { bet: 0.5, check: 0.5 };
   // Gutshots and draws
-  if (r1 === 'A' || r2 === 'A') return { bet: 0.4, check: 0.6 };
-  if (r1 === 'K' || r2 === 'K') return { bet: 0.35, check: 0.65 };
+  if (hasAce(row, col)) return { bet: 0.42, check: 0.58 };
+  if (hasKing(row, col)) return { bet: 0.36, check: 0.64 };
+  if (row < col && gap(row, col) <= 2 && row >= 1 && col <= 6) return { bet: 0.34, check: 0.66 };
   // Most hands check on this connected board
-  return { bet: 0.2, check: 0.8 };
+  return { bet: 0.18, check: 0.82 };
 }
 
 // 4. Monotone: 963ss — mostly check (~30% cbet)
 function monotoneCbet(row: number, col: number) {
-  const h = handLabel(row, col);
-  const r1 = RANKS[row], r2 = RANKS[col];
   const isPair = row === col;
   const isSuited = row < col;
 
@@ -78,43 +85,40 @@ function monotoneCbet(row: number, col: number) {
   if (isPair && row <= 3) return { bet: 0.45, check: 0.55 };
   // Flush draws (suited hands) — mix
   if (isSuited) {
-    if (r1 === 'A' || r2 === 'A') return { bet: 0.55, check: 0.45 };
-    if (r1 === 'K' || r2 === 'K') return { bet: 0.4, check: 0.6 };
-    return { bet: 0.3, check: 0.7 };
+    if (hasAce(row, col)) return { bet: 0.58, check: 0.42 };
+    if (hasKing(row, col)) return { bet: 0.42, check: 0.58 };
+    if (gap(row, col) <= 2) return { bet: 0.34, check: 0.66 };
+    return { bet: 0.26, check: 0.74 };
   }
   // Non-suited overpairs
   if (isPair && row <= 5) return { bet: 0.35, check: 0.65 };
   // Mostly check on monotone without flush draw
-  if (r1 === 'A' || r2 === 'A') return { bet: 0.3, check: 0.7 };
+  if (hasAce(row, col)) return { bet: 0.28, check: 0.72 };
   return { bet: 0.15, check: 0.85 };
 }
 
 // 5. Paired: KK5 — high cbet (~65%)
 function pairedCbet(row: number, col: number) {
-  const h = handLabel(row, col);
-  const r1 = RANKS[row], r2 = RANKS[col];
   const isPair = row === col;
-  const isSuited = row < col;
 
   // Trips or full house
-  if (r1 === 'K' || r2 === 'K') return { bet: 0.9, check: 0.1 };
+  if (hasKing(row, col)) return { bet: 0.9, check: 0.1 };
   // Overpair AA
   if (isPair && row === 0) return { bet: 0.85, check: 0.15 };
   // Medium+ pairs
   if (isPair && row <= 4) return { bet: 0.55, check: 0.45 };
   // Ace high
-  if (r1 === 'A' || r2 === 'A') return { bet: 0.65, check: 0.35 };
+  if (hasAce(row, col)) return { bet: 0.65, check: 0.35 };
   // Small pairs
   if (isPair) return { bet: 0.35, check: 0.65 };
   // Broadway
-  if (row <= 3 && col <= 3) return { bet: 0.5, check: 0.5 };
-  return { bet: 0.3, check: 0.7 };
+  if (isBroadway(row, col)) return { bet: 0.5, check: 0.5 };
+  if (row < col && gap(row, col) <= 2) return { bet: 0.36, check: 0.64 };
+  return { bet: 0.28, check: 0.72 };
 }
 
 // 6. Low Connected: 876 — mostly check (~30% cbet)
 function lowConnectedCbet(row: number, col: number) {
-  const h = handLabel(row, col);
-  const r1 = RANKS[row], r2 = RANKS[col];
   const isPair = row === col;
   const isSuited = row < col;
 
@@ -128,11 +132,12 @@ function lowConnectedCbet(row: number, col: number) {
   // Two pair
   if (isPair) return { bet: 0.3, check: 0.7 };
   // High cards — mostly check on this low board
-  if (r1 === 'A' || r2 === 'A') return { bet: 0.35, check: 0.65 };
-  if (r1 === 'K' || r2 === 'K') return { bet: 0.3, check: 0.7 };
+  if (hasAce(row, col)) return { bet: 0.35, check: 0.65 };
+  if (hasKing(row, col)) return { bet: 0.28, check: 0.72 };
   // Draws
-  if (isSuited && Math.abs(row - col) <= 2 && row >= 4) return { bet: 0.4, check: 0.6 };
-  return { bet: 0.2, check: 0.8 };
+  if (isSuited && gap(row, col) <= 2 && row >= 4) return { bet: 0.42, check: 0.58 };
+  if (isSuited && gap(row, col) <= 4 && row >= 3) return { bet: 0.3, check: 0.7 };
+  return { bet: 0.18, check: 0.82 };
 }
 
 // --- 60bb variants: lower SPR means more aggressive cbet frequencies (+10-15%) ---
