@@ -479,41 +479,28 @@ class _QuickStartCard extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFF161616),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
           Text(
             l.buildYourSpot,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 20,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            l.buildYourSpotDesc,
-            style: const TextStyle(
-              color: Colors.white70,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _QuickInfoChip(label: playerCount == 2 ? l.headsUp : l.nMax(playerCount)),
-              _QuickInfoChip(label: l.nbbView(effectiveBb > 0 ? effectiveBb : stackDepth)),
-              _QuickInfoChip(label: l.nCharts(chartCount)),
-            ],
-          ),
+          const Spacer(),
+          _QuickInfoChip(label: playerCount == 2 ? l.headsUp : l.nMax(playerCount)),
+          const SizedBox(width: 6),
+          _QuickInfoChip(label: l.nbbView(effectiveBb > 0 ? effectiveBb : stackDepth)),
+          const SizedBox(width: 6),
+          _QuickInfoChip(label: l.nCharts(chartCount)),
         ],
       ),
     );

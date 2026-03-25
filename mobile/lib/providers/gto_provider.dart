@@ -109,7 +109,10 @@ class GtoProvider extends ChangeNotifier {
   }
 
   Future<void> loadPositionTree() async {
-    _isLoading = true;
+    final isRefresh = _positionTree.isNotEmpty;
+    if (!isRefresh) {
+      _isLoading = true;
+    }
     _error = null;
     notifyListeners();
 
