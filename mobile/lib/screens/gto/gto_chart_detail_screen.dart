@@ -14,6 +14,7 @@ class GtoChartDetailScreen extends StatefulWidget {
 
 class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
   HandRange? _selectedRange;
+  bool _detailedMode = true;
 
   @override
   void initState() {
@@ -27,6 +28,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
   Widget build(BuildContext context) {
     final gto = context.watch<GtoProvider>();
     final chart = gto.selectedChart;
+    final selectedRange = chart == null ? null : (_selectedRange ?? _defaultRange(chart));
 
     return Scaffold(
       appBar: AppBar(
@@ -38,29 +40,55 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(12),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Dynamic legend based on actionTypes
+                  _ChartSummaryCard(chart: chart),
+                  const SizedBox(height: 16),
+                  _DisplayModeToggle(
+                    detailedMode: _detailedMode,
+                    onChanged: (value) {
+                      setState(() => _detailedMode = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
                   _buildLegend(chart),
                   const SizedBox(height: 12),
-                  // GTO Grid with dynamic action colors
                   GtoGrid(
                     ranges: chart.ranges ?? [],
                     actionTypes: chart.actionTypes,
+                    selectedHand: selectedRange?.hand,
+                    detailedMode: _detailedMode,
                     onCellTap: (range) {
                       setState(() => _selectedRange = range);
                     },
                   ),
                   const SizedBox(height: 16),
-                  // Selected hand detail
-                  if (_selectedRange != null)
+                  if (selectedRange != null)
                     _HandDetail(
-                      range: _selectedRange!,
+                      range: selectedRange,
                       actionTypes: chart.actionTypes,
                     ),
                 ],
               ),
             ),
     );
+  }
+
+  HandRange? _defaultRange(GtoChart chart) {
+    final ranges = chart.ranges ?? const [];
+    if (ranges.isEmpty) return null;
+
+    final sorted = [...ranges]
+      ..sort((a, b) => _primaryFrequency(b).compareTo(_primaryFrequency(a)));
+    return sorted.first;
+  }
+
+  double _primaryFrequency(HandRange range) {
+    if (range.frequencies.isNotEmpty) {
+      return range.frequencies.values.fold<double>(0, (best, value) => value > best ? value : best);
+    }
+    return [range.raiseFreq, range.callFreq, range.foldFreq]
+        .fold<double>(0, (best, value) => value > best ? value : best);
   }
 
   Widget _buildLegend(GtoChart chart) {
@@ -119,25 +147,93 @@ class _HandDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final summary = _actionSummary(range, actionTypes);
+    final rankedActions = _rankedActions(range, actionTypes);
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  range.hand,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: summary.color.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    summary.title,
+                    style: TextStyle(
+                      color: summary.color,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
-              range.hand,
+              summary.description,
               style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.white70,
+                fontSize: 14,
               ),
             ),
             const SizedBox(height: 12),
-            // Dynamic frequency bars based on actionTypes or frequencies map
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MetaChip(label: _handCategory(range.hand)),
+                _MetaChip(label: '${_comboCount(range.hand)} combos'),
+                _MetaChip(label: summary.mixLabel),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (rankedActions.isNotEmpty) ...[
+              const Text(
+                'Action Priority',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 10),
+              ...rankedActions.map(
+                (action) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: _ActionRankTile(action: action),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            Text(
+              _studyNote(range, rankedActions),
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 13,
+                height: 1.45,
+              ),
+            ),
+            const SizedBox(height: 16),
             if (actionTypes != null && range.frequencies.isNotEmpty)
               ...actionTypes!.map((at) {
                 final freq = range.frequencies[at.key] ?? 0.0;
+                if (freq <= 0) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: _FreqBar(label: at.label, freq: freq, color: at.toColor()),
@@ -153,7 +249,139 @@ class _HandDetail extends StatelessWidget {
           ],
         ),
       ),
+      );
+    }
+
+  _ActionSummary _actionSummary(HandRange range, List<ActionType>? actionTypes) {
+    final frequencies = <String, double>{};
+    if (range.frequencies.isNotEmpty) {
+      frequencies.addAll(range.frequencies);
+    } else {
+      if (range.raiseFreq > 0) frequencies['raise'] = range.raiseFreq;
+      if (range.callFreq > 0) frequencies['call'] = range.callFreq;
+      if (range.foldFreq > 0) frequencies['fold'] = range.foldFreq;
+    }
+
+    if (frequencies.isEmpty) {
+      return const _ActionSummary(
+        title: 'No data',
+        description: 'No action frequencies available for this hand.',
+        color: Colors.white54,
+        mixLabel: 'No mix',
+      );
+    }
+
+    final sorted = frequencies.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final primary = sorted.first;
+    final secondary = sorted.length > 1 ? sorted[1] : null;
+    final isMixed = secondary != null && secondary.value >= 0.12;
+
+    final labels = {
+      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.label,
+      'raise': 'Raise',
+      'call': 'Call',
+      'fold': 'Fold',
+    };
+
+    final colors = {
+      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.toColor(),
+      'raise': Colors.red.shade700,
+      'call': Colors.green.shade700,
+      'fold': Colors.grey.shade700,
+    };
+
+    final primaryLabel = labels[primary.key] ?? primary.key;
+    final primaryPercent = (primary.value * 100).round();
+    if (!isMixed) {
+      return _ActionSummary(
+        title: '$primaryLabel $primaryPercent%',
+        description: 'Primary action is $primaryLabel with a clear frequency advantage.',
+        color: colors[primary.key] ?? Colors.blueGrey,
+        mixLabel: 'Pure strategy',
+      );
+    }
+
+    final mixText = sorted
+        .take(3)
+        .map((entry) => '${labels[entry.key] ?? entry.key} ${(entry.value * 100).round()}%')
+        .join(' / ');
+    return _ActionSummary(
+      title: 'Mixed Strategy',
+      description: mixText,
+      color: colors[primary.key] ?? Colors.blueGrey,
+      mixLabel: '${sorted.length}-way mix',
     );
+  }
+
+  List<_RankedAction> _rankedActions(HandRange range, List<ActionType>? actionTypes) {
+    final labels = {
+      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.label,
+      'raise': 'Raise',
+      'call': 'Call',
+      'fold': 'Fold',
+    };
+    final colors = {
+      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.toColor(),
+      'raise': Colors.red.shade700,
+      'call': Colors.green.shade700,
+      'fold': Colors.grey.shade700,
+    };
+
+    final frequencies = <String, double>{};
+    if (range.frequencies.isNotEmpty) {
+      frequencies.addAll(range.frequencies);
+    } else {
+      if (range.raiseFreq > 0) frequencies['raise'] = range.raiseFreq;
+      if (range.callFreq > 0) frequencies['call'] = range.callFreq;
+      if (range.foldFreq > 0) frequencies['fold'] = range.foldFreq;
+    }
+
+    final sorted = frequencies.entries
+        .where((entry) => entry.value > 0)
+        .toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return sorted
+        .map(
+          (entry) => _RankedAction(
+            label: labels[entry.key] ?? entry.key,
+            key: entry.key,
+            freq: entry.value,
+            color: colors[entry.key] ?? Colors.blueGrey,
+          ),
+        )
+        .toList();
+  }
+
+  String _handCategory(String hand) {
+    if (hand.length == 2) return 'Pocket Pair';
+    if (hand.endsWith('s')) return 'Suited';
+    if (hand.endsWith('o')) return 'Offsuit';
+    return 'Hand';
+  }
+
+  int _comboCount(String hand) {
+    if (hand.length == 2) return 6;
+    if (hand.endsWith('s')) return 4;
+    if (hand.endsWith('o')) return 12;
+    return 0;
+  }
+
+  String _studyNote(HandRange range, List<_RankedAction> rankedActions) {
+    if (rankedActions.isEmpty) {
+      return 'No study note is available because this hand does not have action frequencies yet.';
+    }
+
+    final primary = rankedActions.first;
+    final secondary = rankedActions.length > 1 ? rankedActions[1] : null;
+
+    if (secondary == null || secondary.freq < 0.12) {
+      return '${range.hand} is mostly played as ${primary.label.toLowerCase()} in this node. Treat it as a stable default and only deviate if your source chart changes.';
+    }
+
+    final gap = ((primary.freq - secondary.freq) * 100).round();
+    return '${range.hand} mixes actions in this node. Start from ${primary.label.toLowerCase()} as the anchor, then study how ${secondary.label.toLowerCase()} enters the strategy. The top-two gap is $gap percentage points.';
   }
 }
 
@@ -191,4 +419,271 @@ class _FreqBar extends StatelessWidget {
       ],
     );
   }
+}
+
+class _ChartSummaryCard extends StatelessWidget {
+  final GtoChart chart;
+
+  const _ChartSummaryCard({required this.chart});
+
+  @override
+  Widget build(BuildContext context) {
+    final headline = _headline(chart);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              headline,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if ((chart.description ?? '').isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                chart.description!,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _MetaChip(label: chart.position),
+                if (chart.vsPosition != null) _MetaChip(label: 'vs ${chart.vsPosition}'),
+                _MetaChip(label: '${chart.stackDepth}bb'),
+                _MetaChip(label: '${chart.maxPlayers}-max'),
+                if ((chart.category ?? '').isNotEmpty) _MetaChip(label: chart.category!),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _headline(GtoChart chart) {
+    if (chart.vsPosition != null) {
+      return '${chart.position} ${chart.situation} vs ${chart.vsPosition}';
+    }
+    return '${chart.position} ${chart.situation}';
+  }
+}
+
+class _DisplayModeToggle extends StatelessWidget {
+  final bool detailedMode;
+  final ValueChanged<bool> onChanged;
+
+  const _DisplayModeToggle({
+    required this.detailedMode,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'View Mode',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _ModeButton(
+                    label: 'Simple',
+                    isSelected: !detailedMode,
+                    description: 'Primary action first',
+                    onTap: () => onChanged(false),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModeButton(
+                    label: 'Detailed',
+                    isSelected: detailedMode,
+                    description: 'Mixed frequencies visible',
+                    onTap: () => onChanged(true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final String description;
+  final VoidCallback onTap;
+
+  const _ModeButton({
+    required this.label,
+    required this.isSelected,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? const Color(0xFF4CAF50).withValues(alpha: 0.16)
+              : Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF4CAF50)
+                : Colors.white.withValues(alpha: 0.08),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFF7CFF83) : Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final String label;
+
+  const _MetaChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionSummary {
+  final String title;
+  final String description;
+  final Color color;
+  final String mixLabel;
+
+  const _ActionSummary({
+    required this.title,
+    required this.description,
+    required this.color,
+    required this.mixLabel,
+  });
+}
+
+class _ActionRankTile extends StatelessWidget {
+  final _RankedAction action;
+
+  const _ActionRankTile({required this.action});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: action.color,
+              borderRadius: BorderRadius.circular(3),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              action.label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '${(action.freq * 100).round()}%',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RankedAction {
+  final String label;
+  final String key;
+  final double freq;
+  final Color color;
+
+  const _RankedAction({
+    required this.label,
+    required this.key,
+    required this.freq,
+    required this.color,
+  });
 }

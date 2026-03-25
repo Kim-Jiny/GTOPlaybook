@@ -198,10 +198,46 @@ const SB_60_VS_BB_RAISE = new Set([
 // Helpers
 // ---------------------------------------------------------------------------
 
-function sbDefendRange(threeBetSet: Set<string>) {
+type SbMixedMap = false | Record<string, { '3bet': number; fold: number }>;
+
+const SB_DEFEND_MIXED_100: Record<string, { '3bet': number; fold: number }> = {
+  'JJ': { '3bet': 0.55, fold: 0.45 },
+  'TT': { '3bet': 0.42, fold: 0.58 },
+  'AQo': { '3bet': 0.48, fold: 0.52 },
+  'AJs': { '3bet': 0.38, fold: 0.62 },
+  'A5s': { '3bet': 0.72, fold: 0.28 },
+  'A4s': { '3bet': 0.66, fold: 0.34 },
+  'KQo': { '3bet': 0.32, fold: 0.68 },
+  'KJs': { '3bet': 0.28, fold: 0.72 },
+  'QJs': { '3bet': 0.22, fold: 0.78 },
+  'JTs': { '3bet': 0.18, fold: 0.82 },
+};
+
+const SB_DEFEND_MIXED_60: Record<string, { '3bet': number; fold: number }> = {
+  'JJ': { '3bet': 0.6, fold: 0.4 },
+  'TT': { '3bet': 0.48, fold: 0.52 },
+  'AQo': { '3bet': 0.54, fold: 0.46 },
+  'AJs': { '3bet': 0.42, fold: 0.58 },
+  'A5s': { '3bet': 0.76, fold: 0.24 },
+  'A4s': { '3bet': 0.7, fold: 0.3 },
+  'KQo': { '3bet': 0.36, fold: 0.64 },
+  'KJs': { '3bet': 0.31, fold: 0.69 },
+};
+
+const SB_DEFEND_MIXED_40: Record<string, { '3bet': number; fold: number }> = {
+  'JJ': { '3bet': 0.68, fold: 0.32 },
+  'TT': { '3bet': 0.55, fold: 0.45 },
+  'AQo': { '3bet': 0.6, fold: 0.4 },
+  'AJs': { '3bet': 0.48, fold: 0.52 },
+  'A5s': { '3bet': 0.8, fold: 0.2 },
+  'KQo': { '3bet': 0.28, fold: 0.72 },
+};
+
+function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, fold: 0 };
+    if (mixedMap && h in mixedMap) return mixedMap[h];
     return { '3bet': 0, fold: 1.0 };
   };
 }
@@ -228,6 +264,27 @@ function get3betData100(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
   }
 }
 
+function getMixedData100(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): SbMixedMap {
+  switch (cls) {
+    case 'ep-tight':
+      return {
+        'JJ': { '3bet': 0.45, fold: 0.55 },
+        'AQo': { '3bet': 0.3, fold: 0.7 },
+        'A5s': { '3bet': 0.65, fold: 0.35 },
+      };
+    case 'hj':
+      return {
+        'JJ': { '3bet': 0.52, fold: 0.48 },
+        'AQo': { '3bet': 0.4, fold: 0.6 },
+        'A5s': { '3bet': 0.7, fold: 0.3 },
+        'KQs': { '3bet': 0.24, fold: 0.76 },
+      };
+    case 'co':
+    case 'btn':
+      return SB_DEFEND_MIXED_100;
+  }
+}
+
 function get3betData60(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
   switch (cls) {
     case 'ep-tight': return SB_60_VS_UTG_3BET;
@@ -237,12 +294,52 @@ function get3betData60(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
   }
 }
 
+function getMixedData60(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): SbMixedMap {
+  switch (cls) {
+    case 'ep-tight':
+      return {
+        'JJ': { '3bet': 0.5, fold: 0.5 },
+        'AQo': { '3bet': 0.35, fold: 0.65 },
+        'A5s': { '3bet': 0.72, fold: 0.28 },
+      };
+    case 'hj':
+      return {
+        'JJ': { '3bet': 0.56, fold: 0.44 },
+        'AQo': { '3bet': 0.44, fold: 0.56 },
+        'A5s': { '3bet': 0.74, fold: 0.26 },
+        'KQs': { '3bet': 0.28, fold: 0.72 },
+      };
+    case 'co':
+    case 'btn':
+      return SB_DEFEND_MIXED_60;
+  }
+}
+
 function get3betData40(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): Set<string> {
   switch (cls) {
     case 'ep-tight': return SB_40_VS_UTG_3BET;
     case 'hj':       return SB_40_VS_HJ_3BET;
     case 'co':       return SB_40_VS_CO_3BET;
     case 'btn':      return SB_40_VS_BTN_3BET;
+  }
+}
+
+function getMixedData40(cls: 'ep-tight' | 'hj' | 'co' | 'btn'): SbMixedMap {
+  switch (cls) {
+    case 'ep-tight':
+      return {
+        'AQo': { '3bet': 0.42, fold: 0.58 },
+        'A5s': { '3bet': 0.76, fold: 0.24 },
+      };
+    case 'hj':
+      return {
+        'JJ': { '3bet': 0.62, fold: 0.38 },
+        'AQo': { '3bet': 0.5, fold: 0.5 },
+        'A5s': { '3bet': 0.78, fold: 0.22 },
+      };
+    case 'co':
+    case 'btn':
+      return SB_DEFEND_MIXED_40;
   }
 }
 
@@ -316,6 +413,11 @@ export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
         : depth === 60
           ? get3betData60(sbCls)
           : get3betData100(sbCls);
+      const mixedMap = depth === 40
+        ? getMixedData40(sbCls)
+        : depth === 60
+          ? getMixedData60(sbCls)
+          : getMixedData100(sbCls);
       charts.push({
         position: 'SB',
         situation: 'SB Defend',
@@ -325,7 +427,7 @@ export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
         maxPlayers,
         description: `SB 3bet or fold vs ${opener} open (${depth}bb)`,
         actionTypes: SB_DEFEND_ACTIONS,
-        ranges: sbDefendRange(threeBetSet),
+        ranges: sbDefendRange(threeBetSet, mixedMap),
       });
     }
   }
@@ -341,7 +443,17 @@ export function getSbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
     maxPlayers,
     description: `SB raise vs BB limp (${depth}bb)`,
     actionTypes: SB_DEFEND_ACTIONS,
-    ranges: sbDefendRange(bbRaiseSet),
+    ranges: sbDefendRange(bbRaiseSet, depth >= 60
+      ? {
+          'A5o': { '3bet': 0.58, fold: 0.42 },
+          'K8o': { '3bet': 0.44, fold: 0.56 },
+          'Q9o': { '3bet': 0.36, fold: 0.64 },
+          'T8s': { '3bet': 0.4, fold: 0.6 },
+        }
+      : {
+          'A5o': { '3bet': 0.48, fold: 0.52 },
+          'K8o': { '3bet': 0.34, fold: 0.66 },
+        }),
   });
 
   return charts;

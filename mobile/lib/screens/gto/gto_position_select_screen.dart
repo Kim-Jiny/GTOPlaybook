@@ -134,6 +134,16 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
+        _QuickStartCard(
+          playerCount: gto.selectedPlayerCount,
+          stackDepth: gto.selectedTier,
+          effectiveBb: gto.effectiveBb,
+          chartCount: gto.positionTree.fold<int>(
+            0,
+            (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length),
+          ),
+        ),
+        const SizedBox(height: 12),
         // Player count selector
         _buildPlayerCountSelector(gto),
         const SizedBox(height: 12),
@@ -145,12 +155,11 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
           child: Row(
             children: [
               Text(
-                _tableLabel(gto.selectedPlayerCount),
+                'Step 1. Choose your seat',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
                 ),
               ),
               const SizedBox(width: 8),
@@ -171,7 +180,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               ),
               const Spacer(),
               Text(
-                '${gto.positionTree.fold<int>(0, (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length))} charts',
+                '${_tableLabel(gto.selectedPlayerCount)} · ${gto.positionTree.fold<int>(0, (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length))} charts',
                 style: TextStyle(color: Colors.white38, fontSize: 12),
               ),
             ],
@@ -388,6 +397,87 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
       default:
         return const Color(0xFF42A5F5);
     }
+  }
+}
+
+class _QuickStartCard extends StatelessWidget {
+  final int playerCount;
+  final int stackDepth;
+  final int effectiveBb;
+  final int chartCount;
+
+  const _QuickStartCard({
+    required this.playerCount,
+    required this.stackDepth,
+    required this.effectiveBb,
+    required this.chartCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Build Your Spot',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Set the table size and stack first, then pick your position. The next screen will group detailed charts by real in-game decisions.',
+            style: TextStyle(
+              color: Colors.white70,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _QuickInfoChip(label: playerCount == 2 ? 'Heads-up' : '$playerCount-max'),
+              _QuickInfoChip(label: '${effectiveBb > 0 ? effectiveBb : stackDepth}bb view'),
+              _QuickInfoChip(label: '$chartCount charts'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickInfoChip extends StatelessWidget {
+  final String label;
+
+  const _QuickInfoChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white70,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }
 

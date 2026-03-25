@@ -162,14 +162,41 @@ const CO_3BET_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
 
 const EMPTY_CALL = new Set<string>();
 
+type ThreeBetMixedMap = false | Record<string, { '3bet': number; call: number; fold: number }>;
+
+const THREE_BET_MIXED_DEFAULT: Record<string, { '3bet': number; call: number; fold: number }> = {
+  'JJ': { '3bet': 0.52, call: 0.48, fold: 0 },
+  'TT': { '3bet': 0.34, call: 0.66, fold: 0 },
+  'AQs': { '3bet': 0.42, call: 0.58, fold: 0 },
+  'AQo': { '3bet': 0.28, call: 0.52, fold: 0.2 },
+  'AJs': { '3bet': 0.24, call: 0.64, fold: 0.12 },
+  'KQs': { '3bet': 0.18, call: 0.62, fold: 0.2 },
+  'A5s': { '3bet': 0.62, call: 0.1, fold: 0.28 },
+  'A4s': { '3bet': 0.56, call: 0.1, fold: 0.34 },
+};
+
+const THREE_BET_MIXED_40: Record<string, { '3bet': number; call: number; fold: number }> = {
+  'JJ': { '3bet': 0.58, call: 0.42, fold: 0 },
+  'TT': { '3bet': 0.4, call: 0.6, fold: 0 },
+  'AQs': { '3bet': 0.48, call: 0.52, fold: 0 },
+  'AQo': { '3bet': 0.34, call: 0.46, fold: 0.2 },
+  'AJs': { '3bet': 0.3, call: 0.56, fold: 0.14 },
+  'KQs': { '3bet': 0.24, call: 0.56, fold: 0.2 },
+};
+
 // ---------------------------------------------------------------------------
 // threeBetRange helper
 // ---------------------------------------------------------------------------
 
-function threeBetRange(threeBetSet: Set<string>, callSet: Set<string>) {
+function threeBetRange(
+  threeBetSet: Set<string>,
+  callSet: Set<string>,
+  mixedMap: ThreeBetMixedMap = false,
+) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, call: 0, fold: 0 };
+    if (mixedMap && h in mixedMap) return mixedMap[h];
     if (inSet(h, callSet)) return { '3bet': 0, call: 1.0, fold: 0 };
     return { '3bet': 0, call: 0, fold: 1.0 };
   };
@@ -333,9 +360,18 @@ function hjRange(
   // HJ can only 3bet ep-tight openers
   if (oClass !== 'ep-tight') return null;
   switch (depth) {
-    case 100: return threeBetRange(HJ_3BET_VS_UTG_3BET, HJ_3BET_VS_UTG_CALL);
-    case 60:  return threeBetRange(HJ_3BET_VS_UTG_3BET, HJ_3BET_VS_UTG_CALL_60);
-    case 40:  return threeBetRange(HJ_3BET_VS_UTG_3BET, HJ_3BET_VS_UTG_CALL_40);
+    case 100: return threeBetRange(HJ_3BET_VS_UTG_3BET, HJ_3BET_VS_UTG_CALL, {
+      'JJ': { '3bet': 0.4, call: 0.6, fold: 0 },
+      'AQs': { '3bet': 0.28, call: 0.64, fold: 0.08 },
+    });
+    case 60:  return threeBetRange(HJ_3BET_VS_UTG_3BET, HJ_3BET_VS_UTG_CALL_60, {
+      'JJ': { '3bet': 0.46, call: 0.54, fold: 0 },
+      'AQs': { '3bet': 0.32, call: 0.6, fold: 0.08 },
+    });
+    case 40:  return threeBetRange(HJ_3BET_VS_UTG_3BET, HJ_3BET_VS_UTG_CALL_40, {
+      'JJ': { '3bet': 0.52, call: 0.48, fold: 0 },
+      'AQs': { '3bet': 0.38, call: 0.52, fold: 0.1 },
+    });
     default:  return null;
   }
 }
@@ -346,17 +382,26 @@ function coRange(
 ): RangeResult {
   if (oClass === 'ep-tight') {
     switch (depth) {
-      case 100: return threeBetRange(CO_3BET_VS_UTG_3BET, CO_3BET_VS_UTG_CALL);
-      case 60:  return threeBetRange(CO_3BET_VS_UTG_3BET, CO_3BET_VS_UTG_CALL_60);
-      case 40:  return threeBetRange(CO_3BET_VS_UTG_3BET, CO_3BET_VS_UTG_CALL_40);
+      case 100: return threeBetRange(CO_3BET_VS_UTG_3BET, CO_3BET_VS_UTG_CALL, {
+        'JJ': { '3bet': 0.44, call: 0.56, fold: 0 },
+        'AQs': { '3bet': 0.3, call: 0.64, fold: 0.06 },
+      });
+      case 60:  return threeBetRange(CO_3BET_VS_UTG_3BET, CO_3BET_VS_UTG_CALL_60, {
+        'JJ': { '3bet': 0.5, call: 0.5, fold: 0 },
+        'AQs': { '3bet': 0.34, call: 0.6, fold: 0.06 },
+      });
+      case 40:  return threeBetRange(CO_3BET_VS_UTG_3BET, CO_3BET_VS_UTG_CALL_40, {
+        'JJ': { '3bet': 0.56, call: 0.44, fold: 0 },
+        'AQs': { '3bet': 0.4, call: 0.54, fold: 0.06 },
+      });
       default:  return null;
     }
   }
   if (oClass === 'hj') {
     switch (depth) {
-      case 100: return threeBetRange(CO_3BET_VS_HJ_3BET, CO_3BET_VS_HJ_CALL);
-      case 60:  return threeBetRange(CO_3BET_VS_HJ_3BET, CO_3BET_VS_HJ_CALL_60);
-      case 40:  return threeBetRange(CO_3BET_VS_HJ_3BET, CO_3BET_VS_HJ_CALL_40);
+      case 100: return threeBetRange(CO_3BET_VS_HJ_3BET, CO_3BET_VS_HJ_CALL, THREE_BET_MIXED_DEFAULT);
+      case 60:  return threeBetRange(CO_3BET_VS_HJ_3BET, CO_3BET_VS_HJ_CALL_60, THREE_BET_MIXED_DEFAULT);
+      case 40:  return threeBetRange(CO_3BET_VS_HJ_3BET, CO_3BET_VS_HJ_CALL_40, THREE_BET_MIXED_40);
       default:  return null;
     }
   }
@@ -369,25 +414,48 @@ function btnRange(
 ): RangeResult {
   if (oClass === 'ep-tight') {
     switch (depth) {
-      case 100: return threeBetRange(BTN_3BET_VS_UTG_3BET, BTN_3BET_VS_UTG_CALL);
-      case 60:  return threeBetRange(BTN_3BET_VS_UTG_3BET, BTN_3BET_VS_UTG_CALL_60);
-      case 40:  return threeBetRange(BTN_3BET_VS_UTG_3BET, BTN_3BET_VS_UTG_CALL_40);
+      case 100: return threeBetRange(BTN_3BET_VS_UTG_3BET, BTN_3BET_VS_UTG_CALL, {
+        'JJ': { '3bet': 0.42, call: 0.58, fold: 0 },
+        'AQs': { '3bet': 0.32, call: 0.62, fold: 0.06 },
+        'AJs': { '3bet': 0.18, call: 0.7, fold: 0.12 },
+      });
+      case 60:  return threeBetRange(BTN_3BET_VS_UTG_3BET, BTN_3BET_VS_UTG_CALL_60, {
+        'JJ': { '3bet': 0.46, call: 0.54, fold: 0 },
+        'AQs': { '3bet': 0.36, call: 0.58, fold: 0.06 },
+      });
+      case 40:  return threeBetRange(BTN_3BET_VS_UTG_3BET, BTN_3BET_VS_UTG_CALL_40, {
+        'JJ': { '3bet': 0.52, call: 0.48, fold: 0 },
+        'AQs': { '3bet': 0.42, call: 0.52, fold: 0.06 },
+      });
       default:  return null;
     }
   }
   if (oClass === 'hj') {
     switch (depth) {
-      case 100: return threeBetRange(BTN_3BET_VS_HJ_3BET, BTN_3BET_VS_HJ_CALL);
-      case 60:  return threeBetRange(BTN_3BET_VS_HJ_3BET, BTN_3BET_VS_HJ_CALL_60);
-      case 40:  return threeBetRange(BTN_3BET_VS_HJ_3BET, BTN_3BET_VS_HJ_CALL_40);
+      case 100: return threeBetRange(BTN_3BET_VS_HJ_3BET, BTN_3BET_VS_HJ_CALL, THREE_BET_MIXED_DEFAULT);
+      case 60:  return threeBetRange(BTN_3BET_VS_HJ_3BET, BTN_3BET_VS_HJ_CALL_60, THREE_BET_MIXED_DEFAULT);
+      case 40:  return threeBetRange(BTN_3BET_VS_HJ_3BET, BTN_3BET_VS_HJ_CALL_40, THREE_BET_MIXED_40);
       default:  return null;
     }
   }
   if (oClass === 'co') {
     switch (depth) {
-      case 100: return threeBetRange(BTN_3BET_VS_CO_3BET, BTN_3BET_VS_CO_CALL);
-      case 60:  return threeBetRange(BTN_3BET_VS_CO_3BET, BTN_3BET_VS_CO_CALL_60);
-      case 40:  return threeBetRange(BTN_3BET_VS_CO_3BET, BTN_3BET_VS_CO_CALL_40);
+      case 100: return threeBetRange(BTN_3BET_VS_CO_3BET, BTN_3BET_VS_CO_CALL, {
+        ...THREE_BET_MIXED_DEFAULT,
+        '99': { '3bet': 0.22, call: 0.68, fold: 0.1 },
+        'ATs': { '3bet': 0.26, call: 0.56, fold: 0.18 },
+        'KJs': { '3bet': 0.24, call: 0.58, fold: 0.18 },
+        'QTs': { '3bet': 0.18, call: 0.54, fold: 0.28 },
+      });
+      case 60:  return threeBetRange(BTN_3BET_VS_CO_3BET, BTN_3BET_VS_CO_CALL_60, {
+        ...THREE_BET_MIXED_DEFAULT,
+        '99': { '3bet': 0.26, call: 0.66, fold: 0.08 },
+        'ATs': { '3bet': 0.3, call: 0.54, fold: 0.16 },
+      });
+      case 40:  return threeBetRange(BTN_3BET_VS_CO_3BET, BTN_3BET_VS_CO_CALL_40, {
+        ...THREE_BET_MIXED_40,
+        '99': { '3bet': 0.3, call: 0.62, fold: 0.08 },
+      });
       default:  return null;
     }
   }
@@ -400,33 +468,69 @@ function sbRange(
 ): RangeResult {
   if (oClass === 'ep-tight') {
     switch (depth) {
-      case 100: return threeBetRange(SB_3BET_VS_UTG_3BET, SB_3BET_VS_UTG_CALL);
-      case 60:  return threeBetRange(SB_3BET_VS_UTG_3BET, SB_3BET_VS_UTG_CALL_60);
-      case 40:  return threeBetRange(SB_3BET_VS_UTG_3BET, SB_3BET_VS_UTG_CALL_40);
+      case 100: return threeBetRange(SB_3BET_VS_UTG_3BET, SB_3BET_VS_UTG_CALL, {
+        'JJ': { '3bet': 0.44, call: 0.56, fold: 0 },
+        'AQs': { '3bet': 0.32, call: 0.62, fold: 0.06 },
+        'AKo': { '3bet': 0.55, call: 0.45, fold: 0 },
+      });
+      case 60:  return threeBetRange(SB_3BET_VS_UTG_3BET, SB_3BET_VS_UTG_CALL_60, {
+        'JJ': { '3bet': 0.48, call: 0.52, fold: 0 },
+        'AQs': { '3bet': 0.36, call: 0.58, fold: 0.06 },
+      });
+      case 40:  return threeBetRange(SB_3BET_VS_UTG_3BET, SB_3BET_VS_UTG_CALL_40, {
+        'JJ': { '3bet': 0.54, call: 0.46, fold: 0 },
+        'AQs': { '3bet': 0.42, call: 0.52, fold: 0.06 },
+      });
       default:  return null;
     }
   }
   if (oClass === 'hj') {
     switch (depth) {
-      case 100: return threeBetRange(SB_3BET_VS_HJ_3BET, SB_3BET_VS_HJ_CALL);
-      case 60:  return threeBetRange(SB_3BET_VS_HJ_3BET, SB_3BET_VS_HJ_CALL_60);
-      case 40:  return threeBetRange(SB_3BET_VS_HJ_3BET, SB_3BET_VS_HJ_CALL_40);
+      case 100: return threeBetRange(SB_3BET_VS_HJ_3BET, SB_3BET_VS_HJ_CALL, THREE_BET_MIXED_DEFAULT);
+      case 60:  return threeBetRange(SB_3BET_VS_HJ_3BET, SB_3BET_VS_HJ_CALL_60, THREE_BET_MIXED_DEFAULT);
+      case 40:  return threeBetRange(SB_3BET_VS_HJ_3BET, SB_3BET_VS_HJ_CALL_40, THREE_BET_MIXED_40);
       default:  return null;
     }
   }
   if (oClass === 'co') {
     switch (depth) {
-      case 100: return threeBetRange(SB_3BET_VS_CO_3BET, SB_3BET_VS_CO_CALL);
-      case 60:  return threeBetRange(SB_3BET_VS_CO_3BET, SB_3BET_VS_CO_CALL_60);
-      case 40:  return threeBetRange(SB_3BET_VS_CO_3BET, SB_3BET_VS_CO_CALL_40);
+      case 100: return threeBetRange(SB_3BET_VS_CO_3BET, SB_3BET_VS_CO_CALL, {
+        ...THREE_BET_MIXED_DEFAULT,
+        'TT': { '3bet': 0.42, call: 0.58, fold: 0 },
+        'A9s': { '3bet': 0.18, call: 0.56, fold: 0.26 },
+        'KTs': { '3bet': 0.22, call: 0.56, fold: 0.22 },
+      });
+      case 60:  return threeBetRange(SB_3BET_VS_CO_3BET, SB_3BET_VS_CO_CALL_60, {
+        ...THREE_BET_MIXED_DEFAULT,
+        'TT': { '3bet': 0.46, call: 0.54, fold: 0 },
+        'A9s': { '3bet': 0.22, call: 0.54, fold: 0.24 },
+      });
+      case 40:  return threeBetRange(SB_3BET_VS_CO_3BET, SB_3BET_VS_CO_CALL_40, {
+        ...THREE_BET_MIXED_40,
+        'TT': { '3bet': 0.5, call: 0.5, fold: 0 },
+      });
       default:  return null;
     }
   }
   if (oClass === 'btn') {
     switch (depth) {
-      case 100: return threeBetRange(SB_3BET_VS_BTN_3BET, SB_3BET_VS_BTN_CALL);
-      case 60:  return threeBetRange(SB_3BET_VS_BTN_3BET, SB_3BET_VS_BTN_CALL_60);
-      case 40:  return threeBetRange(SB_3BET_VS_BTN_3BET, SB_3BET_VS_BTN_CALL_40);
+      case 100: return threeBetRange(SB_3BET_VS_BTN_3BET, SB_3BET_VS_BTN_CALL, {
+        ...THREE_BET_MIXED_DEFAULT,
+        '99': { '3bet': 0.26, call: 0.68, fold: 0.06 },
+        'A8s': { '3bet': 0.24, call: 0.54, fold: 0.22 },
+        'KTs': { '3bet': 0.28, call: 0.56, fold: 0.16 },
+        'QTs': { '3bet': 0.22, call: 0.54, fold: 0.24 },
+        '87s': { '3bet': 0.16, call: 0.56, fold: 0.28 },
+      });
+      case 60:  return threeBetRange(SB_3BET_VS_BTN_3BET, SB_3BET_VS_BTN_CALL_60, {
+        ...THREE_BET_MIXED_DEFAULT,
+        '99': { '3bet': 0.3, call: 0.64, fold: 0.06 },
+        'A8s': { '3bet': 0.28, call: 0.52, fold: 0.2 },
+      });
+      case 40:  return threeBetRange(SB_3BET_VS_BTN_3BET, SB_3BET_VS_BTN_CALL_40, {
+        ...THREE_BET_MIXED_40,
+        '99': { '3bet': 0.34, call: 0.6, fold: 0.06 },
+      });
       default:  return null;
     }
   }
