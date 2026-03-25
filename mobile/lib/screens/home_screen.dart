@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/gto_provider.dart';
 import 'gto/gto_position_select_screen.dart';
-import 'equity/equity_calculator_screen.dart';
+import 'equity/equity_tab_screen.dart';
 import 'profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   final _screens = const [
     GtoPositionSelectScreen(),
-    EquityCalculatorScreen(),
+    EquityTabScreen(),
     ProfileScreen(),
   ];
 

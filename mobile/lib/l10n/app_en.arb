@@ -88,6 +88,11 @@
   },
 
   "categoryOpenPot": "Open Pot",
+  "categoryIsoRaise": "Iso Raise vs Limp",
+  "categoryColdCall": "Cold Call",
+  "categorySqueeze": "Squeeze",
+  "categoryFacingSqueeze": "Facing Squeeze",
+  "categoryLimpedPot": "Limped Pot",
   "categoryFacing3bet": "Facing a 3-Bet",
   "category3betting": "3-Betting",
   "categoryDefending": "Defending",
@@ -96,6 +101,11 @@
   "categoryPostflopCbet": "Postflop C-Bet",
 
   "categorySummaryRFI": "Unopened pot",
+  "categorySummaryIsoRaise": "Attack limpers with raise / overlimp / fold",
+  "categorySummaryColdCall": "Flat open or overcall when squeezing is too thin",
+  "categorySummarySqueeze": "Re-attack open plus caller spots",
+  "categorySummaryFacingSqueeze": "Respond after your open gets called and squeezed",
+  "categorySummaryLimpedPot": "Punish limp/check spots with raise or take free equity",
   "categorySummaryFacing3bet": "Responding after opening",
   "categorySummary3bet": "Re-raising an opener",
   "categorySummaryDefend": "Calling or mixing from the blinds",
@@ -203,6 +213,25 @@
     "placeholders": {
       "count": { "type": "int" },
       "percent": { "type": "int" }
+    }
+  },
+
+  "handAnalyzer": "Hand Analyzer",
+  "myHand": "My Hand",
+  "analyze": "Analyze",
+  "currentHand": "Current Hand",
+  "beatingHands": "Hands That Beat You",
+  "outs": "Outs",
+  "nCards": "{count} cards",
+  "@nCards": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "totalNCombos": "{count} total combos",
+  "@totalNCombos": {
+    "placeholders": {
+      "count": { "type": "int" }
     }
   },
 

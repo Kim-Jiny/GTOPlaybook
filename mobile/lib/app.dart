@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/gto_provider.dart';
 import 'providers/equity_provider.dart';
+import 'providers/hand_analysis_provider.dart';
 import 'providers/inquiry_provider.dart';
 import 'services/api_service.dart';
 import 'screens/login_screen.dart';
@@ -22,6 +23,7 @@ class GtoPlaybookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
         ChangeNotifierProvider(create: (_) => GtoProvider(apiService)),
         ChangeNotifierProvider(create: (_) => EquityProvider()),
+        ChangeNotifierProvider(create: (_) => HandAnalysisProvider()),
         ChangeNotifierProvider(create: (_) => InquiryProvider(apiService)),
       ],
       child: MaterialApp(

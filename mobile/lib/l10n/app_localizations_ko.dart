@@ -150,6 +150,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get categoryOpenPot => '오픈팟';
 
   @override
+  String get categoryIsoRaise => '아이소 레이즈 vs 림프';
+
+  @override
+  String get categoryColdCall => '콜드콜';
+
+  @override
+  String get categorySqueeze => '스퀴즈';
+
+  @override
+  String get categoryFacingSqueeze => '스퀴즈 대응';
+
+  @override
+  String get categoryLimpedPot => '림프 팟';
+
+  @override
   String get categoryFacing3bet => '3-Bet 대응';
 
   @override
@@ -169,6 +184,21 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get categorySummaryRFI => '오픈되지 않은 팟';
+
+  @override
+  String get categorySummaryIsoRaise => '림퍼에게 레이즈 / 오버림프 / 폴드';
+
+  @override
+  String get categorySummaryColdCall => '스퀴즈하기 얇을 때 플랫콜 또는 오버콜';
+
+  @override
+  String get categorySummarySqueeze => '오픈 + 콜러 스팟을 리어택';
+
+  @override
+  String get categorySummaryFacingSqueeze => '내 오픈에 콜 + 스퀴즈가 들어온 상황';
+
+  @override
+  String get categorySummaryLimpedPot => '림프/체크 스팟에서 레이즈 또는 프리 에퀴티';
 
   @override
   String get categorySummaryFacing3bet => '오픈 후 3-Bet에 대응';
@@ -315,6 +345,34 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String rangeNHandsPercent(int count, int percent) {
     return '레인지: $count개 핸드 (~$percent%)';
+  }
+
+  @override
+  String get handAnalyzer => '핸드 분석기';
+
+  @override
+  String get myHand => '내 핸드';
+
+  @override
+  String get analyze => '분석하기';
+
+  @override
+  String get currentHand => '현재 핸드';
+
+  @override
+  String get beatingHands => '나를 이기는 핸드';
+
+  @override
+  String get outs => '아웃츠';
+
+  @override
+  String nCards(int count) {
+    return '$count장';
+  }
+
+  @override
+  String totalNCombos(int count) {
+    return '총 $count개 콤보';
   }
 
   @override

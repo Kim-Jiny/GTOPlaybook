@@ -140,15 +140,15 @@ class _CategorySection extends StatelessWidget {
       case 'RFI':
         return l.categoryOpenPot;
       case 'Iso Raise vs Limp':
-        return 'Iso Raise vs Limp';
+        return l.categoryIsoRaise;
       case 'Cold Call':
-        return 'Cold Call';
+        return l.categoryColdCall;
       case 'Squeeze':
-        return 'Squeeze';
+        return l.categorySqueeze;
       case 'Facing Squeeze':
-        return 'Facing Squeeze';
+        return l.categoryFacingSqueeze;
       case 'Limped Pot':
-        return 'Limped Pot';
+        return l.categoryLimpedPot;
       case 'Facing 3bet':
         return l.categoryFacing3bet;
       case '3bet vs Opener':
@@ -180,58 +180,30 @@ class _ChartTile extends StatelessWidget {
     required this.posColor,
   });
 
+  static const _villainColors = {
+    'UTG': Color(0xFFE53935),
+    'UTG+1': Color(0xFFE53935),
+    'UTG+2': Color(0xFFE53935),
+    'MP': Color(0xFFFB8C00),
+    'HJ': Color(0xFFFF7043),
+    'CO': Color(0xFFFDD835),
+    'BTN': Color(0xFF43A047),
+    'SB': Color(0xFF1E88E5),
+    'BB': Color(0xFF8E24AA),
+  };
+
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final title = _chartTitle(l);
-    final subtitle = _chartSubtitle(l);
-    final actionPreview = _actionPreview();
+    final title = _chartTitle();
+    final actions = chart.actionTypes?.where((a) => a.key != 'fold').toList() ?? const [];
+    final villainColor = chart.vsPosition != null
+        ? _villainColors[chart.vsPosition] ?? Colors.grey
+        : posColor;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
-      child: ListTile(
-        leading: chart.vsPosition != null
-            ? CircleAvatar(
-                radius: 18,
-                backgroundColor: posColor.withValues(alpha: 0.2),
-                child: Text(
-                  chart.vsPosition!,
-                  style: TextStyle(
-                    color: posColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 11,
-                  ),
-                ),
-              )
-            : null,
-        title: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
-              ),
-              if (actionPreview.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: actionPreview,
-                ),
-              ],
-            ],
-          ),
-        ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
         onTap: () {
           Navigator.push(
             context,
@@ -240,97 +212,99 @@ class _ChartTile extends StatelessWidget {
             ),
           );
         },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              // Villain position badge
+              if (chart.vsPosition != null)
+                Container(
+                  width: 44,
+                  height: 44,
+                  margin: const EdgeInsets.only(right: 12),
+                  decoration: BoxDecoration(
+                    color: villainColor.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: villainColor.withValues(alpha: 0.3)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    chart.vsPosition!,
+                    style: TextStyle(
+                      color: villainColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: chart.vsPosition!.length > 3 ? 10 : 13,
+                    ),
+                  ),
+                ),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (actions.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      // Mini action bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: SizedBox(
+                          height: 6,
+                          child: Row(
+                            children: [
+                              ...actions.map((a) => Expanded(
+                                    child: Container(color: a.toColor()),
+                                  )),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Action labels
+                      Row(
+                        children: actions
+                            .take(3)
+                            .map((a) => Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: Text(
+                                    a.label,
+                                    style: TextStyle(
+                                      color: a.toColor().withValues(alpha: 0.85),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: Colors.white30, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  String _chartTitle(AppLocalizations l) {
+  String _chartTitle() {
     if ((chart.description ?? '').isNotEmpty) {
       return chart.description!;
     }
-
+    final situation = chart.situation.replaceAll('_', ' ').trim();
     if (chart.vsPosition != null) {
-      return '$heroPosition ${_normalizeSituation(chart.situation, l)} vs ${chart.vsPosition}';
+      return 'vs ${chart.vsPosition}  $situation';
     }
-    return '$heroPosition ${_normalizeSituation(chart.situation, l)}';
-  }
-
-  String _chartSubtitle(AppLocalizations l) {
-    final parts = <String>[
-      _categorySummary(category, l),
-      if (chart.vsPosition != null) l.villain(chart.vsPosition!),
-    ];
-    return parts.join('  •  ');
-  }
-
-  String _normalizeSituation(String situation, AppLocalizations l) {
-    final cleaned = situation.replaceAll('_', ' ').trim();
-    if (cleaned.isEmpty) return l.spot;
-    return cleaned;
-  }
-
-  String _categorySummary(String category, AppLocalizations l) {
-    switch (category) {
-      case 'RFI':
-        return l.categorySummaryRFI;
-      case 'Iso Raise vs Limp':
-        return 'Attack limpers with raise / overlimp / fold';
-      case 'Cold Call':
-        return 'Flat open or overcall when squeezing is too thin';
-      case 'Squeeze':
-        return 'Re-attack open plus caller spots';
-      case 'Facing Squeeze':
-        return 'Respond after your open gets called and squeezed';
-      case 'Limped Pot':
-        return 'Punish limp/check spots with raise or take free equity';
-      case 'Facing 3bet':
-        return l.categorySummaryFacing3bet;
-      case '3bet vs Opener':
-        return l.categorySummary3bet;
-      case 'Defend':
-        return l.categorySummaryDefend;
-      case 'SB Defend':
-        return l.categorySummarySBDefend;
-      case 'Facing 4bet':
-        return l.categorySummaryFacing4bet;
-      case 'Postflop Cbet':
-        return l.categorySummaryPostflopCbet;
-      default:
-        return category;
-    }
-  }
-
-  List<Widget> _actionPreview() {
-    final actions = chart.actionTypes
-            ?.where((action) => action.key != 'fold')
-            .take(3)
-            .toList() ??
-        const [];
-    return actions
-        .map(
-          (action) => Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: action.toColor(),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                action.label,
-                style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        )
-        .toList();
+    return '$heroPosition $situation';
   }
 }
 

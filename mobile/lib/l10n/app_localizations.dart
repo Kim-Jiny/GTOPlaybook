@@ -344,6 +344,36 @@ abstract class AppLocalizations {
   /// **'Open Pot'**
   String get categoryOpenPot;
 
+  /// No description provided for @categoryIsoRaise.
+  ///
+  /// In en, this message translates to:
+  /// **'Iso Raise vs Limp'**
+  String get categoryIsoRaise;
+
+  /// No description provided for @categoryColdCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Cold Call'**
+  String get categoryColdCall;
+
+  /// No description provided for @categorySqueeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Squeeze'**
+  String get categorySqueeze;
+
+  /// No description provided for @categoryFacingSqueeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Facing Squeeze'**
+  String get categoryFacingSqueeze;
+
+  /// No description provided for @categoryLimpedPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Limped Pot'**
+  String get categoryLimpedPot;
+
   /// No description provided for @categoryFacing3bet.
   ///
   /// In en, this message translates to:
@@ -385,6 +415,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unopened pot'**
   String get categorySummaryRFI;
+
+  /// No description provided for @categorySummaryIsoRaise.
+  ///
+  /// In en, this message translates to:
+  /// **'Attack limpers with raise / overlimp / fold'**
+  String get categorySummaryIsoRaise;
+
+  /// No description provided for @categorySummaryColdCall.
+  ///
+  /// In en, this message translates to:
+  /// **'Flat open or overcall when squeezing is too thin'**
+  String get categorySummaryColdCall;
+
+  /// No description provided for @categorySummarySqueeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-attack open plus caller spots'**
+  String get categorySummarySqueeze;
+
+  /// No description provided for @categorySummaryFacingSqueeze.
+  ///
+  /// In en, this message translates to:
+  /// **'Respond after your open gets called and squeezed'**
+  String get categorySummaryFacingSqueeze;
+
+  /// No description provided for @categorySummaryLimpedPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Punish limp/check spots with raise or take free equity'**
+  String get categorySummaryLimpedPot;
 
   /// No description provided for @categorySummaryFacing3bet.
   ///
@@ -625,6 +685,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Range: {count} hands (~{percent}%)'**
   String rangeNHandsPercent(int count, int percent);
+
+  /// No description provided for @handAnalyzer.
+  ///
+  /// In en, this message translates to:
+  /// **'Hand Analyzer'**
+  String get handAnalyzer;
+
+  /// No description provided for @myHand.
+  ///
+  /// In en, this message translates to:
+  /// **'My Hand'**
+  String get myHand;
+
+  /// No description provided for @analyze.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze'**
+  String get analyze;
+
+  /// No description provided for @currentHand.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Hand'**
+  String get currentHand;
+
+  /// No description provided for @beatingHands.
+  ///
+  /// In en, this message translates to:
+  /// **'Hands That Beat You'**
+  String get beatingHands;
+
+  /// No description provided for @outs.
+  ///
+  /// In en, this message translates to:
+  /// **'Outs'**
+  String get outs;
+
+  /// No description provided for @nCards.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} cards'**
+  String nCards(int count);
+
+  /// No description provided for @totalNCombos.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} total combos'**
+  String totalNCombos(int count);
 
   /// No description provided for @contactUs.
   ///

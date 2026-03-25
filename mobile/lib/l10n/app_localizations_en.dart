@@ -151,6 +151,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryOpenPot => 'Open Pot';
 
   @override
+  String get categoryIsoRaise => 'Iso Raise vs Limp';
+
+  @override
+  String get categoryColdCall => 'Cold Call';
+
+  @override
+  String get categorySqueeze => 'Squeeze';
+
+  @override
+  String get categoryFacingSqueeze => 'Facing Squeeze';
+
+  @override
+  String get categoryLimpedPot => 'Limped Pot';
+
+  @override
   String get categoryFacing3bet => 'Facing a 3-Bet';
 
   @override
@@ -170,6 +185,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get categorySummaryRFI => 'Unopened pot';
+
+  @override
+  String get categorySummaryIsoRaise =>
+      'Attack limpers with raise / overlimp / fold';
+
+  @override
+  String get categorySummaryColdCall =>
+      'Flat open or overcall when squeezing is too thin';
+
+  @override
+  String get categorySummarySqueeze => 'Re-attack open plus caller spots';
+
+  @override
+  String get categorySummaryFacingSqueeze =>
+      'Respond after your open gets called and squeezed';
+
+  @override
+  String get categorySummaryLimpedPot =>
+      'Punish limp/check spots with raise or take free equity';
 
   @override
   String get categorySummaryFacing3bet => 'Responding after opening';
@@ -318,6 +352,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String rangeNHandsPercent(int count, int percent) {
     return 'Range: $count hands (~$percent%)';
+  }
+
+  @override
+  String get handAnalyzer => 'Hand Analyzer';
+
+  @override
+  String get myHand => 'My Hand';
+
+  @override
+  String get analyze => 'Analyze';
+
+  @override
+  String get currentHand => 'Current Hand';
+
+  @override
+  String get beatingHands => 'Hands That Beat You';
+
+  @override
+  String get outs => 'Outs';
+
+  @override
+  String nCards(int count) {
+    return '$count cards';
+  }
+
+  @override
+  String totalNCombos(int count) {
+    return '$count total combos';
   }
 
   @override

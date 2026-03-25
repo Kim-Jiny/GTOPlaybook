@@ -8,11 +8,64 @@ import '../../widgets/range_picker.dart';
 import '../../widgets/playing_card_widget.dart';
 
 class EquityCalculatorScreen extends StatelessWidget {
-  const EquityCalculatorScreen({super.key});
+  final bool embedded;
+  const EquityCalculatorScreen({super.key, this.embedded = false});
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+
+    final body = Consumer<EquityProvider>(
+      builder: (context, provider, _) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _BoardSection(provider: provider),
+              const SizedBox(height: 16),
+              ...provider.players.asMap().entries.map(
+                    (e) => _PlayerRow(index: e.key, player: e.value, provider: provider),
+                  ),
+              const SizedBox(height: 8),
+              if (provider.players.length < 9)
+                OutlinedButton.icon(
+                  onPressed: provider.addPlayer,
+                  icon: const Icon(Icons.add),
+                  label: Text(l.addPlayer),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white70,
+                    side: const BorderSide(color: Colors.white24),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 52,
+                child: FilledButton(
+                  onPressed: provider.isCalculating ? null : () => provider.calculate(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF2E7D32),
+                  ),
+                  child: provider.isCalculating
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : Text(l.calculate, style: const TextStyle(fontSize: 18)),
+                ),
+              ),
+              if (provider.result != null) ...[
+                const SizedBox(height: 16),
+                _ResultsBar(result: provider.result!, playerCount: provider.players.length),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+
+    if (embedded) return body;
 
     return Scaffold(
       appBar: AppBar(
@@ -24,55 +77,7 @@ class EquityCalculatorScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: Consumer<EquityProvider>(
-        builder: (context, provider, _) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _BoardSection(provider: provider),
-                const SizedBox(height: 16),
-                ...provider.players.asMap().entries.map(
-                      (e) => _PlayerRow(index: e.key, player: e.value, provider: provider),
-                    ),
-                const SizedBox(height: 8),
-                if (provider.players.length < 9)
-                  OutlinedButton.icon(
-                    onPressed: provider.addPlayer,
-                    icon: const Icon(Icons.add),
-                    label: Text(l.addPlayer),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white70,
-                      side: const BorderSide(color: Colors.white24),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: provider.isCalculating ? null : () => provider.calculate(),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
-                    ),
-                    child: provider.isCalculating
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : Text(l.calculate, style: const TextStyle(fontSize: 18)),
-                  ),
-                ),
-                if (provider.result != null) ...[
-                  const SizedBox(height: 16),
-                  _ResultsBar(result: provider.result!, playerCount: provider.players.length),
-                ],
-              ],
-            ),
-          );
-        },
-      ),
+      body: body,
     );
   }
 }
