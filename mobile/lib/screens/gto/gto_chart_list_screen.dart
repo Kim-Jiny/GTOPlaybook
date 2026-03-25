@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/gto_chart.dart';
@@ -19,10 +20,11 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
   @override
   Widget build(BuildContext context) {
     final gto = context.watch<GtoProvider>();
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GTO Charts'),
+        title: Text(l.gtoCharts),
         centerTitle: true,
       ),
       body: Column(
@@ -41,7 +43,7 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
-                    label: Text(pos),
+                    label: Text(pos == 'All' ? l.all : pos),
                     selected: isSelected,
                     onSelected: (_) {
                       setState(() {
@@ -72,7 +74,7 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                             const SizedBox(height: 12),
                             ElevatedButton(
                               onPressed: () => gto.loadCharts(position: _selectedPosition),
-                              child: const Text('Retry'),
+                              child: Text(l.retry),
                             ),
                           ],
                         ),
@@ -82,11 +84,11 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('No charts available', style: TextStyle(color: Colors.white54)),
+                                Text(l.noChartsAvailable, style: const TextStyle(color: Colors.white54)),
                                 const SizedBox(height: 12),
                                 ElevatedButton(
                                   onPressed: () => gto.loadCharts(position: _selectedPosition),
-                                  child: const Text('Reload'),
+                                  child: Text(l.reload),
                                 ),
                               ],
                             ),

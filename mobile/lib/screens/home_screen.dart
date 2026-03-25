@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/gto_provider.dart';
@@ -37,6 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -45,21 +48,21 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.grid_on),
-            selectedIcon: Icon(Icons.grid_on, color: Color(0xFF4CAF50)),
-            label: 'GTO Charts',
+            icon: const Icon(Icons.grid_on),
+            selectedIcon: const Icon(Icons.grid_on, color: Color(0xFF4CAF50)),
+            label: l.gtoCharts,
           ),
           NavigationDestination(
-            icon: Icon(Icons.calculate),
-            selectedIcon: Icon(Icons.calculate, color: Color(0xFF4CAF50)),
-            label: 'Equity',
+            icon: const Icon(Icons.calculate),
+            selectedIcon: const Icon(Icons.calculate, color: Color(0xFF4CAF50)),
+            label: l.equity,
           ),
           NavigationDestination(
-            icon: Icon(Icons.person),
-            selectedIcon: Icon(Icons.person, color: Color(0xFF4CAF50)),
-            label: 'My Page',
+            icon: const Icon(Icons.person),
+            selectedIcon: const Icon(Icons.person, color: Color(0xFF4CAF50)),
+            label: l.myPage,
           ),
         ],
       ),

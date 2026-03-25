@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/inquiry.dart';
 import '../../providers/inquiry_provider.dart';
@@ -20,6 +21,7 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
   }
 
   void _showDetail(Inquiry inquiry) {
+    final l = AppLocalizations.of(context)!;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -54,18 +56,18 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _StatusBadge(status: inquiry.status, label: inquiry.statusLabel),
+            _StatusBadge(status: inquiry.status, label: inquiry.statusLabel(l)),
             const SizedBox(height: 16),
-            const Text('Inquiry Detail',
-                style: TextStyle(
+            Text(l.inquiryDetail,
+                style: const TextStyle(
                     color: Colors.white70, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(inquiry.content,
                 style: const TextStyle(color: Colors.white)),
             if (inquiry.adminReply != null) ...[
               const SizedBox(height: 24),
-              const Text('Admin Reply',
-                  style: TextStyle(
+              Text(l.adminReply,
+                  style: const TextStyle(
                       color: Color(0xFF4CAF50),
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
@@ -88,18 +90,19 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<InquiryProvider>();
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Inquiries'),
+        title: Text(l.myInquiries),
         centerTitle: true,
       ),
       body: provider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : provider.myInquiries.isEmpty
-              ? const Center(
-                  child: Text('No inquiries yet',
-                      style: TextStyle(color: Colors.white54)))
+              ? Center(
+                  child: Text(l.noInquiriesYet,
+                      style: const TextStyle(color: Colors.white54)))
               : RefreshIndicator(
                   onRefresh: () => provider.loadMyInquiries(),
                   child: ListView.builder(
@@ -120,7 +123,7 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
                             style: const TextStyle(color: Colors.white38),
                           ),
                           trailing: _StatusBadge(
-                              status: inq.status, label: inq.statusLabel),
+                              status: inq.status, label: inq.statusLabel(l)),
                           onTap: () => _showDetail(inq),
                         ),
                       );

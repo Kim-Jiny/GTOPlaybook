@@ -1,3 +1,5 @@
+import 'package:gtoplaybook/l10n/app_localizations.dart';
+
 class Inquiry {
   final int id;
   final String userId;
@@ -40,13 +42,13 @@ class Inquiry {
     );
   }
 
-  String get statusLabel {
+  String statusLabel(AppLocalizations l) {
     switch (status) {
       case 'replied':
-        return 'Replied';
+        return l.statusReplied;
       case 'pending':
       default:
-        return 'Pending';
+        return l.statusPending;
     }
   }
 }

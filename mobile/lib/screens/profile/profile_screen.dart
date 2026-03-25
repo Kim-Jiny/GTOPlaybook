@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../inquiry/inquiry_screen.dart';
@@ -12,10 +13,11 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Page'),
+        title: Text(l.myPage),
         centerTitle: true,
       ),
       body: ListView(
@@ -45,7 +47,7 @@ class ProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          user?.displayName ?? 'Player',
+                          user?.displayName ?? l.player,
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -72,7 +74,7 @@ class ProfileScreen extends StatelessWidget {
           // Menu items
           _MenuTile(
             icon: Icons.edit_note,
-            title: 'Contact Us',
+            title: l.contactUs,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const InquiryScreen()),
@@ -80,7 +82,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           _MenuTile(
             icon: Icons.list_alt,
-            title: 'My Inquiries',
+            title: l.myInquiries,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyInquiriesScreen()),
@@ -89,7 +91,7 @@ class ProfileScreen extends StatelessWidget {
           if (auth.isAdmin)
             _MenuTile(
               icon: Icons.admin_panel_settings,
-              title: 'Admin',
+              title: l.admin,
               onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -99,7 +101,7 @@ class ProfileScreen extends StatelessWidget {
           const Divider(height: 32),
           _MenuTile(
             icon: Icons.logout,
-            title: 'Sign Out',
+            title: l.signOut,
             iconColor: Colors.redAccent,
             onTap: () => auth.signOut(),
           ),

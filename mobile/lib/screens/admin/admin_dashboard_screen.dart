@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/inquiry.dart';
 import '../../providers/inquiry_provider.dart';
@@ -25,6 +26,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _showReplyDialog(Inquiry inquiry) {
     final controller = TextEditingController();
+    final l = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -38,9 +40,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'Reply',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.reply,
+                border: const OutlineInputBorder(),
               ),
               maxLines: 4,
             ),
@@ -49,7 +51,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
+            child: Text(l.cancel),
           ),
           FilledButton(
             onPressed: () async {
@@ -66,7 +68,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 provider.loadAdminStats();
               }
             },
-            child: const Text('Send Reply'),
+            child: Text(l.sendReply),
           ),
         ],
       ),
@@ -77,6 +79,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<InquiryProvider>();
     final stats = provider.adminStats;
+    final l = AppLocalizations.of(context)!;
 
     final pendingCount = _getInquiryStatCount(stats, 'pending');
     final totalUsers = stats?['totalUsers'] ?? 0;
@@ -85,7 +88,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin'),
+        title: Text(l.admin),
         centerTitle: true,
       ),
       body: provider.isLoading && stats == null
@@ -102,13 +105,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   Row(
                     children: [
                       _StatCard(
-                          label: 'Users', value: '$totalUsers', flex: 1),
+                          label: l.users, value: '$totalUsers', flex: 1),
                       const SizedBox(width: 8),
                       _StatCard(
-                          label: 'Inquiries', value: '$totalInquiries', flex: 1),
+                          label: l.inquiries, value: '$totalInquiries', flex: 1),
                       const SizedBox(width: 8),
                       _StatCard(
-                        label: 'Pending',
+                        label: l.pending,
                         value: '$pendingCount',
                         flex: 1,
                         valueColor: pendingCount > 0
@@ -120,17 +123,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 24),
 
                   // Daily signups
-                  const Text('Signups (Last 30 Days)',
-                      style: TextStyle(
+                  Text(l.signupsLast30Days,
+                      style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   if (dailySignups.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Text('No data',
-                          style: TextStyle(color: Colors.white38)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Text(l.noDataAvailable,
+                          style: const TextStyle(color: Colors.white38)),
                     )
                   else
                     ...dailySignups.map((d) => Padding(
@@ -154,15 +157,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   // Inquiry management
                   Row(
                     children: [
-                      const Expanded(
-                        child: Text('Inquiry Management',
-                            style: TextStyle(
+                      Expanded(
+                        child: Text(l.inquiryManagement,
+                            style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold)),
                       ),
                       ChoiceChip(
-                        label: const Text('All'),
+                        label: Text(l.all),
                         selected: _statusFilter == null,
                         onSelected: (_) {
                           setState(() => _statusFilter = null);
@@ -171,7 +174,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(width: 4),
                       ChoiceChip(
-                        label: const Text('Pending'),
+                        label: Text(l.pending),
                         selected: _statusFilter == 'pending',
                         onSelected: (_) {
                           setState(() => _statusFilter = 'pending');
@@ -180,7 +183,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(width: 4),
                       ChoiceChip(
-                        label: const Text('Replied'),
+                        label: Text(l.replied),
                         selected: _statusFilter == 'replied',
                         onSelected: (_) {
                           setState(() => _statusFilter = 'replied');
@@ -192,11 +195,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 8),
 
                   if (provider.allInquiries.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       child: Center(
-                          child: Text('No inquiries',
-                              style: TextStyle(color: Colors.white38))),
+                          child: Text(l.noInquiries,
+                              style: const TextStyle(color: Colors.white38))),
                     )
                   else
                     ...provider.allInquiries.map((inq) => Card(
@@ -225,7 +228,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                inq.statusLabel,
+                                inq.statusLabel(l),
                                 style: TextStyle(
                                   color: inq.status == 'replied'
                                       ? const Color(0xFF4CAF50)

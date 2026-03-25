@@ -1,0 +1,237 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "GTO Playbook",
+  "masterYourPokerGame": "Master Your Poker Game",
+  "continueWithGoogle": "Continue with Google",
+  "continueWithApple": "Continue with Apple",
+
+  "gtoCharts": "GTO Charts",
+  "equity": "Equity",
+  "myPage": "My Page",
+
+  "retry": "Retry",
+  "reload": "Reload",
+  "cancel": "Cancel",
+  "done": "Done",
+  "clear": "Clear",
+  "submit": "Submit",
+  "loading": "Loading...",
+
+  "buildYourSpot": "Build Your Spot",
+  "buildYourSpotDesc": "Set the table size and stack first, then pick your position. The next screen will group detailed charts by real in-game decisions.",
+  "headsUp": "Heads-up",
+  "nMax": "{count}-max",
+  "@nMax": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "nbbView": "{bb}bb view",
+  "@nbbView": {
+    "placeholders": {
+      "bb": { "type": "int" }
+    }
+  },
+  "nCharts": "{count} charts",
+  "@nCharts": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "stepChooseSeat": "Step 1. Choose your seat",
+  "myChips": "My Chips",
+  "nbbEffective": "= {bb}bb effective",
+  "@nbbEffective": {
+    "placeholders": {
+      "bb": { "type": "int" }
+    }
+  },
+  "enterValuesToCalculate": "Enter values to calculate stack depth",
+  "nPlayers": "{count}P",
+  "@nPlayers": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "positionUTG": "Under the Gun",
+  "positionUTGPlus1": "Under the Gun +1",
+  "positionUTGPlus2": "Under the Gun +2",
+  "positionMP": "Middle Position",
+  "positionHJ": "Hijack",
+  "positionCO": "Cut Off",
+  "positionBTN": "Button",
+  "positionSB": "Small Blind",
+  "positionBB": "Big Blind",
+
+  "positionPlaybook": "{position} Playbook",
+  "@positionPlaybook": {
+    "placeholders": {
+      "position": { "type": "String" }
+    }
+  },
+  "positionStrategyLibrary": "{position} Strategy Library",
+  "@positionStrategyLibrary": {
+    "placeholders": {
+      "position": { "type": "String" }
+    }
+  },
+  "chooseSpotDesc": "Choose the exact spot you want to study. Each section groups similar decisions so detailed charts stay navigable.",
+  "nSections": "{count} sections",
+  "@nSections": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+
+  "categoryOpenPot": "Open Pot",
+  "categoryFacing3bet": "Facing a 3-Bet",
+  "category3betting": "3-Betting",
+  "categoryDefending": "Defending",
+  "categorySBDefense": "Small Blind Defense",
+  "categoryFacing4bet": "Facing a 4-Bet",
+  "categoryPostflopCbet": "Postflop C-Bet",
+
+  "categorySummaryRFI": "Unopened pot",
+  "categorySummaryFacing3bet": "Responding after opening",
+  "categorySummary3bet": "Re-raising an opener",
+  "categorySummaryDefend": "Calling or mixing from the blinds",
+  "categorySummarySBDefend": "Playing from the small blind",
+  "categorySummaryFacing4bet": "Continuing vs a 4-bet",
+  "categorySummaryPostflopCbet": "Postflop continuation spot",
+
+  "villain": "Villain: {position}",
+  "@villain": {
+    "placeholders": {
+      "position": { "type": "String" }
+    }
+  },
+  "spot": "Spot",
+
+  "noChartsAvailable": "No charts available",
+
+  "viewMode": "View Mode",
+  "simple": "Simple",
+  "detailed": "Detailed",
+  "primaryActionFirst": "Primary action first",
+  "mixedFrequenciesVisible": "Mixed frequencies visible",
+
+  "pocketPair": "Pocket Pair",
+  "suited": "Suited",
+  "offsuit": "Offsuit",
+  "hand": "Hand",
+  "nCombos": "{count} combos",
+  "@nCombos": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "actionPriority": "Action Priority",
+  "noData": "No data",
+  "noActionFrequencies": "No action frequencies available for this hand.",
+  "noMix": "No mix",
+  "pureStrategy": "Pure strategy",
+  "mixedStrategy": "Mixed Strategy",
+  "nWayMix": "{count}-way mix",
+  "@nWayMix": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "primaryActionDesc": "Primary action is {action} with a clear frequency advantage.",
+  "@primaryActionDesc": {
+    "placeholders": {
+      "action": { "type": "String" }
+    }
+  },
+  "studyNotePure": "{hand} is mostly played as {action} in this node. Treat it as a stable default and only deviate if your source chart changes.",
+  "@studyNotePure": {
+    "placeholders": {
+      "hand": { "type": "String" },
+      "action": { "type": "String" }
+    }
+  },
+  "studyNoteMixed": "{hand} mixes actions in this node. Start from {primary} as the anchor, then study how {secondary} enters the strategy. The top-two gap is {gap} percentage points.",
+  "@studyNoteMixed": {
+    "placeholders": {
+      "hand": { "type": "String" },
+      "primary": { "type": "String" },
+      "secondary": { "type": "String" },
+      "gap": { "type": "int" }
+    }
+  },
+  "studyNoteEmpty": "No study note is available because this hand does not have action frequencies yet.",
+  "nPercentAction": "{action} {percent}%",
+  "@nPercentAction": {
+    "placeholders": {
+      "action": { "type": "String" },
+      "percent": { "type": "int" }
+    }
+  },
+
+  "equityCalculator": "Equity Calculator",
+  "board": "Board",
+  "addPlayer": "Add Player",
+  "calculate": "Calculate",
+  "nSimulations": "{count} simulations",
+  "@nSimulations": {
+    "placeholders": {
+      "count": { "type": "String" }
+    }
+  },
+  "tapToSelectRange": "Tap to select range",
+  "nHandsPercent": "{count} hands (~{percent}%)",
+  "@nHandsPercent": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
+  "selectNCards": "Select {max} card{plural} ({current}/{max})",
+  "@selectNCards": {
+    "placeholders": {
+      "max": { "type": "int" },
+      "plural": { "type": "String" },
+      "current": { "type": "int" }
+    }
+  },
+  "rangeNHandsPercent": "Range: {count} hands (~{percent}%)",
+  "@rangeNHandsPercent": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "percent": { "type": "int" }
+    }
+  },
+
+  "contactUs": "Contact Us",
+  "myInquiries": "My Inquiries",
+  "admin": "Admin",
+  "signOut": "Sign Out",
+  "player": "Player",
+
+  "inquiryTitle": "Title",
+  "inquiryContent": "Content",
+  "pleaseEnterTitle": "Please enter a title",
+  "pleaseEnterContent": "Please enter content",
+  "inquirySubmitted": "Inquiry submitted successfully",
+  "failedToSubmitInquiry": "Failed to submit inquiry",
+
+  "noInquiriesYet": "No inquiries yet",
+  "inquiryDetail": "Inquiry Detail",
+  "adminReply": "Admin Reply",
+  "statusPending": "Pending",
+  "statusReplied": "Replied",
+
+  "users": "Users",
+  "inquiries": "Inquiries",
+  "pending": "Pending",
+  "all": "All",
+  "replied": "Replied",
+  "signupsLast30Days": "Signups (Last 30 Days)",
+  "noDataAvailable": "No data",
+  "inquiryManagement": "Inquiry Management",
+  "noInquiries": "No inquiries",
+  "reply": "Reply",
+  "sendReply": "Send Reply"
+}

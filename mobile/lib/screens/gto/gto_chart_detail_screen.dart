@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/gto_chart.dart';
@@ -29,10 +30,11 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
     final gto = context.watch<GtoProvider>();
     final chart = gto.selectedChart;
     final selectedRange = chart == null ? null : (_selectedRange ?? _defaultRange(chart));
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(chart?.description ?? 'Loading...'),
+        title: Text(chart?.description ?? l.loading),
         centerTitle: true,
       ),
       body: gto.isLoading || chart == null
@@ -147,7 +149,8 @@ class _HandDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = _actionSummary(range, actionTypes);
+    final l = AppLocalizations.of(context)!;
+    final summary = _actionSummary(range, actionTypes, l);
     final rankedActions = _rankedActions(range, actionTypes);
 
     return Card(
@@ -197,16 +200,16 @@ class _HandDetail extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _MetaChip(label: _handCategory(range.hand)),
-                _MetaChip(label: '${_comboCount(range.hand)} combos'),
+                _MetaChip(label: _handCategory(range.hand, l)),
+                _MetaChip(label: l.nCombos(_comboCount(range.hand))),
                 _MetaChip(label: summary.mixLabel),
               ],
             ),
             const SizedBox(height: 16),
             if (rankedActions.isNotEmpty) ...[
-              const Text(
-                'Action Priority',
-                style: TextStyle(
+              Text(
+                l.actionPriority,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -222,7 +225,7 @@ class _HandDetail extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             Text(
-              _studyNote(range, rankedActions),
+              _studyNote(range, rankedActions, l),
               style: const TextStyle(
                 color: Colors.white60,
                 fontSize: 13,
@@ -252,7 +255,7 @@ class _HandDetail extends StatelessWidget {
       );
     }
 
-  _ActionSummary _actionSummary(HandRange range, List<ActionType>? actionTypes) {
+  _ActionSummary _actionSummary(HandRange range, List<ActionType>? actionTypes, AppLocalizations l) {
     final frequencies = <String, double>{};
     if (range.frequencies.isNotEmpty) {
       frequencies.addAll(range.frequencies);
@@ -263,11 +266,11 @@ class _HandDetail extends StatelessWidget {
     }
 
     if (frequencies.isEmpty) {
-      return const _ActionSummary(
-        title: 'No data',
-        description: 'No action frequencies available for this hand.',
+      return _ActionSummary(
+        title: l.noData,
+        description: l.noActionFrequencies,
         color: Colors.white54,
-        mixLabel: 'No mix',
+        mixLabel: l.noMix,
       );
     }
 
@@ -295,22 +298,22 @@ class _HandDetail extends StatelessWidget {
     final primaryPercent = (primary.value * 100).round();
     if (!isMixed) {
       return _ActionSummary(
-        title: '$primaryLabel $primaryPercent%',
-        description: 'Primary action is $primaryLabel with a clear frequency advantage.',
+        title: l.nPercentAction(primaryLabel, primaryPercent),
+        description: l.primaryActionDesc(primaryLabel),
         color: colors[primary.key] ?? Colors.blueGrey,
-        mixLabel: 'Pure strategy',
+        mixLabel: l.pureStrategy,
       );
     }
 
     final mixText = sorted
         .take(3)
-        .map((entry) => '${labels[entry.key] ?? entry.key} ${(entry.value * 100).round()}%')
+        .map((entry) => l.nPercentAction(labels[entry.key] ?? entry.key, (entry.value * 100).round()))
         .join(' / ');
     return _ActionSummary(
-      title: 'Mixed Strategy',
+      title: l.mixedStrategy,
       description: mixText,
       color: colors[primary.key] ?? Colors.blueGrey,
-      mixLabel: '${sorted.length}-way mix',
+      mixLabel: l.nWayMix(sorted.length),
     );
   }
 
@@ -354,11 +357,11 @@ class _HandDetail extends StatelessWidget {
         .toList();
   }
 
-  String _handCategory(String hand) {
-    if (hand.length == 2) return 'Pocket Pair';
-    if (hand.endsWith('s')) return 'Suited';
-    if (hand.endsWith('o')) return 'Offsuit';
-    return 'Hand';
+  String _handCategory(String hand, AppLocalizations l) {
+    if (hand.length == 2) return l.pocketPair;
+    if (hand.endsWith('s')) return l.suited;
+    if (hand.endsWith('o')) return l.offsuit;
+    return l.hand;
   }
 
   int _comboCount(String hand) {
@@ -368,20 +371,20 @@ class _HandDetail extends StatelessWidget {
     return 0;
   }
 
-  String _studyNote(HandRange range, List<_RankedAction> rankedActions) {
+  String _studyNote(HandRange range, List<_RankedAction> rankedActions, AppLocalizations l) {
     if (rankedActions.isEmpty) {
-      return 'No study note is available because this hand does not have action frequencies yet.';
+      return l.studyNoteEmpty;
     }
 
     final primary = rankedActions.first;
     final secondary = rankedActions.length > 1 ? rankedActions[1] : null;
 
     if (secondary == null || secondary.freq < 0.12) {
-      return '${range.hand} is mostly played as ${primary.label.toLowerCase()} in this node. Treat it as a stable default and only deviate if your source chart changes.';
+      return l.studyNotePure(range.hand, primary.label.toLowerCase());
     }
 
     final gap = ((primary.freq - secondary.freq) * 100).round();
-    return '${range.hand} mixes actions in this node. Start from ${primary.label.toLowerCase()} as the anchor, then study how ${secondary.label.toLowerCase()} enters the strategy. The top-two gap is $gap percentage points.';
+    return l.studyNoteMixed(range.hand, primary.label.toLowerCase(), secondary.label.toLowerCase(), gap);
   }
 }
 
@@ -488,15 +491,17 @@ class _DisplayModeToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'View Mode',
-              style: TextStyle(
+            Text(
+              l.viewMode,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -507,18 +512,18 @@ class _DisplayModeToggle extends StatelessWidget {
               children: [
                 Expanded(
                   child: _ModeButton(
-                    label: 'Simple',
+                    label: l.simple,
                     isSelected: !detailedMode,
-                    description: 'Primary action first',
+                    description: l.primaryActionFirst,
                     onTap: () => onChanged(false),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: _ModeButton(
-                    label: 'Detailed',
+                    label: l.detailed,
                     isSelected: detailedMode,
-                    description: 'Mixed frequencies visible',
+                    description: l.mixedFrequenciesVisible,
                     onTap: () => onChanged(true),
                   ),
                 ),

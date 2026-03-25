@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import '../../models/position_situations.dart';
 import 'gto_chart_detail_screen.dart';
 
@@ -34,10 +35,11 @@ class GtoSituationSelectScreen extends StatelessWidget {
       0,
       (sum, category) => sum + category.charts.length,
     );
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_screenTitle(pos)),
+        title: Text(l.positionPlaybook(pos)),
         centerTitle: true,
       ),
       body: ListView(
@@ -62,8 +64,6 @@ class GtoSituationSelectScreen extends StatelessWidget {
       ),
     );
   }
-
-  String _screenTitle(String position) => '$position Playbook';
 }
 
 class _CategorySection extends StatelessWidget {
@@ -81,6 +81,8 @@ class _CategorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -92,7 +94,7 @@ class _CategorySection extends StatelessWidget {
               Icon(icon, color: posColor, size: 20),
               const SizedBox(width: 8),
               Text(
-                _categoryLabel(category.category),
+                _categoryLabel(category.category, l),
                 style: TextStyle(
                   color: posColor,
                   fontSize: 18,
@@ -128,22 +130,22 @@ class _CategorySection extends StatelessWidget {
     );
   }
 
-  String _categoryLabel(String category) {
+  String _categoryLabel(String category, AppLocalizations l) {
     switch (category) {
       case 'RFI':
-        return 'Open Pot';
+        return l.categoryOpenPot;
       case 'Facing 3bet':
-        return 'Facing a 3-Bet';
+        return l.categoryFacing3bet;
       case '3bet vs Opener':
-        return '3-Betting';
+        return l.category3betting;
       case 'Defend':
-        return 'Defending';
+        return l.categoryDefending;
       case 'SB Defend':
-        return 'Small Blind Defense';
+        return l.categorySBDefense;
       case 'Facing 4bet':
-        return 'Facing a 4-Bet';
+        return l.categoryFacing4bet;
       case 'Postflop Cbet':
-        return 'Postflop C-Bet';
+        return l.categoryPostflopCbet;
       default:
         return category;
     }
@@ -165,8 +167,9 @@ class _ChartTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = _chartTitle();
-    final subtitle = _chartSubtitle();
+    final l = AppLocalizations.of(context)!;
+    final title = _chartTitle(l);
+    final subtitle = _chartSubtitle(l);
     final actionPreview = _actionPreview();
 
     return Card(
@@ -226,47 +229,47 @@ class _ChartTile extends StatelessWidget {
     );
   }
 
-  String _chartTitle() {
+  String _chartTitle(AppLocalizations l) {
     if ((chart.description ?? '').isNotEmpty) {
       return chart.description!;
     }
 
     if (chart.vsPosition != null) {
-      return '$heroPosition ${_normalizeSituation(chart.situation)} vs ${chart.vsPosition}';
+      return '$heroPosition ${_normalizeSituation(chart.situation, l)} vs ${chart.vsPosition}';
     }
-    return '$heroPosition ${_normalizeSituation(chart.situation)}';
+    return '$heroPosition ${_normalizeSituation(chart.situation, l)}';
   }
 
-  String _chartSubtitle() {
+  String _chartSubtitle(AppLocalizations l) {
     final parts = <String>[
-      _categorySummary(category),
-      if (chart.vsPosition != null) 'Villain: ${chart.vsPosition}',
+      _categorySummary(category, l),
+      if (chart.vsPosition != null) l.villain(chart.vsPosition!),
     ];
     return parts.join('  •  ');
   }
 
-  String _normalizeSituation(String situation) {
+  String _normalizeSituation(String situation, AppLocalizations l) {
     final cleaned = situation.replaceAll('_', ' ').trim();
-    if (cleaned.isEmpty) return 'Spot';
+    if (cleaned.isEmpty) return l.spot;
     return cleaned;
   }
 
-  String _categorySummary(String category) {
+  String _categorySummary(String category, AppLocalizations l) {
     switch (category) {
       case 'RFI':
-        return 'Unopened pot';
+        return l.categorySummaryRFI;
       case 'Facing 3bet':
-        return 'Responding after opening';
+        return l.categorySummaryFacing3bet;
       case '3bet vs Opener':
-        return 'Re-raising an opener';
+        return l.categorySummary3bet;
       case 'Defend':
-        return 'Calling or mixing from the blinds';
+        return l.categorySummaryDefend;
       case 'SB Defend':
-        return 'Playing from the small blind';
+        return l.categorySummarySBDefend;
       case 'Facing 4bet':
-        return 'Continuing vs a 4-bet';
+        return l.categorySummaryFacing4bet;
       case 'Postflop Cbet':
-        return 'Postflop continuation spot';
+        return l.categorySummaryPostflopCbet;
       default:
         return category;
     }
@@ -321,6 +324,8 @@ class _SituationIntroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -328,7 +333,7 @@ class _SituationIntroCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$position Strategy Library',
+              l.positionStrategyLibrary(position),
               style: const TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -337,7 +342,7 @@ class _SituationIntroCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Choose the exact spot you want to study. Each section groups similar decisions so detailed charts stay navigable.',
+              l.chooseSpotDesc,
               style: const TextStyle(
                 color: Colors.white70,
                 height: 1.4,
@@ -348,8 +353,8 @@ class _SituationIntroCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _InfoChip(label: '$categoryCount sections', color: color),
-                _InfoChip(label: '$chartCount charts', color: color),
+                _InfoChip(label: l.nSections(categoryCount), color: color),
+                _InfoChip(label: l.nCharts(chartCount), color: color),
               ],
             ),
           ],

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/position_situations.dart';
@@ -45,16 +46,16 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     'BB': Color(0xFF8E24AA),
   };
 
-  static const _positionDescriptions = {
-    'UTG': 'Under the Gun',
-    'UTG+1': 'Under the Gun +1',
-    'UTG+2': 'Under the Gun +2',
-    'MP': 'Middle Position',
-    'HJ': 'Hijack',
-    'CO': 'Cut Off',
-    'BTN': 'Button',
-    'SB': 'Small Blind',
-    'BB': 'Big Blind',
+  Map<String, String> _positionDescriptions(AppLocalizations l) => {
+    'UTG': l.positionUTG,
+    'UTG+1': l.positionUTGPlus1,
+    'UTG+2': l.positionUTGPlus2,
+    'MP': l.positionMP,
+    'HJ': l.positionHJ,
+    'CO': l.positionCO,
+    'BTN': l.positionBTN,
+    'SB': l.positionSB,
+    'BB': l.positionBB,
   };
 
   /// Header label for the selected table size
@@ -93,10 +94,11 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
   @override
   Widget build(BuildContext context) {
     final gto = context.watch<GtoProvider>();
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GTO Charts'),
+        title: Text(l.gtoCharts),
         centerTitle: true,
       ),
       body: GestureDetector(
@@ -113,23 +115,24 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () => gto.loadPositionTree(),
-                          child: const Text('Retry'),
+                          child: Text(l.retry),
                         ),
                       ],
                     ),
                   )
-                : _buildBody(context, gto),
+                : _buildBody(context, gto, l),
       ),
     );
   }
 
-  Widget _buildBody(BuildContext context, GtoProvider gto) {
+  Widget _buildBody(BuildContext context, GtoProvider gto, AppLocalizations l) {
     final treeMap = <String, PositionSituations>{};
     for (final ps in gto.positionTree) {
       treeMap[ps.position] = ps;
     }
 
     final positions = _positionOrder(gto.selectedPlayerCount);
+    final posDesc = _positionDescriptions(l);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -145,9 +148,9 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
         ),
         const SizedBox(height: 12),
         // Player count selector
-        _buildPlayerCountSelector(gto),
+        _buildPlayerCountSelector(gto, l),
         const SizedBox(height: 12),
-        _buildBbCalculator(gto),
+        _buildBbCalculator(gto, l),
         const SizedBox(height: 12),
         // Header row
         Container(
@@ -155,7 +158,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
           child: Row(
             children: [
               Text(
-                'Step 1. Choose your seat',
+                l.stepChooseSeat,
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 13,
@@ -180,7 +183,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               ),
               const Spacer(),
               Text(
-                '${_tableLabel(gto.selectedPlayerCount)} · ${gto.positionTree.fold<int>(0, (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length))} charts',
+                '${_tableLabel(gto.selectedPlayerCount)} · ${l.nCharts(gto.positionTree.fold<int>(0, (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length)))}',
                 style: TextStyle(color: Colors.white38, fontSize: 12),
               ),
             ],
@@ -199,7 +202,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
 
           return _PositionCard(
             position: pos,
-            description: _positionDescriptions[pos] ?? pos,
+            description: posDesc[pos] ?? pos,
             color: _positionColors[pos] ?? const Color(0xFF757575),
             chartCount: chartCount,
             categories: categories,
@@ -219,7 +222,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     );
   }
 
-  Widget _buildPlayerCountSelector(GtoProvider gto) {
+  Widget _buildPlayerCountSelector(GtoProvider gto, AppLocalizations l) {
     return SizedBox(
       height: 36,
       child: ListView.separated(
@@ -229,7 +232,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
         itemBuilder: (context, index) {
           final count = index + 2; // 2~9
           final isSelected = count == gto.selectedPlayerCount;
-          final label = count == 2 ? 'HU' : '$count인';
+          final label = count == 2 ? l.headsUp : l.nPlayers(count);
 
           return GestureDetector(
             onTap: () => gto.selectPlayerCount(count),
@@ -264,7 +267,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     );
   }
 
-  Widget _buildBbCalculator(GtoProvider gto) {
+  Widget _buildBbCalculator(GtoProvider gto, AppLocalizations l) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -290,7 +293,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _BbInputField(
-                  label: 'My Chips',
+                  label: l.myChips,
                   controller: _chipsController,
                   onChanged: (_) => _onInputChanged(),
                 ),
@@ -310,7 +313,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    '= ${gto.effectiveBb}bb effective',
+                    l.nbbEffective(gto.effectiveBb),
                     style: TextStyle(
                       color: _tierColor(gto.selectedTier),
                       fontSize: 13,
@@ -320,7 +323,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                 )
               else
                 Text(
-                  'Enter values to calculate stack depth',
+                  l.enterValuesToCalculate,
                   style: TextStyle(color: Colors.white30, fontSize: 12),
                 ),
               const Spacer(),
@@ -415,6 +418,8 @@ class _QuickStartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -425,18 +430,18 @@ class _QuickStartCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Build Your Spot',
-            style: TextStyle(
+          Text(
+            l.buildYourSpot,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Set the table size and stack first, then pick your position. The next screen will group detailed charts by real in-game decisions.',
-            style: TextStyle(
+          Text(
+            l.buildYourSpotDesc,
+            style: const TextStyle(
               color: Colors.white70,
               height: 1.4,
             ),
@@ -446,9 +451,9 @@ class _QuickStartCard extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _QuickInfoChip(label: playerCount == 2 ? 'Heads-up' : '$playerCount-max'),
-              _QuickInfoChip(label: '${effectiveBb > 0 ? effectiveBb : stackDepth}bb view'),
-              _QuickInfoChip(label: '$chartCount charts'),
+              _QuickInfoChip(label: playerCount == 2 ? l.headsUp : l.nMax(playerCount)),
+              _QuickInfoChip(label: l.nbbView(effectiveBb > 0 ? effectiveBb : stackDepth)),
+              _QuickInfoChip(label: l.nCharts(chartCount)),
             ],
           ),
         ],

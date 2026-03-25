@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import '../models/card.dart';
 
 class CardPicker extends StatefulWidget {
@@ -62,6 +63,8 @@ class _CardPickerState extends State<CardPicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -72,7 +75,7 @@ class _CardPickerState extends State<CardPicker> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Select ${widget.maxCards} card${widget.maxCards > 1 ? 's' : ''} (${selected.length}/${widget.maxCards})',
+                  l.selectNCards(widget.maxCards, widget.maxCards > 1 ? 's' : '', selected.length),
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Row(
@@ -80,11 +83,11 @@ class _CardPickerState extends State<CardPicker> {
                     if (selected.isNotEmpty)
                       TextButton(
                         onPressed: () => setState(() => selected.clear()),
-                        child: const Text('Clear'),
+                        child: Text(l.clear),
                       ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, selected),
-                      child: const Text('Done'),
+                      child: Text(l.done),
                     ),
                   ],
                 ),

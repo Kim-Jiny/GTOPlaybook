@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 
@@ -8,6 +9,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       body: SafeArea(
@@ -24,7 +26,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'GTO Playbook',
+                  l.appTitle,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -32,7 +34,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Master Your Poker Game',
+                  l.masterYourPokerGame,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.white60,
                       ),
@@ -53,7 +55,7 @@ class LoginScreen extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: auth.isLoading ? null : () => auth.signInWithGoogle(),
                     icon: const Icon(Icons.g_mobiledata, size: 28),
-                    label: const Text('Continue with Google'),
+                    label: Text(l.continueWithGoogle),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.black87,
@@ -71,7 +73,7 @@ class LoginScreen extends StatelessWidget {
                     child: ElevatedButton.icon(
                       onPressed: auth.isLoading ? null : () => auth.signInWithApple(),
                       icon: const Icon(Icons.apple, size: 28),
-                      label: const Text('Continue with Apple'),
+                      label: Text(l.continueWithApple),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
                         foregroundColor: Colors.white,

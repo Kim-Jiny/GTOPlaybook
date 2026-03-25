@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/inquiry_provider.dart';
 
@@ -31,14 +32,15 @@ class _InquiryScreenState extends State<InquiryScreen> {
     );
 
     if (!mounted) return;
+    final l = AppLocalizations.of(context)!;
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Inquiry submitted successfully')),
+        SnackBar(content: Text(l.inquirySubmitted)),
       );
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error ?? 'Failed to submit inquiry')),
+        SnackBar(content: Text(provider.error ?? l.failedToSubmitInquiry)),
       );
     }
   }
@@ -46,10 +48,11 @@ class _InquiryScreenState extends State<InquiryScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<InquiryProvider>();
+    final l = AppLocalizations.of(context)!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contact Us'),
+        title: Text(l.contactUs),
         centerTitle: true,
       ),
       body: Padding(
@@ -60,27 +63,27 @@ class _InquiryScreenState extends State<InquiryScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l.inquiryTitle,
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Please enter a title' : null,
+                    v == null || v.trim().isEmpty ? l.pleaseEnterTitle : null,
               ),
               const SizedBox(height: 16),
               Expanded(
                 child: TextFormField(
                   controller: _contentController,
-                  decoration: const InputDecoration(
-                    labelText: 'Content',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l.inquiryContent,
+                    border: const OutlineInputBorder(),
                     alignLabelWithHint: true,
                   ),
                   maxLines: null,
                   expands: true,
                   textAlignVertical: TextAlignVertical.top,
                   validator: (v) =>
-                      v == null || v.trim().isEmpty ? 'Please enter content' : null,
+                      v == null || v.trim().isEmpty ? l.pleaseEnterContent : null,
                 ),
               ),
               const SizedBox(height: 16),
@@ -95,7 +98,7 @@ class _InquiryScreenState extends State<InquiryScreen> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Submit'),
+                      : Text(l.submit),
                 ),
               ),
             ],

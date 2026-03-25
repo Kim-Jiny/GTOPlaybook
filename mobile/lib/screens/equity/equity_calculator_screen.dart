@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/equity_result.dart';
 import '../../providers/equity_provider.dart';
@@ -11,9 +12,11 @@ class EquityCalculatorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Equity Calculator'),
+        title: Text(l.equityCalculator),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -38,7 +41,7 @@ class EquityCalculatorScreen extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: provider.addPlayer,
                     icon: const Icon(Icons.add),
-                    label: const Text('Add Player'),
+                    label: Text(l.addPlayer),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white70,
                       side: const BorderSide(color: Colors.white24),
@@ -58,7 +61,7 @@ class EquityCalculatorScreen extends StatelessWidget {
                             height: 24,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                           )
-                        : const Text('Calculate', style: TextStyle(fontSize: 18)),
+                        : Text(l.calculate, style: const TextStyle(fontSize: 18)),
                   ),
                 ),
                 if (provider.result != null) ...[
@@ -80,13 +83,15 @@ class _BoardSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Board', style: TextStyle(fontSize: 14, color: Colors.white60)),
+            Text(l.board, style: const TextStyle(fontSize: 14, color: Colors.white60)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () async {
@@ -149,6 +154,7 @@ class _PlayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final result = provider.result;
     final equity = result != null ? result.equities[index] : null;
+    final l = AppLocalizations.of(context)!;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -187,7 +193,7 @@ class _PlayerRow extends StatelessWidget {
             Expanded(
               child: player.inputMode == InputMode.cards
                   ? _buildCardInput(context)
-                  : _buildRangeInput(context),
+                  : _buildRangeInput(context, l),
             ),
             // Equity display
             if (equity != null)
@@ -254,7 +260,7 @@ class _PlayerRow extends StatelessWidget {
     );
   }
 
-  Widget _buildRangeInput(BuildContext context) {
+  Widget _buildRangeInput(BuildContext context, AppLocalizations l) {
     return GestureDetector(
       onTap: () async {
         final range = await RangePicker.show(context, initialRange: player.range);
@@ -269,8 +275,8 @@ class _PlayerRow extends StatelessWidget {
         ),
         child: Text(
           player.range.isEmpty
-              ? 'Tap to select range'
-              : '${player.range.length} hands (~${_estimatePercent(player.range)}%)',
+              ? l.tapToSelectRange
+              : l.nHandsPercent(player.range.length, _estimatePercent(player.range)),
           style: TextStyle(
             color: player.range.isEmpty ? Colors.white38 : Colors.white,
             fontSize: 13,
@@ -315,6 +321,8 @@ class _ResultsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -322,7 +330,7 @@ class _ResultsBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${result.simulations.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')} simulations',
+              l.nSimulations(result.simulations.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')),
               style: const TextStyle(fontSize: 12, color: Colors.white38),
             ),
             const SizedBox(height: 8),

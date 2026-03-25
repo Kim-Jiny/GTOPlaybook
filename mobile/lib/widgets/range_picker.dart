@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gtoplaybook/l10n/app_localizations.dart';
 
 class RangePicker extends StatefulWidget {
   final Set<String> initialRange;
@@ -86,6 +87,7 @@ class _RangePickerState extends State<RangePicker> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
     final pct = selected.isEmpty ? 0 : _estimatePercent();
     return SafeArea(
       child: Padding(
@@ -96,17 +98,17 @@ class _RangePickerState extends State<RangePicker> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Range: ${selected.length} hands (~$pct%)',
+                Text(l.rangeNHandsPercent(selected.length, pct),
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 Row(
                   children: [
                     TextButton(
                       onPressed: () => setState(() => selected.clear()),
-                      child: const Text('Clear'),
+                      child: Text(l.clear),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(context, selected),
-                      child: const Text('Done'),
+                      child: Text(l.done),
                     ),
                   ],
                 ),
