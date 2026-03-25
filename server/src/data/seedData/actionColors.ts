@@ -21,6 +21,28 @@ export const RFI_ACTIONS: ActionType[] = [
   { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
 ];
 
+export const ISO_RAISE_ACTIONS: ActionType[] = [
+  { key: 'raise', label: 'Iso Raise', color: ACTION_COLORS.raise },
+  { key: 'call', label: 'Overlimp', color: ACTION_COLORS.call },
+  { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
+];
+
+export const SQUEEZE_ACTIONS: ActionType[] = [
+  { key: '3bet', label: 'Squeeze', color: ACTION_COLORS['3bet'] },
+  { key: 'call', label: 'Call', color: ACTION_COLORS.call },
+  { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
+];
+
+export const COLD_CALL_ACTIONS: ActionType[] = [
+  { key: 'call', label: 'Call', color: ACTION_COLORS.call },
+  { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
+];
+
+export const LIMPED_POT_ACTIONS: ActionType[] = [
+  { key: 'raise', label: 'Raise', color: ACTION_COLORS.raise },
+  { key: 'check', label: 'Check', color: ACTION_COLORS.check },
+];
+
 export const FACING_3BET_ACTIONS: ActionType[] = [
   { key: '4bet', label: '4bet', color: ACTION_COLORS['4bet'] },
   { key: 'call', label: 'Call', color: ACTION_COLORS.call },

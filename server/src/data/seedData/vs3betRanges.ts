@@ -111,8 +111,10 @@ const CALL_25_BTN_VS_BB = new Set(['JJ', 'TT', '99', '88', 'AQs', 'AQo', 'AJs', 
 const FOURBET_25_SB_VS_BB = new Set(['AA', 'KK', 'QQ', 'JJ', 'AKs', 'AKo', 'A5s', 'A4s', 'A3s']);
 const CALL_25_SB_VS_BB = new Set(['TT', '99', '88', '77', 'AQs', 'AQo', 'AJs', 'ATs', 'A9s', 'A8s', 'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s']);
 
+type FacingMixedMap = Record<string, { '4bet': number; call: number; fold: number }>;
+
 // Mixed frequency hands at boundary (e.g. QQ sometimes 4bets, sometimes calls)
-const FACING_3BET_MIXED: Record<string, { '4bet': number; call: number; fold: number }> = {
+const FACING_3BET_MIXED: FacingMixedMap = {
   'QQ': { '4bet': 0.45, call: 0.55, fold: 0 },
   'JJ': { '4bet': 0.2, call: 0.8, fold: 0 },
   'AQs': { '4bet': 0.3, call: 0.6, fold: 0.1 },
@@ -129,12 +131,47 @@ const FACING_3BET_MIXED: Record<string, { '4bet': number; call: number; fold: nu
   'A4s': { '4bet': 0.3, call: 0.18, fold: 0.52 },
 };
 
+const FACING_25_CO_VS_BLIND_MIXED: FacingMixedMap = {
+  ...FACING_3BET_MIXED,
+  'A5s': { '4bet': 0.42, call: 0.2, fold: 0.38 },
+  'A4s': { '4bet': 0.26, call: 0.18, fold: 0.56 },
+  'A3s': { '4bet': 0.16, call: 0.14, fold: 0.7 },
+};
+
+const FACING_25_BTN_VS_SB_MIXED: FacingMixedMap = {
+  ...FACING_3BET_MIXED,
+  'A5s': { '4bet': 0.44, call: 0.2, fold: 0.36 },
+  'A4s': { '4bet': 0.34, call: 0.2, fold: 0.46 },
+  'A3s': { '4bet': 0.22, call: 0.16, fold: 0.62 },
+  'A2s': { '4bet': 0.12, call: 0.12, fold: 0.76 },
+};
+
+const FACING_25_BTN_VS_BB_MIXED: FacingMixedMap = {
+  ...FACING_3BET_MIXED,
+  'A5s': { '4bet': 0.46, call: 0.2, fold: 0.34 },
+  'A4s': { '4bet': 0.36, call: 0.2, fold: 0.44 },
+  'A3s': { '4bet': 0.24, call: 0.16, fold: 0.6 },
+  'A2s': { '4bet': 0.14, call: 0.12, fold: 0.74 },
+};
+
+const FACING_25_SB_VS_BB_MIXED: FacingMixedMap = {
+  ...FACING_3BET_MIXED,
+  'A5s': { '4bet': 0.48, call: 0.18, fold: 0.34 },
+  'A4s': { '4bet': 0.4, call: 0.18, fold: 0.42 },
+  'A3s': { '4bet': 0.28, call: 0.16, fold: 0.56 },
+  'A2s': { '4bet': 0.16, call: 0.12, fold: 0.72 },
+};
+
 // ── Range helper functions ──
 
-function facing3betRange(fourBetSet: Set<string>, callSet: Set<string>, useMixed = false) {
+function facing3betRange(
+  fourBetSet: Set<string>,
+  callSet: Set<string>,
+  mixedMap: false | FacingMixedMap = false,
+) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (useMixed && h in FACING_3BET_MIXED) return FACING_3BET_MIXED[h];
+    if (mixedMap && h in mixedMap) return mixedMap[h];
     const currentKey = inSet(h, fourBetSet) ? '4bet' : inSet(h, callSet) ? 'call' : 'fold';
     const smooth = smoothFrequencies(row, col, currentKey, [
       { key: '4bet', set: fourBetSet },
@@ -251,7 +288,7 @@ function useMixedFor(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBett
 // ── 25bb data lookup ──
 
 type Facing25Key = string; // "opener_vs_3bettor"
-type Facing25Data = { fourBet: Set<string>; call: Set<string> };
+type Facing25Data = { fourBet: Set<string>; call: Set<string>; mixed?: FacingMixedMap };
 
 const FACING_25_DATA: Record<Facing25Key, Facing25Data> = {
   'ep-tight_vs_tight': { fourBet: FOURBET_25_UTG_VS_HJ, call: CALL_25_UTG_VS_HJ },
@@ -264,11 +301,11 @@ const FACING_25_DATA: Record<Facing25Key, Facing25Data> = {
   'hj_vs_sb': { fourBet: FOURBET_25_HJ_VS_LATE, call: CALL_25_HJ_VS_LATE },
   'hj_vs_bb': { fourBet: FOURBET_25_HJ_VS_LATE, call: CALL_25_HJ_VS_LATE },
   'co_vs_btn': { fourBet: FOURBET_25_CO_VS_BTN, call: CALL_25_CO_VS_BTN },
-  'co_vs_sb': { fourBet: FOURBET_25_CO_VS_BLIND, call: CALL_25_CO_VS_BLIND },
-  'co_vs_bb': { fourBet: FOURBET_25_CO_VS_BLIND, call: CALL_25_CO_VS_BLIND },
-  'btn_vs_sb': { fourBet: FOURBET_25_BTN_VS_SB, call: CALL_25_BTN_VS_SB },
-  'btn_vs_bb': { fourBet: FOURBET_25_BTN_VS_BB, call: CALL_25_BTN_VS_BB },
-  'sb_vs_bb':  { fourBet: FOURBET_25_SB_VS_BB, call: CALL_25_SB_VS_BB },
+  'co_vs_sb': { fourBet: FOURBET_25_CO_VS_BLIND, call: CALL_25_CO_VS_BLIND, mixed: FACING_25_CO_VS_BLIND_MIXED },
+  'co_vs_bb': { fourBet: FOURBET_25_CO_VS_BLIND, call: CALL_25_CO_VS_BLIND, mixed: FACING_25_CO_VS_BLIND_MIXED },
+  'btn_vs_sb': { fourBet: FOURBET_25_BTN_VS_SB, call: CALL_25_BTN_VS_SB, mixed: FACING_25_BTN_VS_SB_MIXED },
+  'btn_vs_bb': { fourBet: FOURBET_25_BTN_VS_BB, call: CALL_25_BTN_VS_BB, mixed: FACING_25_BTN_VS_BB_MIXED },
+  'sb_vs_bb':  { fourBet: FOURBET_25_SB_VS_BB, call: CALL_25_SB_VS_BB, mixed: FACING_25_SB_VS_BB_MIXED },
 };
 
 // ── 15bb jam sets — jam-or-fold only, no calling range ──
@@ -403,7 +440,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_ACTIONS,
-          ranges: facing3betRange(data.fourBet, data.call, true),
+          ranges: facing3betRange(data.fourBet, data.call, data.mixed ?? false),
         });
       } else {
         // 40bb, 60bb, 100bb: 4bet / call / fold
@@ -411,7 +448,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
         const callSet = getCallSet(opClass, tbClass, depth);
         if (!fourBetSet || !callSet) continue;
 
-        const mixed = useMixedFor(opClass, tbClass, depth);
+        const mixed = useMixedFor(opClass, tbClass, depth) ? FACING_3BET_MIXED : false;
 
         charts.push({
           position: opener,

@@ -18,6 +18,17 @@ class GtoGrid extends StatelessWidget {
   });
 
   static const _ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+  static const _actionPriority = {
+    'allin': 0,
+    '5bet': 1,
+    '4bet': 2,
+    '3bet': 3,
+    'raise': 4,
+    'bet': 5,
+    'call': 6,
+    'check': 7,
+    'fold': 8,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -196,10 +207,22 @@ class GtoGrid extends StatelessWidget {
 
     final best = freqs.entries.reduce((a, b) => a.value >= b.value ? a : b);
     switch (best.key) {
+      case 'allin':
+        return 'AI';
+      case '5bet':
+        return '5B';
+      case '4bet':
+        return '4B';
+      case '3bet':
+        return '3B';
       case 'raise':
         return 'R';
+      case 'bet':
+        return 'B';
       case 'call':
         return 'C';
+      case 'check':
+        return 'X';
       case 'fold':
         return 'F';
       default:
@@ -266,7 +289,12 @@ class _CellBackground extends StatelessWidget {
     final ordered = freqs.entries
         .where((entry) => entry.value > 0)
         .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+      ..sort((a, b) {
+        final pa = GtoGrid._actionPriority[a.key] ?? 99;
+        final pb = GtoGrid._actionPriority[b.key] ?? 99;
+        if (pa != pb) return pa.compareTo(pb);
+        return b.value.compareTo(a.value);
+      });
 
     if (ordered.isEmpty) return const [];
 
@@ -284,10 +312,22 @@ class _CellBackground extends StatelessWidget {
 
   Color _fallbackColor(String key) {
     switch (key) {
+      case 'allin':
+        return Colors.red.shade900;
+      case '5bet':
+        return Colors.redAccent.shade700;
+      case '4bet':
+        return Colors.purple.shade700;
+      case '3bet':
+        return Colors.orange.shade700;
       case 'raise':
         return Colors.red.shade700;
+      case 'bet':
+        return Colors.blue.shade700;
       case 'call':
         return Colors.green.shade700;
+      case 'check':
+        return Colors.blueGrey.shade500;
       case 'fold':
         return Colors.grey.shade700;
       default:

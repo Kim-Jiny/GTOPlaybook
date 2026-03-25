@@ -19,6 +19,11 @@ class GtoSituationSelectScreen extends StatelessWidget {
 
   static const _categoryIcons = {
     'RFI': Icons.arrow_upward,
+    'Iso Raise vs Limp': Icons.north_east,
+    'Cold Call': Icons.call_received,
+    'Squeeze': Icons.bolt,
+    'Facing Squeeze': Icons.sync_problem,
+    'Limped Pot': Icons.waterfall_chart,
     'Facing 3bet': Icons.shield,
     '3bet vs Opener': Icons.flash_on,
     'Defend': Icons.security,
@@ -134,6 +139,16 @@ class _CategorySection extends StatelessWidget {
     switch (category) {
       case 'RFI':
         return l.categoryOpenPot;
+      case 'Iso Raise vs Limp':
+        return 'Iso Raise vs Limp';
+      case 'Cold Call':
+        return 'Cold Call';
+      case 'Squeeze':
+        return 'Squeeze';
+      case 'Facing Squeeze':
+        return 'Facing Squeeze';
+      case 'Limped Pot':
+        return 'Limped Pot';
       case 'Facing 3bet':
         return l.categoryFacing3bet;
       case '3bet vs Opener':
@@ -258,6 +273,16 @@ class _ChartTile extends StatelessWidget {
     switch (category) {
       case 'RFI':
         return l.categorySummaryRFI;
+      case 'Iso Raise vs Limp':
+        return 'Attack limpers with raise / overlimp / fold';
+      case 'Cold Call':
+        return 'Flat open or overcall when squeezing is too thin';
+      case 'Squeeze':
+        return 'Re-attack open plus caller spots';
+      case 'Facing Squeeze':
+        return 'Respond after your open gets called and squeezed';
+      case 'Limped Pot':
+        return 'Punish limp/check spots with raise or take free equity';
       case 'Facing 3bet':
         return l.categorySummaryFacing3bet;
       case '3bet vs Opener':
