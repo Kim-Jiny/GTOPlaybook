@@ -248,6 +248,18 @@ abstract class AppLocalizations {
   /// **'{count}P'**
   String nPlayers(int count);
 
+  /// No description provided for @tableSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Table Size'**
+  String get tableSize;
+
+  /// No description provided for @tableSizeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the table size first. All seats stay visible at once.'**
+  String get tableSizeDesc;
+
   /// No description provided for @positionUTG.
   ///
   /// In en, this message translates to:

@@ -29,6 +29,8 @@
   "nbbEffective": "= {bb}bb 이펙티브",
   "enterValuesToCalculate": "값을 입력하면 스택 깊이를 계산합니다",
   "nPlayers": "{count}인",
+  "tableSize": "테이블 인원",
+  "tableSizeDesc": "테이블 인원을 먼저 선택하세요. 모든 좌석이 한눈에 표시됩니다.",
 
   "positionUTG": "언더 더 건",
   "positionUTGPlus1": "언더 더 건 +1",

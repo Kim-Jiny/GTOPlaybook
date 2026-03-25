@@ -95,6 +95,12 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get tableSize => '테이블 인원';
+
+  @override
+  String get tableSizeDesc => '테이블 인원을 먼저 선택하세요. 모든 좌석이 한눈에 표시됩니다.';
+
+  @override
   String get positionUTG => '언더 더 건';
 
   @override

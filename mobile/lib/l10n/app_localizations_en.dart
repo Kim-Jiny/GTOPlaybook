@@ -95,6 +95,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tableSize => 'Table Size';
+
+  @override
+  String get tableSizeDesc =>
+      'Choose the table size first. All seats stay visible at once.';
+
+  @override
   String get positionUTG => 'Under the Gun';
 
   @override

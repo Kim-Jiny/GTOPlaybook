@@ -54,6 +54,8 @@
       "count": { "type": "int" }
     }
   },
+  "tableSize": "Table Size",
+  "tableSizeDesc": "Choose the table size first. All seats stay visible at once.",
 
   "positionUTG": "Under the Gun",
   "positionUTGPlus1": "Under the Gun +1",

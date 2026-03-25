@@ -223,44 +223,102 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
   }
 
   Widget _buildPlayerCountSelector(GtoProvider gto, AppLocalizations l) {
-    return SizedBox(
-      height: 36,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: 8,
-        separatorBuilder: (_, _) => const SizedBox(width: 6),
-        itemBuilder: (context, index) {
-          final count = index + 2; // 2~9
-          final isSelected = count == gto.selectedPlayerCount;
-          final label = count == 2 ? l.headsUp : l.nPlayers(count);
+    const counts = [2, 3, 4, 5, 6, 7, 8, 9];
 
-          return GestureDetector(
-            onTap: () => gto.selectPlayerCount(count),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFF42A5F5)
-                    : Colors.white.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFF42A5F5)
-                      : Colors.white.withValues(alpha: 0.1),
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF161616),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const spacing = 8.0;
+          final itemWidth = (constraints.maxWidth - (spacing * 3)) / 4;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l.tableSize,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              child: Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.white54,
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
+              const SizedBox(height: 4),
+              Text(
+                l.tableSizeDesc,
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  height: 1.35,
                 ),
               ),
-            ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: counts.map((count) {
+                  final isSelected = count == gto.selectedPlayerCount;
+                  final primaryLabel = count == 2 ? 'HU' : '$count-MAX';
+                  final secondaryLabel = count == 2 ? l.headsUp : l.nPlayers(count);
+
+                  return SizedBox(
+                    width: itemWidth,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => gto.selectPlayerCount(count),
+                        borderRadius: BorderRadius.circular(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF42A5F5).withValues(alpha: 0.16)
+                                : Colors.white.withValues(alpha: 0.04),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFF42A5F5)
+                                  : Colors.white.withValues(alpha: 0.08),
+                              width: isSelected ? 1.4 : 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                primaryLabel,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white : Colors.white70,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                secondaryLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: isSelected ? Colors.white70 : Colors.white38,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
           );
         },
       ),
