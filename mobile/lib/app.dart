@@ -52,6 +52,13 @@ class GtoPlaybookApp extends StatelessWidget {
         ),
         home: Consumer<AuthProvider>(
           builder: (context, auth, _) {
+            if (auth.isInitializing) {
+              return const Scaffold(
+                body: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+            }
             if (auth.isAuthenticated) {
               return const HomeScreen();
             }

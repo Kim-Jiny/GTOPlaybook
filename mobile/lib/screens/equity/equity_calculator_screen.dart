@@ -3,6 +3,8 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/equity_result.dart';
 import '../../providers/equity_provider.dart';
+import '../../services/ad_helper.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/card_picker.dart';
 import '../../widgets/range_picker.dart';
 import '../../widgets/playing_card_widget.dart';
@@ -55,6 +57,8 @@ class EquityCalculatorScreen extends StatelessWidget {
                       : Text(l.calculate, style: const TextStyle(fontSize: 18)),
                 ),
               ),
+              const SizedBox(height: 12),
+              const Center(child: BannerAdWidget(placement: AdPlacement.equity)),
               if (provider.result != null) ...[
                 const SizedBox(height: 16),
                 _ResultsBar(result: provider.result!, playerCount: provider.players.length),

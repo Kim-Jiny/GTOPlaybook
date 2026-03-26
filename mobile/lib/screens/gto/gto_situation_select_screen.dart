@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import '../../models/position_situations.dart';
+import '../../services/ad_helper.dart';
+import '../../widgets/banner_ad_widget.dart';
 import 'gto_chart_detail_screen.dart';
 
 class GtoSituationSelectScreen extends StatelessWidget {
@@ -56,7 +58,9 @@ class GtoSituationSelectScreen extends StatelessWidget {
             categoryCount: positionSituations.categories.length,
             chartCount: totalCharts,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
+          const Center(child: BannerAdWidget(placement: AdPlacement.situationList)),
+          const SizedBox(height: 12),
           ...positionSituations.categories.map((cat) {
             return _CategorySection(
               heroPosition: pos,

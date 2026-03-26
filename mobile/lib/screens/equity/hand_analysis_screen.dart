@@ -3,6 +3,8 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/hand_analysis_result.dart';
 import '../../providers/hand_analysis_provider.dart';
+import '../../services/ad_helper.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/card_picker.dart';
 import '../../widgets/playing_card_widget.dart';
 
@@ -45,6 +47,8 @@ class HandAnalysisScreen extends StatelessWidget {
                       : Text(l.analyze, style: const TextStyle(fontSize: 18)),
                 ),
               ),
+              const SizedBox(height: 12),
+              const Center(child: BannerAdWidget(placement: AdPlacement.handAnalysis)),
               if (provider.result != null) ...[
                 const SizedBox(height: 16),
                 _HeroHandStrength(result: provider.result!),

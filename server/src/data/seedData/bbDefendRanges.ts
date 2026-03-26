@@ -107,22 +107,22 @@ const BB_VS_SB_JAM_15 = new Set([
 
 const BB_VS_UTG_3BET_25 = new Set(['AA', 'KK', 'AKs', 'AKo']);
 const BB_VS_UTG_CALL_25 = new Set([
-  'JJ', 'TT', '99',
+  'TT', '99',
   'AQs', 'AQo', 'AJs',
   'KQs', 'KJs',
 ]);
 
-const BB_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'AKs', 'AQs']);
+const BB_VS_HJ_3BET_25 = new Set(['AA', 'KK', 'AKs', 'AKo']);
 const BB_VS_HJ_CALL_25 = new Set([
-  'JJ', 'TT', '99', '88',
-  'AKo', 'AQo', 'AJs', 'ATs',
+  'TT', '99', '88',
+  'AQo', 'AJs', 'ATs',
   'KQs', 'KJs', 'QJs',
 ]);
 
 const BB_VS_CO_3BET_25 = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo', 'AQs']);
 const BB_VS_CO_CALL_25 = new Set([
-  'TT', '99', '88', '77', '66',
-  'AQo', 'AJs', 'ATs', 'A9s', 'A5s',
+  '99', '88', '77', '66',
+  'AJs', 'ATs', 'A9s',
   'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
   'KQo',
 ]);
@@ -132,7 +132,7 @@ const BB_VS_BTN_3BET_25 = new Set([
   'AKs', 'AKo', 'AQs',
 ]);
 const BB_VS_BTN_CALL_25 = new Set([
-  '99', '88', '77', '66', '55', '44',
+  '88', '77', '66', '55', '44',
   'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s',
   'KQs', 'KJs', 'KTs', 'K9s', 'K8s',
   'QJs', 'QTs', 'Q9s', 'JTs', 'J9s', 'T9s', '98s', '87s', '76s',
@@ -145,17 +145,17 @@ const BB_VS_SB_3BET_25 = new Set([
   'A3s',
 ]);
 const BB_VS_SB_CALL_25 = new Set([
-  '88', '77', '66', '55', '44', '33',
+  '77', '66', '55', '44', '33',
   'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A2s',
   'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s',
   'QJs', 'QTs', 'Q9s', 'JTs', 'J9s', 'T9s', '98s', '97s', '87s', '76s', '65s',
   'AJo', 'ATo', 'A9o',
-  'KQo', 'KJo', 'KTo', 'QJo', 'JTo',
+  'KJo', 'KTo', 'QJo', 'JTo',
 ]);
 
 // 25bb jam sets — hands that 3bet-jam (all-in) instead of standard 3bet
 const BB_VS_UTG_JAM_25 = new Set(['QQ', 'JJ']);
-const BB_VS_HJ_JAM_25 = new Set(['QQ', 'JJ', 'AKo']);
+const BB_VS_HJ_JAM_25 = new Set(['QQ', 'JJ', 'AQs']);
 const BB_VS_CO_JAM_25 = new Set(['JJ', 'TT', 'AQo', 'A5s']);
 const BB_VS_BTN_JAM_25 = new Set(['TT', '99', 'AQo', 'A5s', 'A4s']);
 const BB_VS_SB_JAM_25 = new Set(['99', '88', 'AQo', 'A5s', 'A4s', 'KQo']);
@@ -467,7 +467,7 @@ const BB_VS_HU_CALL_15 = new Set(['AA', 'KK']);
 function bbDefendRange(threeBetSet: Set<string>, callSet: Set<string>, useMixed: false | Record<string, { '3bet': number; call: number; fold: number }> = false) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (useMixed && h in useMixed) return useMixed[h];
+    if (useMixed && h in useMixed && !inSet(h, threeBetSet)) return useMixed[h];
     const currentKey = inSet(h, threeBetSet) ? '3bet' : inSet(h, callSet) ? 'call' : 'fold';
     const smooth = smoothFrequencies(row, col, currentKey, [
       { key: '3bet', set: threeBetSet },

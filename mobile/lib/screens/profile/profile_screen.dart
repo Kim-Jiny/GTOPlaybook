@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/ad_helper.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../inquiry/inquiry_screen.dart';
 import '../inquiry/my_inquiries_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -69,7 +71,9 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          const Center(child: BannerAdWidget(placement: AdPlacement.profile)),
+          const SizedBox(height: 16),
 
           // Menu items
           _MenuTile(

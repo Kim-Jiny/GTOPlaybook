@@ -3,6 +3,8 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/gto_chart.dart';
+import '../../services/ad_helper.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/gto_grid.dart';
 
 class GtoChartDetailScreen extends StatefulWidget {
@@ -70,6 +72,8 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                       range: selectedRange,
                       actionTypes: chart.actionTypes,
                     ),
+                  const SizedBox(height: 16),
+                  const Center(child: BannerAdWidget(placement: AdPlacement.chart)),
                 ],
               ),
             ),

@@ -9,6 +9,7 @@ class AuthProvider extends ChangeNotifier {
 
   User? _user;
   bool _isLoading = false;
+  bool _isInitializing = true;
   String? _error;
   bool _isAdmin = false;
 
@@ -18,6 +19,7 @@ class AuthProvider extends ChangeNotifier {
 
   User? get user => _user;
   bool get isLoading => _isLoading;
+  bool get isInitializing => _isInitializing;
   bool get isAuthenticated => _user != null;
   String? get error => _error;
   bool get isAdmin => _isAdmin;
@@ -42,6 +44,7 @@ class AuthProvider extends ChangeNotifier {
         }
       }
     }
+    _isInitializing = false;
     notifyListeners();
   }
 

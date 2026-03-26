@@ -132,9 +132,9 @@ const SB_40_VS_CO_3BET = new Set([
 
 // SB vs BTN at 40bb — tighter than 100bb
 const SB_40_VS_BTN_3BET = new Set([
-  'AA', 'KK', 'QQ', 'JJ',
+  'AA', 'KK', 'QQ', 'JJ', 'TT',
   'AKs', 'AKo', 'AQs', 'AJs',
-  'A5s', 'A4s',
+  'A5s', 'A4s', 'A3s',
   'K9s',
 ]);
 
@@ -176,9 +176,9 @@ const SB_60_VS_CO_3BET = new Set([
 // SB vs BTN at 60bb — slightly tighter
 const SB_60_VS_BTN_3BET = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT',
-  'AKs', 'AKo', 'AQs', 'AQo',
+  'AKs', 'AKo', 'AQs', 'AQo', 'AJs',
   'A5s', 'A4s', 'A3s',
-  'K9s',
+  'K9s', 'Q9s',
 ]);
 
 // SB vs BB limp at 60bb — slightly tighter than 100bb
@@ -234,7 +234,7 @@ const SB_DEFEND_MIXED_40: Record<string, { '3bet': number; fold: number }> = {
 function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (mixedMap && h in mixedMap) return mixedMap[h];
+    if (mixedMap && h in mixedMap && !inSet(h, threeBetSet)) return mixedMap[h];
     const currentKey = inSet(h, threeBetSet) ? '3bet' : 'fold';
     const smooth = smoothFrequencies(row, col, currentKey, [{ key: '3bet', set: threeBetSet }]);
     if (smooth) return smooth;

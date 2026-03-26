@@ -171,7 +171,7 @@ function facing3betRange(
 ) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (mixedMap && h in mixedMap) return mixedMap[h];
+    if (mixedMap && h in mixedMap && !inSet(h, fourBetSet)) return mixedMap[h];
     const currentKey = inSet(h, fourBetSet) ? '4bet' : inSet(h, callSet) ? 'call' : 'fold';
     const smooth = smoothFrequencies(row, col, currentKey, [
       { key: '4bet', set: fourBetSet },

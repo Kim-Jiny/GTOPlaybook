@@ -5,6 +5,8 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/position_situations.dart';
+import '../../services/ad_helper.dart';
+import '../../widgets/banner_ad_widget.dart';
 import 'gto_situation_select_screen.dart';
 
 class GtoPositionSelectScreen extends StatefulWidget {
@@ -151,6 +153,8 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
         _buildPlayerCountSelector(gto, l),
         const SizedBox(height: 12),
         _buildBbCalculator(gto, l),
+        const SizedBox(height: 12),
+        const Center(child: BannerAdWidget(placement: AdPlacement.main)),
         const SizedBox(height: 12),
         // Header row
         Container(

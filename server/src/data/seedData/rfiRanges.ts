@@ -241,14 +241,12 @@ const CO_25_MIXED: Record<string, number> = {
 const BTN_25_RAISE = new Set([
   ...CO_25_RAISE,
   '66',
-  'A8s', 'A7s', 'A6s', 'A3s', 'A2s',
+  'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
   '76s', '65s',
 ]);
 const BTN_25_MIXED: Record<string, number> = {
   '55': 0.52,
   '44': 0.32,
-  'A5s': 0.62,
-  'A4s': 0.48,
   'K9s': 0.42,
   'Q9s': 0.34,
   'J9s': 0.28,
@@ -262,8 +260,8 @@ const BTN_25_MIXED: Record<string, number> = {
 // SB 25bb (multiway)
 const SB_25_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'TT', '99', '88', '77', '66', '55',
-  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A3s', 'A2s',
-  'KQs', 'KJs', 'KTs', 'K9s', 'K7s', 'K6s',
+  'AKs', 'AQs', 'AJs', 'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KQs', 'KJs', 'KTs', 'K9s', 'K8s', 'K7s', 'K6s',
   'QJs', 'QTs', 'Q9s',
   'JTs', 'J9s', 'T9s', '98s', '97s', '87s', '86s', '76s', '65s', '54s',
   'AKo', 'AQo', 'AJo', 'ATo', 'A9o',
@@ -273,9 +271,6 @@ const SB_25_RAISE = new Set([
 const SB_25_MIXED: Record<string, number> = {
   '44': 0.56,
   '33': 0.38,
-  'A5s': 0.68,
-  'A4s': 0.52,
-  'K8s': 0.44,
   'Q8s': 0.36,
   'T8s': 0.32,
   'A8o': 0.64,
@@ -393,8 +388,8 @@ const HJ_15_RAISE = new Set([
   'AA', 'KK', 'QQ', 'JJ', 'AKs', 'AQs', 'AKo',
 ]);
 const HJ_15_JAM = new Set([
-  'TT', '99', '88',
-  'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'QJs', 'QTs',
+  'TT', '99', '88', '77',
+  'AJs', 'ATs', 'A9s', 'KQs', 'KJs', 'KTs', 'QJs', 'QTs',
   'AQo', 'AJo',
 ]);
 
@@ -404,9 +399,9 @@ const CO_15_RAISE = new Set([
   'KQs',
 ]);
 const CO_15_JAM = new Set([
-  '99', '88', '77', '66',
-  'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s',
-  'KJs', 'KTs', 'K9s', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
+  '99', '88', '77', '66', '55',
+  'ATs', 'A9s', 'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
+  'KJs', 'KTs', 'K9s', 'QJs', 'QTs', 'Q9s', 'JTs', 'T9s', '98s',
   'AJo', 'ATo', 'KQo', 'KJo',
 ]);
 
@@ -418,9 +413,9 @@ const BTN_15_RAISE = new Set([
 const BTN_15_JAM = new Set([
   '88', '77', '66', '55', '44', '33', '22',
   'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
-  'KTs', 'K9s', 'K8s', 'K7s', 'K6s',
-  'QTs', 'Q9s', 'Q8s', 'JTs', 'J9s', 'J8s', 'T9s', 'T8s', '98s', '97s', '87s', '76s', '65s', '54s',
-  'ATo', 'A9o', 'A8o', 'A7o',
+  'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s',
+  'QTs', 'Q9s', 'Q8s', 'JTs', 'J9s', 'J8s', 'T9s', 'T8s', '98s', '97s', '87s', '86s', '76s', '65s', '54s',
+  'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o',
   'KQo', 'KJo', 'KTo', 'QJo', 'QTo', 'JTo',
 ]);
 
@@ -434,11 +429,11 @@ const SB_15_JAM = new Set([
   '88', '77', '66', '55', '44', '33', '22',
   'A8s', 'A7s', 'A6s', 'A5s', 'A4s', 'A3s', 'A2s',
   'KTs', 'K9s', 'K8s', 'K7s', 'K6s', 'K5s', 'K4s',
-  'QTs', 'Q9s', 'Q8s', 'Q7s',
+  'QTs', 'Q9s', 'Q8s', 'Q7s', 'Q6s', 'Q5s',
   'JTs', 'J9s', 'J8s', 'J7s', 'T9s', 'T8s', 'T7s', '98s', '97s', '96s', '87s', '86s', '85s', '76s', '75s', '65s', '64s', '54s', '53s',
-  'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o',
+  'ATo', 'A9o', 'A8o', 'A7o', 'A6o', 'A5o', 'A4o', 'A3o', 'A2o',
   'KQo', 'KJo', 'KTo', 'K9o', 'K8o',
-  'QJo', 'QTo', 'Q9o', 'JTo', 'J9o', 'T9o',
+  'QJo', 'QTo', 'Q9o', 'Q8o', 'JTo', 'J9o', 'T9o',
 ]);
 
 const UTG_9MAX_15_RAISE = new Set([
