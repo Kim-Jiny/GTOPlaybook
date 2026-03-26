@@ -72,20 +72,22 @@ const SB_F4B_5BET_25 = new Set(['AA', 'KK']);
 
 type F4bMixedMap = false | Record<string, { '5bet': number; call: number; fold: number }>;
 
+// Facing 4bet has very narrow call sets (3-5 premium hands), so smoothFrequencies
+// can't produce good values for boundary hands. Keep all boundary hands in mixed map.
 const FACING_4BET_MIXED_DEFAULT: Record<string, { '5bet': number; call: number; fold: number }> = {
   'QQ': { '5bet': 0.34, call: 0.66, fold: 0 },
   'JJ': { '5bet': 0.12, call: 0.7, fold: 0.18 },
-  'TT': { '5bet': 0.04, call: 0.54, fold: 0.42 },
+  'TT': { '5bet': 0.08, call: 0.52, fold: 0.4 },
   'AKs': { '5bet': 0.42, call: 0.58, fold: 0 },
   'AKo': { '5bet': 0.28, call: 0.52, fold: 0.2 },
-  'AQs': { '5bet': 0.14, call: 0.52, fold: 0.34 },
-  'AQo': { '5bet': 0.08, call: 0.38, fold: 0.54 },
+  'AQs': { '5bet': 0.15, call: 0.45, fold: 0.4 },
+  'AQo': { '5bet': 0.06, call: 0.3, fold: 0.64 },
 };
 
 const FACING_4BET_MIXED_40: Record<string, { '5bet': number; call: number; fold: number }> = {
   'AKs': { '5bet': 0.58, call: 0.42, fold: 0 },
   'QQ': { '5bet': 0.18, call: 0.52, fold: 0.3 },
-  'JJ': { '5bet': 0.06, call: 0.34, fold: 0.6 },
+  'JJ': { '5bet': 0.1, call: 0.38, fold: 0.52 },
 };
 
 function facing4betRange(

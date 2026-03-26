@@ -260,7 +260,8 @@ class _CellBackground extends StatelessWidget {
     }
 
     if (!detailedMode) {
-      return ColoredBox(color: segments.first.color);
+      final maxSegment = segments.reduce((a, b) => a.flex >= b.flex ? a : b);
+      return ColoredBox(color: maxSegment.color);
     }
 
     return Row(

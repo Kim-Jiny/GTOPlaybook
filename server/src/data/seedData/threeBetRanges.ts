@@ -181,13 +181,13 @@ const CO_3BET_VS_HJ_3BET_15 = new Set(['AA', 'KK', 'QQ', 'AKs']);
 
 type ThreeBetMixedMap = false | Record<string, { '3bet': number; call: number; fold: number }>;
 
+// Only 3bet/call boundary hands — call/fold boundary handled by smoothFrequencies
 const THREE_BET_MIXED_DEFAULT: Record<string, { '3bet': number; call: number; fold: number }> = {
   'JJ': { '3bet': 0.52, call: 0.48, fold: 0 },
   'TT': { '3bet': 0.34, call: 0.66, fold: 0 },
   'AQs': { '3bet': 0.42, call: 0.58, fold: 0 },
   'AQo': { '3bet': 0.28, call: 0.52, fold: 0.2 },
   'AJs': { '3bet': 0.24, call: 0.64, fold: 0.12 },
-  'KQs': { '3bet': 0.18, call: 0.62, fold: 0.2 },
   'A5s': { '3bet': 0.62, call: 0.1, fold: 0.28 },
   'A4s': { '3bet': 0.56, call: 0.1, fold: 0.34 },
 };
@@ -198,7 +198,6 @@ const THREE_BET_MIXED_40: Record<string, { '3bet': number; call: number; fold: n
   'AQs': { '3bet': 0.48, call: 0.52, fold: 0 },
   'AQo': { '3bet': 0.34, call: 0.46, fold: 0.2 },
   'AJs': { '3bet': 0.3, call: 0.56, fold: 0.14 },
-  'KQs': { '3bet': 0.24, call: 0.56, fold: 0.2 },
 };
 
 const THREE_BET_MIXED_25: Record<string, { '3bet': number; call: number; fold: number }> = {
@@ -207,7 +206,6 @@ const THREE_BET_MIXED_25: Record<string, { '3bet': number; call: number; fold: n
   'AQs': { '3bet': 0.55, call: 0.45, fold: 0 },
   'AQo': { '3bet': 0.4, call: 0.35, fold: 0.25 },
   'AJs': { '3bet': 0.35, call: 0.4, fold: 0.25 },
-  'KQs': { '3bet': 0.3, call: 0.4, fold: 0.3 },
 };
 
 // ---------------------------------------------------------------------------

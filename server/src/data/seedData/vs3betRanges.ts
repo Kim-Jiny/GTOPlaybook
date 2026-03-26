@@ -114,21 +114,21 @@ const CALL_25_SB_VS_BB = new Set(['TT', '99', '88', '77', 'AQs', 'AQo', 'AJs', '
 type FacingMixedMap = Record<string, { '4bet': number; call: number; fold: number }>;
 
 // Mixed frequency hands at boundary (e.g. QQ sometimes 4bets, sometimes calls)
+// Facing 3bet has narrow call sets (5-9 hands), so smoothFrequencies can't produce
+// good values for boundary hands (especially pairs). Keep all boundary hands here.
 const FACING_3BET_MIXED: FacingMixedMap = {
   'QQ': { '4bet': 0.45, call: 0.55, fold: 0 },
   'JJ': { '4bet': 0.2, call: 0.8, fold: 0 },
-  'AQs': { '4bet': 0.3, call: 0.6, fold: 0.1 },
-  'AQo': { '4bet': 0.15, call: 0.55, fold: 0.3 },
-  'TT': { '4bet': 0.1, call: 0.7, fold: 0.2 },
-  '99': { '4bet': 0, call: 0.6, fold: 0.4 },
+  'TT': { '4bet': 0.08, call: 0.58, fold: 0.34 },
+  '99': { '4bet': 0.04, call: 0.42, fold: 0.54 },
   'AKo': { '4bet': 0.58, call: 0.42, fold: 0 },
-  'AJs': { '4bet': 0.08, call: 0.62, fold: 0.3 },
-  'ATs': { '4bet': 0.04, call: 0.5, fold: 0.46 },
-  'KQs': { '4bet': 0.06, call: 0.62, fold: 0.32 },
-  'KJs': { '4bet': 0.02, call: 0.52, fold: 0.46 },
-  'QJs': { '4bet': 0.02, call: 0.48, fold: 0.5 },
-  'A5s': { '4bet': 0.36, call: 0.22, fold: 0.42 },
-  'A4s': { '4bet': 0.3, call: 0.18, fold: 0.52 },
+  'AQs': { '4bet': 0.3, call: 0.6, fold: 0.1 },
+  'AQo': { '4bet': 0.14, call: 0.36, fold: 0.5 },
+  'AJs': { '4bet': 0.08, call: 0.5, fold: 0.42 },
+  'ATs': { '4bet': 0.04, call: 0.38, fold: 0.58 },
+  'KQs': { '4bet': 0.18, call: 0.42, fold: 0.4 },
+  'KJs': { '4bet': 0.06, call: 0.32, fold: 0.62 },
+  'QJs': { '4bet': 0.04, call: 0.36, fold: 0.6 },
 };
 
 const FACING_25_CO_VS_BLIND_MIXED: FacingMixedMap = {
@@ -275,14 +275,12 @@ function isTight3bettor(cls: ThreeBettorClass): boolean {
 }
 
 // Whether to use mixed frequencies (wide 3bettors at deep stacks)
-function useMixedFor(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass, depth: StackDepth): boolean {
-  if (depth < 40) return false;
-  // Wider late-position and blind confrontations should mix much more often.
-  if (opClass === 'co' && (tbClass === 'btn' || tbClass === 'sb' || tbClass === 'bb')) return true;
-  if (opClass === 'hj' && (tbClass === 'btn' || tbClass === 'sb' || tbClass === 'bb')) return true;
-  if (opClass === 'btn' && (tbClass === 'sb' || tbClass === 'bb')) return true;
-  if (opClass === 'sb' && tbClass === 'bb') return true;
-  return false;
+function useMixedFor(_opClass: ReturnType<typeof openerClass>, _tbClass: ThreeBettorClass, depth: StackDepth): boolean {
+  // Mixed map provides boundary blend values for all matchups at depth >= 40.
+  // Position-specific call/4bet sets already control which hands are in range;
+  // the mixed map just smooths transitions at boundaries where smoothFrequencies
+  // can't produce good values (narrow call sets, sparse grid neighbors).
+  return depth >= 40;
 }
 
 // ── 25bb data lookup ──

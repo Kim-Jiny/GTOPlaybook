@@ -198,6 +198,7 @@ const SB_60_VS_BB_RAISE = new Set([
 
 type SbMixedMap = false | Record<string, { '3bet': number; fold: number }>;
 
+// Only high-frequency 3bet boundary hands — low-3bet hands handled by smoothFrequencies
 const SB_DEFEND_MIXED_100: Record<string, { '3bet': number; fold: number }> = {
   'JJ': { '3bet': 0.55, fold: 0.45 },
   'TT': { '3bet': 0.42, fold: 0.58 },
@@ -205,10 +206,6 @@ const SB_DEFEND_MIXED_100: Record<string, { '3bet': number; fold: number }> = {
   'AJs': { '3bet': 0.38, fold: 0.62 },
   'A5s': { '3bet': 0.72, fold: 0.28 },
   'A4s': { '3bet': 0.66, fold: 0.34 },
-  'KQo': { '3bet': 0.32, fold: 0.68 },
-  'KJs': { '3bet': 0.28, fold: 0.72 },
-  'QJs': { '3bet': 0.22, fold: 0.78 },
-  'JTs': { '3bet': 0.18, fold: 0.82 },
 };
 
 const SB_DEFEND_MIXED_60: Record<string, { '3bet': number; fold: number }> = {
@@ -218,8 +215,6 @@ const SB_DEFEND_MIXED_60: Record<string, { '3bet': number; fold: number }> = {
   'AJs': { '3bet': 0.42, fold: 0.58 },
   'A5s': { '3bet': 0.76, fold: 0.24 },
   'A4s': { '3bet': 0.7, fold: 0.3 },
-  'KQo': { '3bet': 0.36, fold: 0.64 },
-  'KJs': { '3bet': 0.31, fold: 0.69 },
 };
 
 const SB_DEFEND_MIXED_40: Record<string, { '3bet': number; fold: number }> = {
@@ -228,7 +223,6 @@ const SB_DEFEND_MIXED_40: Record<string, { '3bet': number; fold: number }> = {
   'AQo': { '3bet': 0.6, fold: 0.4 },
   'AJs': { '3bet': 0.48, fold: 0.52 },
   'A5s': { '3bet': 0.8, fold: 0.2 },
-  'KQo': { '3bet': 0.28, fold: 0.72 },
 };
 
 function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {

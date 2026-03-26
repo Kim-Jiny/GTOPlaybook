@@ -285,6 +285,7 @@ const BB_VS_SB_CALL_60 = new Set([
 // ---------------------------------------------------------------------------
 // Mixed frequency hands at 3bet/call boundary (used at 100bb/60bb)
 // ---------------------------------------------------------------------------
+// Only 3bet/call boundary hands — call/fold boundary is handled by smoothFrequencies
 const BB_MIXED: Record<string, { '3bet': number; call: number; fold: number }> = {
   'JJ': { '3bet': 0.55, call: 0.45, fold: 0 },
   'TT': { '3bet': 0.35, call: 0.65, fold: 0 },
@@ -292,27 +293,13 @@ const BB_MIXED: Record<string, { '3bet': number; call: number; fold: number }> =
   'AJs': { '3bet': 0.3, call: 0.7, fold: 0 },
   'A5s': { '3bet': 0.6, call: 0.2, fold: 0.2 },
   'A4s': { '3bet': 0.55, call: 0.2, fold: 0.25 },
-  'K9s': { '3bet': 0.25, call: 0.55, fold: 0.2 },
-  '99': { '3bet': 0.14, call: 0.74, fold: 0.12 },
-  'ATs': { '3bet': 0.16, call: 0.7, fold: 0.14 },
-  'A9s': { '3bet': 0.12, call: 0.68, fold: 0.2 },
-  'KTs': { '3bet': 0.18, call: 0.66, fold: 0.16 },
-  'QJs': { '3bet': 0.16, call: 0.7, fold: 0.14 },
-  'QTs': { '3bet': 0.12, call: 0.66, fold: 0.22 },
-  'JTs': { '3bet': 0.1, call: 0.68, fold: 0.22 },
-  'KQo': { '3bet': 0.16, call: 0.62, fold: 0.22 },
-  'KJo': { '3bet': 0.12, call: 0.6, fold: 0.28 },
-  'QJo': { '3bet': 0.08, call: 0.62, fold: 0.3 },
 };
 
-// Mixed frequencies for 40bb — reduced
+// Mixed frequencies for 40bb — only 3bet/call boundary
 const BB_MIXED_40: Record<string, { '3bet': number; call: number; fold: number }> = {
   'JJ': { '3bet': 0.6, call: 0.4, fold: 0 },
   'AQo': { '3bet': 0.5, call: 0.5, fold: 0 },
   'TT': { '3bet': 0.28, call: 0.62, fold: 0.1 },
-  'ATs': { '3bet': 0.12, call: 0.68, fold: 0.2 },
-  'KQs': { '3bet': 0.14, call: 0.66, fold: 0.2 },
-  'KJs': { '3bet': 0.1, call: 0.64, fold: 0.26 },
 };
 
 // ---------------------------------------------------------------------------
@@ -350,6 +337,7 @@ const BB_VS_HU_CALL = new Set([
   '76o',
   '65o',
 ]);
+// Only 3bet/call boundary hands — call/fold boundary handled by smoothFrequencies
 const BB_HU_MIXED: Record<string, { '3bet': number; call: number; fold: number }> = {
   '88': { '3bet': 0.55, call: 0.45, fold: 0 },
   'AJs': { '3bet': 0.4, call: 0.6, fold: 0 },
@@ -357,14 +345,6 @@ const BB_HU_MIXED: Record<string, { '3bet': number; call: number; fold: number }
   'A5s': { '3bet': 0.65, call: 0.2, fold: 0.15 },
   'A4s': { '3bet': 0.6, call: 0.2, fold: 0.2 },
   'A3s': { '3bet': 0.5, call: 0.3, fold: 0.2 },
-  'K9s': { '3bet': 0.3, call: 0.5, fold: 0.2 },
-  'Q9s': { '3bet': 0.25, call: 0.55, fold: 0.2 },
-  'J9s': { '3bet': 0.2, call: 0.6, fold: 0.2 },
-  'T9s': { '3bet': 0.18, call: 0.62, fold: 0.2 },
-  '98s': { '3bet': 0.15, call: 0.6, fold: 0.25 },
-  '87s': { '3bet': 0.15, call: 0.55, fold: 0.3 },
-  '76s': { '3bet': 0.12, call: 0.5, fold: 0.38 },
-  '65s': { '3bet': 0.1, call: 0.45, fold: 0.45 },
 };
 
 // 60bb HU (~60% defend)
