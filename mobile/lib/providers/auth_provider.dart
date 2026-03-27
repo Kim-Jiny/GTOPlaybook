@@ -79,5 +79,11 @@ class AuthProvider extends ChangeNotifier {
     await _authService.signOut();
   }
 
+  Future<void> deleteAccount() async {
+    await _apiService.delete('/api/users/me');
+    _isAdmin = false;
+    await _authService.signOut();
+  }
+
   bool get isAppleSignInAvailable => _authService.isAppleSignInAvailable;
 }

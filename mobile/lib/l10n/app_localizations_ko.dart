@@ -388,6 +388,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get signOut => '로그아웃';
 
   @override
+  String get deleteAccount => '회원탈퇴';
+
+  @override
+  String get deleteAccountTitle => '회원탈퇴';
+
+  @override
+  String get deleteAccountMessage =>
+      '정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없으며 모든 데이터가 삭제됩니다.';
+
+  @override
+  String get delete => '삭제';
+
+  @override
   String get player => '플레이어';
 
   @override

@@ -239,6 +239,10 @@
   "myInquiries": "My Inquiries",
   "admin": "Admin",
   "signOut": "Sign Out",
+  "deleteAccount": "Delete Account",
+  "deleteAccountTitle": "Delete Account",
+  "deleteAccountMessage": "Are you sure you want to delete your account? This action is permanent and all your data will be removed. This cannot be undone.",
+  "delete": "Delete",
   "player": "Player",
 
   "inquiryTitle": "Title",

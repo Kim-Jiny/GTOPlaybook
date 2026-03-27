@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import pool from '../config/db';
+import firebaseApp from '../config/firebase';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
@@ -45,6 +46,24 @@ router.get('/me', requireAuth, async (req: AuthRequest, res) => {
   } catch (err) {
     console.error('Error fetching user:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// DELETE /api/users/me — delete account (DB + Firebase Auth)
+router.delete('/me', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const uid = req.uid!;
+
+    // Delete from database (cascades to inquiries, etc.)
+    await pool.query('DELETE FROM users WHERE id = $1', [uid]);
+
+    // Delete from Firebase Auth
+    await firebaseApp.auth().deleteUser(uid);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting user:', err);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 });
 

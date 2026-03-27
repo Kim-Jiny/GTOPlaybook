@@ -125,6 +125,10 @@
   "myInquiries": "내 문의 내역",
   "admin": "관리자",
   "signOut": "로그아웃",
+  "deleteAccount": "회원탈퇴",
+  "deleteAccountTitle": "회원탈퇴",
+  "deleteAccountMessage": "정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없으며 모든 데이터가 삭제됩니다.",
+  "delete": "삭제",
   "player": "플레이어",
 
   "inquiryTitle": "제목",

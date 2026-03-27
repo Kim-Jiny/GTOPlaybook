@@ -109,10 +109,49 @@ class ProfileScreen extends StatelessWidget {
             iconColor: Colors.redAccent,
             onTap: () => auth.signOut(),
           ),
+          _MenuTile(
+            icon: Icons.delete_forever,
+            title: l.deleteAccount,
+            iconColor: Colors.redAccent,
+            onTap: () => _showDeleteAccountDialog(context, auth, l),
+          ),
         ],
       ),
     );
   }
+}
+
+void _showDeleteAccountDialog(
+    BuildContext context, AuthProvider auth, AppLocalizations l) {
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.deleteAccountTitle),
+      content: Text(l.deleteAccountMessage),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: Text(l.cancel),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(ctx);
+            try {
+              await auth.deleteAccount();
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              }
+            }
+          },
+          style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+          child: Text(l.delete),
+        ),
+      ],
+    ),
+  );
 }
 
 class _MenuTile extends StatelessWidget {
