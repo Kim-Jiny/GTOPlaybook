@@ -74,6 +74,9 @@ const CREATE_TABLES = `
     password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
   );
+
+  -- Users: last active tracking
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;
 `;
 
 export async function initDatabase(): Promise<void> {

@@ -11,7 +11,58 @@
       background: #0f172a;
       color: #e2e8f0;
       min-height: 100vh;
+      display: flex;
     }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: #1e293b;
+      border-right: 1px solid #334155;
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 50;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #334155;
+    }
+    .sidebar-header h1 {
+      font-size: 16px;
+      color: #f8fafc;
+      font-weight: 700;
+    }
+    .sidebar-header .sub { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .nav-items { flex: 1; padding: 12px 8px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 14px;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .nav-item:hover { background: #334155; color: #e2e8f0; }
+    .nav-item.active { background: #3b82f6; color: #fff; }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .sidebar-footer {
+      padding: 12px 8px;
+      border-top: 1px solid #334155;
+    }
+
+    /* Main */
+    .main { margin-left: 220px; flex: 1; min-height: 100vh; }
     header {
       background: #1e293b;
       padding: 16px 24px;
@@ -20,7 +71,7 @@
       align-items: center;
       border-bottom: 1px solid #334155;
     }
-    header h1 { font-size: 20px; color: #f8fafc; }
+    header h2 { font-size: 18px; color: #f8fafc; }
     .logout-btn {
       background: #475569;
       color: #e2e8f0;
@@ -31,12 +82,15 @@
       font-size: 13px;
     }
     .logout-btn:hover { background: #64748b; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+    .content { padding: 24px; max-width: 1200px; }
+    .section { display: none; }
+    .section.active { display: block; }
 
     /* Stats */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
     }
@@ -49,22 +103,46 @@
     .stat-card .label { font-size: 13px; color: #94a3b8; margin-bottom: 4px; }
     .stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; }
 
-    /* Tabs */
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-    .tab {
-      padding: 8px 16px;
-      border-radius: 6px;
+    /* Chart */
+    .chart-card {
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 20px;
       border: 1px solid #334155;
-      background: transparent;
-      color: #94a3b8;
-      cursor: pointer;
-      font-size: 13px;
+      margin-bottom: 24px;
     }
-    .tab.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .chart-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 16px; }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 120px;
+    }
+    .bar-chart .bar {
+      flex: 1;
+      background: #3b82f6;
+      border-radius: 3px 3px 0 0;
+      min-width: 6px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .bar-chart .bar:hover { background: #60a5fa; }
+    .bar-chart .bar .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #334155;
+      color: #e2e8f0;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+    .bar-chart .bar:hover .tooltip { display: block; }
 
     /* Table */
     .table-wrap {
@@ -99,6 +177,63 @@
     .badge.pending { background: #854d0e; color: #fde68a; }
     .badge.replied { background: #14532d; color: #86efac; }
 
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .tab.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+
+    /* Search */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .search-bar input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-size: 14px;
+      outline: none;
+    }
+    .search-bar input:focus { border-color: #3b82f6; }
+    .search-bar input::placeholder { color: #475569; }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .pagination button {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pagination button:not(:disabled):hover { background: #334155; }
+    .pagination span { font-size: 13px; color: #64748b; }
+
     /* Modal */
     .modal-overlay {
       display: none;
@@ -124,26 +259,27 @@
     .modal .field { margin-bottom: 12px; }
     .modal .field-label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
     .modal .field-value { font-size: 14px; color: #e2e8f0; white-space: pre-wrap; }
-    .modal textarea {
+    .modal textarea, .modal input[type="text"] {
       width: 100%;
-      min-height: 100px;
       padding: 10px;
       border: 1px solid #334155;
       border-radius: 8px;
       background: #0f172a;
       color: #e2e8f0;
       font-size: 14px;
-      resize: vertical;
       outline: none;
       font-family: inherit;
     }
-    .modal textarea:focus { border-color: #3b82f6; }
+    .modal textarea { min-height: 100px; resize: vertical; }
+    .modal textarea:focus, .modal input[type="text"]:focus { border-color: #3b82f6; }
     .modal-actions {
       display: flex;
       justify-content: flex-end;
       gap: 8px;
       margin-top: 16px;
     }
+
+    /* Buttons */
     .btn {
       padding: 8px 16px;
       border-radius: 6px;
@@ -154,47 +290,132 @@
     }
     .btn-primary { background: #3b82f6; color: #fff; }
     .btn-primary:hover { background: #2563eb; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-secondary { background: #334155; color: #e2e8f0; }
     .btn-secondary:hover { background: #475569; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
     .empty { text-align: center; padding: 40px; color: #64748b; }
+    .text-muted { color: #64748b; }
+    .truncate { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #14532d;
+      color: #86efac;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+    .toast.error { background: #7f1d1d; color: #fca5a5; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>GTO Playbook Admin</h1>
-    <form method="POST" action="/admin/logout" style="margin:0">
-      <button class="logout-btn" type="submit">Logout</button>
-    </form>
-  </header>
-
-  <div class="container">
-    <div class="stats-grid" id="stats"></div>
-
-    <div class="tabs">
-      <button class="tab active" data-filter="">All</button>
-      <button class="tab" data-filter="pending">Pending</button>
-      <button class="tab" data-filter="replied">Replied</button>
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-header">
+      <h1>GTO Playbook</h1>
+      <div class="sub">Admin Panel</div>
     </div>
+    <div class="nav-items">
+      <button class="nav-item active" data-section="dashboard">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4"/></svg>
+        Dashboard
+      </button>
+      <button class="nav-item" data-section="users">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Users
+      </button>
+      <button class="nav-item" data-section="inquiries">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+        Inquiries
+      </button>
+    </div>
+    <div class="sidebar-footer">
+      <form method="POST" action="/admin/logout" style="margin:0">
+        <button class="nav-item" type="submit">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Logout
+        </button>
+      </form>
+    </div>
+  </nav>
 
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>User</th>
-            <th>Title</th>
-            <th>Status</th>
-            <th>Date</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="inquiries"></tbody>
-      </table>
-      <div class="empty" id="empty" style="display:none">No inquiries found</div>
+  <!-- Main -->
+  <div class="main">
+    <header>
+      <h2 id="page-title">Dashboard</h2>
+    </header>
+
+    <div class="content">
+      <!-- Dashboard Section -->
+      <div class="section active" id="section-dashboard">
+        <div class="stats-grid" id="stats"></div>
+        <div class="chart-card">
+          <h3>Signups — Last 30 Days</h3>
+          <div class="bar-chart" id="signup-chart"></div>
+        </div>
+      </div>
+
+      <!-- Users Section -->
+      <div class="section" id="section-users">
+        <div class="search-bar">
+          <input type="text" id="user-search" placeholder="Search by email, name, or ID..." />
+          <button class="btn btn-primary" onclick="loadUsers(1)">Search</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Joined</th>
+                <th>Last Active</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+          <div class="empty" id="users-empty" style="display:none">No users found</div>
+        </div>
+        <div class="pagination" id="users-pagination"></div>
+      </div>
+
+      <!-- Inquiries Section -->
+      <div class="section" id="section-inquiries">
+        <div class="tabs">
+          <button class="tab active" data-filter="">All</button>
+          <button class="tab" data-filter="pending">Pending</button>
+          <button class="tab" data-filter="replied">Replied</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>User</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="inquiries-tbody"></tbody>
+          </table>
+          <div class="empty" id="inquiries-empty" style="display:none">No inquiries found</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="modal">
+  <!-- Inquiry Modal -->
+  <div class="modal-overlay" id="inquiry-modal">
     <div class="modal">
       <h2 id="modal-title"></h2>
       <div class="field">
@@ -216,35 +437,146 @@
         </div>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        <button class="btn btn-secondary" onclick="closeInquiryModal()">Close</button>
         <button class="btn btn-primary" id="reply-btn" onclick="submitReply()">Send Reply</button>
       </div>
     </div>
   </div>
 
-  <script>
-    let currentId = null;
-    let currentFilter = '';
+  <!-- User Detail Modal -->
+  <div class="modal-overlay" id="user-modal">
+    <div class="modal">
+      <h2>User Detail</h2>
+      <div id="user-detail-content"></div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closeUserModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* ── State ── */
+    let currentInquiryId = null;
+    let currentFilter = '';
+    let usersPage = 1;
+
+    /* ── Navigation ── */
+    document.querySelectorAll('.nav-item[data-section]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const section = btn.dataset.section;
+        document.querySelectorAll('.nav-item[data-section]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('section-' + section).classList.add('active');
+        document.getElementById('page-title').textContent =
+          section.charAt(0).toUpperCase() + section.slice(1);
+
+        // Load data on navigate
+        if (section === 'dashboard') loadStats();
+        if (section === 'users') loadUsers(1);
+        if (section === 'inquiries') loadInquiries();
+      });
+    });
+
+    /* ── Dashboard ── */
     async function loadStats() {
       const res = await fetch('/admin/api/stats');
       const data = await res.json();
       const pending = data.inquiryStats.find(s => s.status === 'pending');
-      const replied = data.inquiryStats.find(s => s.status === 'replied');
+
       document.getElementById('stats').innerHTML = `
         <div class="stat-card"><div class="label">Total Users</div><div class="value">${data.totalUsers}</div></div>
-        <div class="stat-card"><div class="label">Total Inquiries</div><div class="value">${data.totalInquiries}</div></div>
-        <div class="stat-card"><div class="label">Pending</div><div class="value">${pending ? pending.count : 0}</div></div>
-        <div class="stat-card"><div class="label">Replied</div><div class="value">${replied ? replied.count : 0}</div></div>
+        <div class="stat-card"><div class="label">Today Signups</div><div class="value">${data.todaySignups}</div></div>
+        <div class="stat-card"><div class="label">Weekly Active</div><div class="value">${data.weeklyActiveUsers}</div></div>
+        <div class="stat-card"><div class="label">Monthly Active</div><div class="value">${data.monthlyActiveUsers}</div></div>
+        <div class="stat-card"><div class="label">Pending Inquiries</div><div class="value">${pending ? pending.count : 0}</div></div>
       `;
+
+      // Bar chart
+      const chart = document.getElementById('signup-chart');
+      if (data.dailySignups.length === 0) {
+        chart.innerHTML = '<div class="empty" style="padding:20px;width:100%">No signup data</div>';
+        return;
+      }
+      const maxCount = Math.max(...data.dailySignups.map(d => parseInt(d.count)), 1);
+      chart.innerHTML = data.dailySignups.map(d => {
+        const pct = (parseInt(d.count) / maxCount) * 100;
+        const date = new Date(d.date).toLocaleDateString('ko-KR', { month:'short', day:'numeric' });
+        return `<div class="bar" style="height:${Math.max(pct, 4)}%">
+          <div class="tooltip">${date}: ${d.count}</div>
+        </div>`;
+      }).join('');
     }
 
+    /* ── Users ── */
+    async function loadUsers(page) {
+      usersPage = page;
+      const search = document.getElementById('user-search').value;
+      const params = new URLSearchParams({ page, limit: 20 });
+      if (search) params.set('search', search);
+
+      const res = await fetch('/admin/api/users?' + params);
+      const data = await res.json();
+      const tbody = document.getElementById('users-tbody');
+      const empty = document.getElementById('users-empty');
+
+      if (data.users.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        document.getElementById('users-pagination').innerHTML = '';
+        return;
+      }
+      empty.style.display = 'none';
+
+      tbody.innerHTML = data.users.map(u => `
+        <tr>
+          <td class="text-muted" style="font-size:12px">${esc(u.id.substring(0,8))}...</td>
+          <td>${esc(u.email)}</td>
+          <td>${esc(u.display_name || '-')}</td>
+          <td>${fmtDate(u.created_at)}</td>
+          <td>${u.last_active_at ? fmtDate(u.last_active_at) : '-'}</td>
+          <td><button class="btn btn-secondary btn-sm" onclick="openUserDetail('${esc(u.id)}')">View</button></td>
+        </tr>
+      `).join('');
+
+      renderPagination('users-pagination', data.total, data.page, data.limit, loadUsers);
+    }
+
+    async function openUserDetail(userId) {
+      const res = await fetch('/admin/api/users/' + userId);
+      const u = await res.json();
+
+      document.getElementById('user-detail-content').innerHTML = `
+        <div class="field"><div class="field-label">ID</div><div class="field-value">${esc(u.id)}</div></div>
+        <div class="field"><div class="field-label">Email</div><div class="field-value">${esc(u.email)}</div></div>
+        <div class="field"><div class="field-label">Name</div><div class="field-value">${esc(u.display_name || '-')}</div></div>
+        <div class="field"><div class="field-label">Admin</div><div class="field-value">${u.is_admin ? 'Yes' : 'No'}</div></div>
+        <div class="field"><div class="field-label">Joined</div><div class="field-value">${fmtDate(u.created_at)}</div></div>
+        <div class="field"><div class="field-label">Last Active</div><div class="field-value">${u.last_active_at ? fmtDate(u.last_active_at) : '-'}</div></div>
+      `;
+
+      document.getElementById('user-modal').classList.add('open');
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal').classList.remove('open');
+    }
+
+    // Enter key in search
+    document.getElementById('user-search').addEventListener('keydown', e => {
+      if (e.key === 'Enter') loadUsers(1);
+    });
+
+    /* ── Inquiries ── */
     async function loadInquiries() {
       const url = currentFilter ? `/admin/api/inquiries?status=${currentFilter}` : '/admin/api/inquiries';
       const res = await fetch(url);
       const rows = await res.json();
-      const tbody = document.getElementById('inquiries');
-      const empty = document.getElementById('empty');
+      const tbody = document.getElementById('inquiries-tbody');
+      const empty = document.getElementById('inquiries-empty');
       if (rows.length === 0) {
         tbody.innerHTML = '';
         empty.style.display = 'block';
@@ -257,20 +589,23 @@
           <td>${esc(r.display_name || r.email)}</td>
           <td>${esc(r.title)}</td>
           <td><span class="badge ${r.status}">${r.status}</span></td>
-          <td>${new Date(r.created_at).toLocaleDateString('ko-KR')}</td>
-          <td><button class="btn btn-secondary" onclick='openModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>View</button></td>
+          <td>${fmtDate(r.created_at)}</td>
+          <td><button class="btn btn-secondary btn-sm" onclick='openInquiryModal(${JSON.stringify(r).replace(/'/g, "&#39;")})'>View</button></td>
         </tr>
       `).join('');
     }
 
-    function esc(str) {
-      const d = document.createElement('div');
-      d.textContent = str || '';
-      return d.innerHTML;
-    }
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentFilter = tab.dataset.filter;
+        loadInquiries();
+      });
+    });
 
-    function openModal(row) {
-      currentId = row.id;
+    function openInquiryModal(row) {
+      currentInquiryId = row.id;
       document.getElementById('modal-title').textContent = row.title;
       document.getElementById('modal-user').textContent = (row.display_name || '') + ' (' + row.email + ')';
       document.getElementById('modal-content').textContent = row.content;
@@ -287,12 +622,12 @@
         document.getElementById('reply-text').value = '';
       }
 
-      document.getElementById('modal').classList.add('open');
+      document.getElementById('inquiry-modal').classList.add('open');
     }
 
-    function closeModal() {
-      document.getElementById('modal').classList.remove('open');
-      currentId = null;
+    function closeInquiryModal() {
+      document.getElementById('inquiry-modal').classList.remove('open');
+      currentInquiryId = null;
     }
 
     async function submitReply() {
@@ -304,15 +639,16 @@
       btn.textContent = 'Sending...';
 
       try {
-        const res = await fetch(`/admin/api/inquiries/${currentId}/reply`, {
+        const res = await fetch(`/admin/api/inquiries/${currentInquiryId}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reply }),
         });
         if (res.ok) {
-          closeModal();
+          closeInquiryModal();
           loadStats();
           loadInquiries();
+          showToast('Reply sent');
         }
       } finally {
         btn.disabled = false;
@@ -320,24 +656,46 @@
       }
     }
 
-    // Tab click
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        currentFilter = tab.dataset.filter;
-        loadInquiries();
+    /* ── Helpers ── */
+    function esc(str) {
+      const d = document.createElement('div');
+      d.textContent = str || '';
+      return d.innerHTML;
+    }
+
+    function fmtDate(dateStr) {
+      return new Date(dateStr).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    }
+
+    function renderPagination(containerId, total, page, limit, loadFn) {
+      const totalPages = Math.ceil(total / limit);
+      if (totalPages <= 1) { document.getElementById(containerId).innerHTML = ''; return; }
+      document.getElementById(containerId).innerHTML = `
+        <button ${page <= 1 ? 'disabled' : ''} onclick="(${loadFn.name})(${page - 1})">Prev</button>
+        <span>${page} / ${totalPages}</span>
+        <button ${page >= totalPages ? 'disabled' : ''} onclick="(${loadFn.name})(${page + 1})">Next</button>
+      `;
+    }
+
+    function showToast(msg, isError) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast show' + (isError ? ' error' : '');
+      setTimeout(() => t.className = 'toast', 3000);
+    }
+
+    // Close modals on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(m => {
+      m.addEventListener('click', e => {
+        if (e.target === e.currentTarget) {
+          m.classList.remove('open');
+          currentInquiryId = null;
+        }
       });
     });
 
-    // Close modal on overlay click
-    document.getElementById('modal').addEventListener('click', e => {
-      if (e.target === e.currentTarget) closeModal();
-    });
-
-    // Init
+    /* ── Init ── */
     loadStats();
-    loadInquiries();
   </script>
 </body>
 </html>

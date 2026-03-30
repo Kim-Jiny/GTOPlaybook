@@ -12,12 +12,13 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res) => {
     const { displayName, photoUrl } = req.body;
 
     await pool.query(
-      `INSERT INTO users (id, email, display_name, photo_url)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (id, email, display_name, photo_url, last_active_at)
+       VALUES ($1, $2, $3, $4, NOW())
        ON CONFLICT (id) DO UPDATE SET
          email = EXCLUDED.email,
          display_name = EXCLUDED.display_name,
          photo_url = EXCLUDED.photo_url,
+         last_active_at = NOW(),
          updated_at = NOW()`,
       [uid, email, displayName || null, photoUrl || null],
     );

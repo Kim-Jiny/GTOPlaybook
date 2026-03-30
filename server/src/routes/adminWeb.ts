@@ -82,7 +82,16 @@ router.get('/api/stats', requireAdminSession, async (_req: Request, res: Respons
        FROM users
        WHERE created_at >= NOW() - INTERVAL '30 days'
        GROUP BY DATE(created_at)
-       ORDER BY date DESC`,
+       ORDER BY date ASC`,
+    );
+    const todaySignups = await pool.query(
+      `SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURRENT_DATE`,
+    );
+    const weeklyActiveUsers = await pool.query(
+      `SELECT COUNT(*) FROM users WHERE last_active_at >= NOW() - INTERVAL '7 days'`,
+    );
+    const monthlyActiveUsers = await pool.query(
+      `SELECT COUNT(*) FROM users WHERE last_active_at >= NOW() - INTERVAL '30 days'`,
     );
 
     res.json({
@@ -90,10 +99,72 @@ router.get('/api/stats', requireAdminSession, async (_req: Request, res: Respons
       totalInquiries: parseInt(totalInquiries.rows[0].count),
       inquiryStats: inquiryStats.rows,
       dailySignups: dailySignups.rows,
+      todaySignups: parseInt(todaySignups.rows[0].count),
+      weeklyActiveUsers: parseInt(weeklyActiveUsers.rows[0].count),
+      monthlyActiveUsers: parseInt(monthlyActiveUsers.rows[0].count),
     });
   } catch (err) {
     console.error('Admin stats error:', err);
     res.status(500).json({ error: 'Failed to fetch stats' });
+  }
+});
+
+// GET /admin/api/users — user list with search and pagination
+router.get('/api/users', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const search = (req.query.search as string) || '';
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const offset = (page - 1) * limit;
+
+    let whereClause = '';
+    const params: (string | number)[] = [];
+
+    if (search) {
+      whereClause = 'WHERE email ILIKE $1 OR display_name ILIKE $1 OR id ILIKE $1';
+      params.push(`%${search}%`);
+    }
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM users ${whereClause}`,
+      params,
+    );
+    const total = parseInt(countResult.rows[0].count);
+
+    const dataParams = [...params, limit, offset];
+    const result = await pool.query(
+      `SELECT id, email, display_name, photo_url, is_admin,
+              created_at, last_active_at
+       FROM users ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      dataParams,
+    );
+
+    res.json({ users: result.rows, total, page, limit });
+  } catch (err) {
+    console.error('Admin users error:', err);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+// GET /admin/api/users/:id — user detail
+router.get('/api/users/:id', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, email, display_name, photo_url, is_admin,
+              created_at, last_active_at, updated_at
+       FROM users WHERE id = $1`,
+      [req.params.id],
+    );
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Admin user detail error:', err);
+    res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
 
