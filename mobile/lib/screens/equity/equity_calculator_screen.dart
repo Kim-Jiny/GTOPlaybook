@@ -19,6 +19,7 @@ class EquityCalculatorScreen extends StatelessWidget {
 
     final body = Consumer<EquityProvider>(
       builder: (context, provider, _) {
+        final validationMessage = _validationMessage(context, provider);
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -44,7 +45,17 @@ class EquityCalculatorScreen extends StatelessWidget {
               SizedBox(
                 height: 52,
                 child: FilledButton(
-                  onPressed: provider.isCalculating ? null : () => provider.calculate(),
+                  onPressed: provider.isCalculating
+                      ? null
+                      : () {
+                          if (validationMessage != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(validationMessage)),
+                            );
+                            return;
+                          }
+                          provider.calculate();
+                        },
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFF2E7D32),
                   ),
@@ -57,8 +68,29 @@ class EquityCalculatorScreen extends StatelessWidget {
                       : Text(l.calculate, style: const TextStyle(fontSize: 18)),
                 ),
               ),
+              if (validationMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  validationMessage,
+                  style: const TextStyle(
+                    color: Colors.orangeAccent,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
               const SizedBox(height: 12),
               const Center(child: BannerAdWidget(placement: AdPlacement.equity)),
+              if (provider.errorMessage != null) ...[
+                const SizedBox(height: 12),
+                Text(
+                  provider.errorMessage!,
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 13,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
               if (provider.result != null) ...[
                 const SizedBox(height: 16),
                 _ResultsBar(result: provider.result!, playerCount: provider.players.length),
@@ -83,6 +115,26 @@ class EquityCalculatorScreen extends StatelessWidget {
       ),
       body: body,
     );
+  }
+
+  String? _validationMessage(BuildContext context, EquityProvider provider) {
+    final isKorean = Localizations.localeOf(context).languageCode == 'ko';
+
+    for (int i = 0; i < provider.players.length; i++) {
+      final player = provider.players[i];
+      if (player.inputMode == InputMode.cards && player.cards.length != 2) {
+        return isKorean
+            ? 'P${i + 1}의 핸드 카드 2장을 선택해 주세요.'
+            : 'Select 2 hole cards for P${i + 1}.';
+      }
+      if (player.inputMode == InputMode.range && player.range.isEmpty) {
+        return isKorean
+            ? 'P${i + 1}의 레인지를 선택해 주세요.'
+            : 'Select a range for P${i + 1}.';
+      }
+    }
+
+    return null;
   }
 }
 

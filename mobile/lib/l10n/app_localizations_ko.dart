@@ -348,6 +348,24 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get rangePresetTop10 => '상위 10%';
+
+  @override
+  String get rangePresetTop20 => '상위 20%';
+
+  @override
+  String get rangePresetTop30 => '상위 30%';
+
+  @override
+  String get rangePresetPairs => '페어';
+
+  @override
+  String get rangePresetBroadways => '브로드웨이';
+
+  @override
+  String get rangePresetSuitedConnectors => 'SC';
+
+  @override
   String get handAnalyzer => '핸드 분석기';
 
   @override
@@ -420,6 +438,15 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get failedToSubmitInquiry => '문의 제출에 실패했습니다';
+
+  @override
+  String get failedToLoadInquiries => '문의 내역을 불러오지 못했습니다';
+
+  @override
+  String get failedToLoadAdminData => '관리자 데이터를 불러오지 못했습니다';
+
+  @override
+  String get failedToSendReply => '답변 전송에 실패했습니다';
 
   @override
   String get noInquiriesYet => '문의 내역이 없습니다';

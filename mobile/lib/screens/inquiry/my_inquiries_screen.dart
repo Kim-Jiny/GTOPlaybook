@@ -97,8 +97,26 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
         title: Text(l.myInquiries),
         centerTitle: true,
       ),
-      body: provider.isLoading
+      body: provider.isLoadingMyInquiries
           ? const Center(child: CircularProgressIndicator())
+          : provider.myInquiriesError != null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        provider.myInquiriesError ?? l.failedToLoadInquiries,
+                        style: const TextStyle(color: Colors.redAccent),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () => provider.loadMyInquiries(),
+                        child: Text(l.retry),
+                      ),
+                    ],
+                  ),
+                )
           : provider.myInquiries.isEmpty
               ? Center(
                   child: Text(l.noInquiriesYet,

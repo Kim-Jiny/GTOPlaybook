@@ -215,6 +215,12 @@
       "percent": { "type": "int" }
     }
   },
+  "rangePresetTop10": "Top 10%",
+  "rangePresetTop20": "Top 20%",
+  "rangePresetTop30": "Top 30%",
+  "rangePresetPairs": "Pairs",
+  "rangePresetBroadways": "Broadways",
+  "rangePresetSuitedConnectors": "SC",
 
   "handAnalyzer": "Hand Analyzer",
   "myHand": "My Hand",
@@ -251,6 +257,9 @@
   "pleaseEnterContent": "Please enter content",
   "inquirySubmitted": "Inquiry submitted successfully",
   "failedToSubmitInquiry": "Failed to submit inquiry",
+  "failedToLoadInquiries": "Failed to load inquiries",
+  "failedToLoadAdminData": "Failed to load admin data",
+  "failedToSendReply": "Failed to send reply",
 
   "noInquiriesYet": "No inquiries yet",
   "inquiryDetail": "Inquiry Detail",

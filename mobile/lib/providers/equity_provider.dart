@@ -11,6 +11,7 @@ class EquityProvider extends ChangeNotifier {
   List<PlayingCard> board = [];
   EquityResult? result;
   bool isCalculating = false;
+  String? errorMessage;
 
   Set<PlayingCard> get usedCards {
     final used = <PlayingCard>{...board};
@@ -26,6 +27,7 @@ class EquityProvider extends ChangeNotifier {
     if (players.length >= 9) return;
     players.add(PlayerInput(index: players.length));
     result = null;
+    errorMessage = null;
     notifyListeners();
   }
 
@@ -41,18 +43,21 @@ class EquityProvider extends ChangeNotifier {
       );
     }
     result = null;
+    errorMessage = null;
     notifyListeners();
   }
 
   void setPlayerCards(int index, List<PlayingCard> cards) {
     players[index].cards = cards;
     result = null;
+    errorMessage = null;
     notifyListeners();
   }
 
   void setPlayerRange(int index, Set<String> range) {
     players[index].range = range;
     result = null;
+    errorMessage = null;
     notifyListeners();
   }
 
@@ -61,12 +66,14 @@ class EquityProvider extends ChangeNotifier {
     players[index].cards = [];
     players[index].range = {};
     result = null;
+    errorMessage = null;
     notifyListeners();
   }
 
   void setBoardCards(List<PlayingCard> cards) {
     board = cards;
     result = null;
+    errorMessage = null;
     notifyListeners();
   }
 
@@ -78,6 +85,7 @@ class EquityProvider extends ChangeNotifier {
     }
 
     isCalculating = true;
+    errorMessage = null;
     notifyListeners();
 
     try {
@@ -85,6 +93,10 @@ class EquityProvider extends ChangeNotifier {
         players: players,
         board: board,
       );
+      errorMessage = result?.errorMessage;
+    } catch (e) {
+      result = null;
+      errorMessage = e.toString();
     } finally {
       isCalculating = false;
       notifyListeners();
@@ -99,6 +111,7 @@ class EquityProvider extends ChangeNotifier {
     board = [];
     result = null;
     isCalculating = false;
+    errorMessage = null;
     notifyListeners();
   }
 }

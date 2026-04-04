@@ -22,8 +22,13 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   }
 
   void _loadAd() {
+    final adUnitId = AdHelper.getBannerAdUnitId(widget.placement);
+    if (adUnitId == null) {
+      return;
+    }
+
     _bannerAd = BannerAd(
-      adUnitId: AdHelper.getBannerAdUnitId(widget.placement),
+      adUnitId: adUnitId,
       size: AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
@@ -47,7 +52,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (!_isLoaded || _bannerAd == null) {
+    if (!AdHelper.isBannerAdsSupported || !_isLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
     return SizedBox(

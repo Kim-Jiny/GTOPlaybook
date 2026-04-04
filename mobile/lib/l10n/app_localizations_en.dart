@@ -355,6 +355,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get rangePresetTop10 => 'Top 10%';
+
+  @override
+  String get rangePresetTop20 => 'Top 20%';
+
+  @override
+  String get rangePresetTop30 => 'Top 30%';
+
+  @override
+  String get rangePresetPairs => 'Pairs';
+
+  @override
+  String get rangePresetBroadways => 'Broadways';
+
+  @override
+  String get rangePresetSuitedConnectors => 'SC';
+
+  @override
   String get handAnalyzer => 'Hand Analyzer';
 
   @override
@@ -427,6 +445,15 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get failedToSubmitInquiry => 'Failed to submit inquiry';
+
+  @override
+  String get failedToLoadInquiries => 'Failed to load inquiries';
+
+  @override
+  String get failedToLoadAdminData => 'Failed to load admin data';
+
+  @override
+  String get failedToSendReply => 'Failed to send reply';
 
   @override
   String get noInquiriesYet => 'No inquiries yet';

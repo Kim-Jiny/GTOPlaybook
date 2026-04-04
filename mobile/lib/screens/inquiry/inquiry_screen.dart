@@ -91,8 +91,8 @@ class _InquiryScreenState extends State<InquiryScreen> {
                 width: double.infinity,
                 height: 48,
                 child: FilledButton(
-                  onPressed: provider.isLoading ? null : _submit,
-                  child: provider.isLoading
+                  onPressed: provider.isSubmitting ? null : _submit,
+                  child: provider.isSubmitting
                       ? const SizedBox(
                           width: 20,
                           height: 20,

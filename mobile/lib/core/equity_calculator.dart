@@ -260,9 +260,10 @@ class EquityCalculator {
 
     if (validSims == 0) {
       return EquityResult(
-        equities: List.filled(numPlayers, 1.0 / numPlayers * 100),
+        equities: List.filled(numPlayers, 0),
         tieRates: List.filled(numPlayers, 0),
         simulations: 0,
+        errorMessage: 'No valid simulation could be generated from the selected cards and ranges.',
       );
     }
 

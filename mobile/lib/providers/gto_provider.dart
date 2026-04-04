@@ -9,7 +9,6 @@ class GtoProvider extends ChangeNotifier {
 
   List<GtoChart> _charts = [];
   List<PositionSituations> _positionTree = [];
-  GtoChart? _selectedChart;
   bool _isLoading = false;
   String? _error;
 
@@ -21,12 +20,13 @@ class GtoProvider extends ChangeNotifier {
 
   // Player count state
   int _selectedPlayerCount = 6;
+  int _positionTreeRequestId = 0;
+  int _chartsRequestId = 0;
 
   GtoProvider(this._apiService);
 
   List<GtoChart> get charts => _charts;
   List<PositionSituations> get positionTree => _positionTree;
-  GtoChart? get selectedChart => _selectedChart;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -109,6 +109,7 @@ class GtoProvider extends ChangeNotifier {
   }
 
   Future<void> loadPositionTree() async {
+    final requestId = ++_positionTreeRequestId;
     final isRefresh = _positionTree.isNotEmpty;
     if (!isRefresh) {
       _isLoading = true;
@@ -124,18 +125,22 @@ class GtoProvider extends ChangeNotifier {
           'max_players': _selectedPlayerCount.toString(),
         },
       );
+      if (requestId != _positionTreeRequestId) return;
       _positionTree = (data as List)
           .map((j) => PositionSituations.fromJson(j))
           .toList();
     } catch (e) {
+      if (requestId != _positionTreeRequestId) return;
       _error = e.toString();
     }
 
+    if (requestId != _positionTreeRequestId) return;
     _isLoading = false;
     notifyListeners();
   }
 
   Future<void> loadCharts({String? position, String? situation}) async {
+    final requestId = ++_chartsRequestId;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -149,33 +154,20 @@ class GtoProvider extends ChangeNotifier {
       if (situation != null) params['situation'] = situation;
 
       final data = await _apiService.get('/api/gto/charts', params: params);
+      if (requestId != _chartsRequestId) return;
       _charts = (data as List).map((j) => GtoChart.fromJson(j)).toList();
     } catch (e) {
+      if (requestId != _chartsRequestId) return;
       _error = e.toString();
     }
 
+    if (requestId != _chartsRequestId) return;
     _isLoading = false;
     notifyListeners();
   }
 
-  Future<void> loadChartDetail(int chartId) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
-
-    try {
-      final data = await _apiService.get('/api/gto/charts/$chartId');
-      _selectedChart = GtoChart.fromJson(data);
-    } catch (e) {
-      _error = e.toString();
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  void clearSelection() {
-    _selectedChart = null;
-    notifyListeners();
+  Future<GtoChart> fetchChartDetail(int chartId) async {
+    final data = await _apiService.get('/api/gto/charts/$chartId');
+    return GtoChart.fromJson(data);
   }
 }

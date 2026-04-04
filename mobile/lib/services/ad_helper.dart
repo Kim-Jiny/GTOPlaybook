@@ -1,4 +1,4 @@
-import 'dart:io';
+import '../config/platform_support.dart';
 
 enum AdPlacement {
   main,
@@ -10,12 +10,16 @@ enum AdPlacement {
 }
 
 class AdHelper {
-  static String getBannerAdUnitId(AdPlacement placement) {
-    if (Platform.isIOS) {
-      return _iosBannerIds[placement]!;
-    } else {
-      return _androidBannerIds[placement]!;
+  static bool get isBannerAdsSupported => PlatformSupport.isAdsSupported;
+
+  static String? getBannerAdUnitId(AdPlacement placement) {
+    if (!isBannerAdsSupported) {
+      return null;
     }
+    if (PlatformSupport.isAppleSignInSupported) {
+      return _iosBannerIds[placement];
+    }
+    return _androidBannerIds[placement];
   }
 
   static const _iosBannerIds = {

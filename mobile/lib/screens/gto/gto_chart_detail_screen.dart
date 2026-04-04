@@ -18,19 +18,44 @@ class GtoChartDetailScreen extends StatefulWidget {
 class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
   HandRange? _selectedRange;
   bool _detailedMode = true;
+  GtoChart? _chart;
+  String? _error;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<GtoProvider>().loadChartDetail(widget.chartId);
+      _loadChart();
     });
+  }
+
+  Future<void> _loadChart() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final chart = await context.read<GtoProvider>().fetchChartDetail(widget.chartId);
+      if (!mounted) return;
+      setState(() {
+        _chart = chart;
+        _selectedRange = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final gto = context.watch<GtoProvider>();
-    final chart = gto.selectedChart;
+    final chart = _chart;
     final selectedRange = chart == null ? null : (_selectedRange ?? _defaultRange(chart));
     final l = AppLocalizations.of(context)!;
 
@@ -39,9 +64,30 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
         title: Text(chart?.description ?? l.loading),
         centerTitle: true,
       ),
-      body: gto.isLoading || chart == null
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_error!, style: const TextStyle(color: Colors.redAccent)),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: _loadChart,
+                        child: Text(l.retry),
+                      ),
+                    ],
+                  ),
+                )
+              : chart == null
+                  ? Center(
+                      child: Text(
+                        l.noData,
+                        style: const TextStyle(color: Colors.white54),
+                      ),
+                    )
+                  : SingleChildScrollView(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

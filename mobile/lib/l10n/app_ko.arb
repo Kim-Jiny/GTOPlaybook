@@ -111,6 +111,12 @@
   "nHandsPercent": "{count}개 핸드 (~{percent}%)",
   "selectNCards": "카드 {max}장 선택 ({current}/{max})",
   "rangeNHandsPercent": "레인지: {count}개 핸드 (~{percent}%)",
+  "rangePresetTop10": "상위 10%",
+  "rangePresetTop20": "상위 20%",
+  "rangePresetTop30": "상위 30%",
+  "rangePresetPairs": "페어",
+  "rangePresetBroadways": "브로드웨이",
+  "rangePresetSuitedConnectors": "SC",
 
   "handAnalyzer": "핸드 분석기",
   "myHand": "내 핸드",
@@ -137,6 +143,9 @@
   "pleaseEnterContent": "내용을 입력해주세요",
   "inquirySubmitted": "문의가 성공적으로 제출되었습니다",
   "failedToSubmitInquiry": "문의 제출에 실패했습니다",
+  "failedToLoadInquiries": "문의 내역을 불러오지 못했습니다",
+  "failedToLoadAdminData": "관리자 데이터를 불러오지 못했습니다",
+  "failedToSendReply": "답변 전송에 실패했습니다",
 
   "noInquiriesYet": "문의 내역이 없습니다",
   "inquiryDetail": "문의 상세",

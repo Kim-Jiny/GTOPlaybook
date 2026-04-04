@@ -2,6 +2,11 @@ import { Router, Request, Response } from 'express';
 import path from 'path';
 import bcrypt from 'bcrypt';
 import pool from '../config/db';
+import {
+  getAdminInquiries,
+  getAdminStats,
+  replyToInquiry,
+} from '../services/adminService';
 
 const router = Router();
 
@@ -72,36 +77,16 @@ router.get('/', requireAdminSession, (_req: Request, res: Response) => {
 // GET /admin/api/stats
 router.get('/api/stats', requireAdminSession, async (_req: Request, res: Response) => {
   try {
-    const totalUsers = await pool.query('SELECT COUNT(*) FROM users');
-    const totalInquiries = await pool.query('SELECT COUNT(*) FROM inquiries');
-    const inquiryStats = await pool.query(
-      'SELECT status, COUNT(*) as count FROM inquiries GROUP BY status',
-    );
-    const dailySignups = await pool.query(
-      `SELECT DATE(created_at) as date, COUNT(*) as count
-       FROM users
-       WHERE created_at >= NOW() - INTERVAL '30 days'
-       GROUP BY DATE(created_at)
-       ORDER BY date ASC`,
-    );
-    const todaySignups = await pool.query(
-      `SELECT COUNT(*) FROM users WHERE DATE(created_at) = CURRENT_DATE`,
-    );
-    const weeklyActiveUsers = await pool.query(
-      `SELECT COUNT(*) FROM users WHERE last_active_at >= NOW() - INTERVAL '7 days'`,
-    );
-    const monthlyActiveUsers = await pool.query(
-      `SELECT COUNT(*) FROM users WHERE last_active_at >= NOW() - INTERVAL '30 days'`,
-    );
+    const stats = await getAdminStats();
 
     res.json({
-      totalUsers: parseInt(totalUsers.rows[0].count),
-      totalInquiries: parseInt(totalInquiries.rows[0].count),
-      inquiryStats: inquiryStats.rows,
-      dailySignups: dailySignups.rows,
-      todaySignups: parseInt(todaySignups.rows[0].count),
-      weeklyActiveUsers: parseInt(weeklyActiveUsers.rows[0].count),
-      monthlyActiveUsers: parseInt(monthlyActiveUsers.rows[0].count),
+      totalUsers: stats.totalUsers,
+      totalInquiries: stats.totalInquiries,
+      inquiryStats: stats.inquiryStats,
+      dailySignups: stats.dailySignupsAsc,
+      todaySignups: stats.todaySignups,
+      weeklyActiveUsers: stats.weeklyActiveUsers,
+      monthlyActiveUsers: stats.monthlyActiveUsers,
     });
   } catch (err) {
     console.error('Admin stats error:', err);
@@ -171,22 +156,8 @@ router.get('/api/users/:id', requireAdminSession, async (req: Request, res: Resp
 // GET /admin/api/inquiries
 router.get('/api/inquiries', requireAdminSession, async (req: Request, res: Response) => {
   try {
-    const { status } = req.query;
-    let query = `
-      SELECT i.*, u.email, u.display_name
-      FROM inquiries i
-      JOIN users u ON i.user_id = u.id
-    `;
-    const params: string[] = [];
-
-    if (status) {
-      query += ' WHERE i.status = $1';
-      params.push(status as string);
-    }
-
-    query += ' ORDER BY i.created_at DESC';
-    const result = await pool.query(query, params);
-    res.json(result.rows);
+    const result = await getAdminInquiries(req.query.status as string | undefined);
+    res.json(result);
   } catch (err) {
     console.error('Admin inquiries error:', err);
     res.status(500).json({ error: 'Failed to fetch inquiries' });
@@ -196,7 +167,7 @@ router.get('/api/inquiries', requireAdminSession, async (req: Request, res: Resp
 // POST /admin/api/inquiries/:id/reply
 router.post('/api/inquiries/:id/reply', requireAdminSession, async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { reply } = req.body;
 
     if (!reply) {
@@ -204,20 +175,14 @@ router.post('/api/inquiries/:id/reply', requireAdminSession, async (req: Request
       return;
     }
 
-    const result = await pool.query(
-      `UPDATE inquiries
-       SET admin_reply = $1, status = 'replied', replied_at = NOW(), updated_at = NOW()
-       WHERE id = $2
-       RETURNING *`,
-      [reply, id],
-    );
+    const result = await replyToInquiry(id, reply);
 
-    if (result.rows.length === 0) {
+    if (!result) {
       res.status(404).json({ error: 'Inquiry not found' });
       return;
     }
 
-    res.json(result.rows[0]);
+    res.json(result);
   } catch (err) {
     console.error('Admin reply error:', err);
     res.status(500).json({ error: 'Failed to reply' });

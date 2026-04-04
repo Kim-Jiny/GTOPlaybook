@@ -120,12 +120,12 @@ class _RangePickerState extends State<RangePicker> {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _presetChip('Top 10%', _top10),
-                  _presetChip('Top 20%', _top20),
-                  _presetChip('Top 30%', _top30),
-                  _presetChip('Pairs', _allPairs()),
-                  _presetChip('Broadways', _broadways()),
-                  _presetChip('SC', _suitedConnectors()),
+                  _presetChip(l.rangePresetTop10, _top10),
+                  _presetChip(l.rangePresetTop20, _top20),
+                  _presetChip(l.rangePresetTop30, _top30),
+                  _presetChip(l.rangePresetPairs, _allPairs()),
+                  _presetChip(l.rangePresetBroadways, _broadways()),
+                  _presetChip(l.rangePresetSuitedConnectors, _suitedConnectors()),
                 ],
               ),
             ),

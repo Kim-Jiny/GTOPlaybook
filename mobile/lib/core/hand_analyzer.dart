@@ -144,10 +144,9 @@ class HandAnalyzer {
         }
       }
     } else {
-      // Flop: Monte Carlo
+      // Flop: Monte Carlo with equal samples per villain combo.
       final rng = Random(42);
-      const sims = 10000;
-      // Enumerate all villain combos
+      const simsPerCombo = 24;
       final villainCombos = <List<PlayingCard>>[];
       for (int i = 0; i < remainingDeck.length - 1; i++) {
         for (int j = i + 1; j < remainingDeck.length; j++) {
@@ -155,59 +154,43 @@ class HandAnalyzer {
         }
       }
 
-      final comboWins = <int, int>{};
-      final comboLosses = <int, int>{};
-      final comboTies = <int, int>{};
-      final comboCategories = <int, Map<int, int>>{};
-
-      for (int sim = 0; sim < sims; sim++) {
-        final vIdx = rng.nextInt(villainCombos.length);
-        final villainCards = villainCombos[vIdx];
-
-        // Deal remaining board from deck minus villain cards
+      totalCombos = villainCombos.length;
+      for (final villainCards in villainCombos) {
+        int comboWins = 0;
+        int comboLosses = 0;
+        int comboTies = 0;
+        final comboCategories = <int, int>{};
         final deckForBoard = remainingDeck.where(
           (c) => c != villainCards[0] && c != villainCards[1],
-        ).toList()..shuffle(rng);
+        ).toList();
 
-        final fullBoard = [...board];
-        int di = 0;
-        while (fullBoard.length < 5) {
-          fullBoard.add(deckForBoard[di++]);
+        for (int sim = 0; sim < simsPerCombo; sim++) {
+          final shuffledDeck = List<PlayingCard>.from(deckForBoard)..shuffle(rng);
+          final fullBoard = [...board, shuffledDeck[0], shuffledDeck[1]];
+
+          final hScore = EquityCalculator.evaluateHand([...heroCards, ...fullBoard]);
+          final vScore = EquityCalculator.evaluateHand([...villainCards, ...fullBoard]);
+
+          if (vScore > hScore) {
+            comboWins++;
+            final cat = _category(vScore);
+            comboCategories[cat] = (comboCategories[cat] ?? 0) + 1;
+          } else if (vScore == hScore) {
+            comboTies++;
+          } else {
+            comboLosses++;
+          }
         }
 
-        final hScore = EquityCalculator.evaluateHand([...heroCards, ...fullBoard]);
-        final vScore = EquityCalculator.evaluateHand([...villainCards, ...fullBoard]);
-
-        comboWins[vIdx] = (comboWins[vIdx] ?? 0) + (vScore > hScore ? 1 : 0);
-        comboLosses[vIdx] = (comboLosses[vIdx] ?? 0) + (vScore < hScore ? 1 : 0);
-        comboTies[vIdx] = (comboTies[vIdx] ?? 0) + (vScore == hScore ? 1 : 0);
-        if (vScore > hScore) {
-          comboCategories.putIfAbsent(vIdx, () => {});
-          final cat = _category(vScore);
-          comboCategories[vIdx]![cat] = (comboCategories[vIdx]![cat] ?? 0) + 1;
-        }
-      }
-
-      totalCombos = villainCombos.length;
-      for (int idx = 0; idx < villainCombos.length; idx++) {
-        final w = comboWins[idx] ?? 0;
-        final l = comboLosses[idx] ?? 0;
-        final t = comboTies[idx] ?? 0;
-        final total = w + l + t;
-        if (total == 0) {
-          wins++; // no data, assume hero wins
-          continue;
-        }
-        final villainEq = (w + t * 0.5) / total;
-        final heroEq = (l + t * 0.5) / total;
+        final total = comboWins + comboLosses + comboTies;
+        final villainEq = (comboWins + comboTies * 0.5) / total;
+        final heroEq = (comboLosses + comboTies * 0.5) / total;
         if (villainEq > heroEq) {
           losses++;
-          // Find dominant category
-          final cats = comboCategories[idx];
-          if (cats != null && cats.isNotEmpty) {
-            final bestCat = cats.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+          if (comboCategories.isNotEmpty) {
+            final bestCat = comboCategories.entries.reduce((a, b) => a.value > b.value ? a : b).key;
             beatingByCategory.putIfAbsent(bestCat, () => []);
-            beatingByCategory[bestCat]!.add(villainCombos[idx]);
+            beatingByCategory[bestCat]!.add(villainCards);
           }
         } else if ((villainEq - heroEq).abs() < 0.01) {
           ties++;

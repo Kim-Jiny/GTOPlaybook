@@ -686,6 +686,42 @@ abstract class AppLocalizations {
   /// **'Range: {count} hands (~{percent}%)'**
   String rangeNHandsPercent(int count, int percent);
 
+  /// No description provided for @rangePresetTop10.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 10%'**
+  String get rangePresetTop10;
+
+  /// No description provided for @rangePresetTop20.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 20%'**
+  String get rangePresetTop20;
+
+  /// No description provided for @rangePresetTop30.
+  ///
+  /// In en, this message translates to:
+  /// **'Top 30%'**
+  String get rangePresetTop30;
+
+  /// No description provided for @rangePresetPairs.
+  ///
+  /// In en, this message translates to:
+  /// **'Pairs'**
+  String get rangePresetPairs;
+
+  /// No description provided for @rangePresetBroadways.
+  ///
+  /// In en, this message translates to:
+  /// **'Broadways'**
+  String get rangePresetBroadways;
+
+  /// No description provided for @rangePresetSuitedConnectors.
+  ///
+  /// In en, this message translates to:
+  /// **'SC'**
+  String get rangePresetSuitedConnectors;
+
   /// No description provided for @handAnalyzer.
   ///
   /// In en, this message translates to:
@@ -823,6 +859,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to submit inquiry'**
   String get failedToSubmitInquiry;
+
+  /// No description provided for @failedToLoadInquiries.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load inquiries'**
+  String get failedToLoadInquiries;
+
+  /// No description provided for @failedToLoadAdminData.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load admin data'**
+  String get failedToLoadAdminData;
+
+  /// No description provided for @failedToSendReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send reply'**
+  String get failedToSendReply;
 
   /// No description provided for @noInquiriesYet.
   ///

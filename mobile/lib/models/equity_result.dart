@@ -20,10 +20,14 @@ class EquityResult {
   final List<double> equities;
   final List<double> tieRates;
   final int simulations;
+  final String? errorMessage;
 
   EquityResult({
     required this.equities,
     required this.tieRates,
     required this.simulations,
+    this.errorMessage,
   });
+
+  bool get hasError => errorMessage != null;
 }

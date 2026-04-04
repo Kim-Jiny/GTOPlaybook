@@ -1,7 +1,7 @@
-import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import '../config/platform_support.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -46,5 +46,5 @@ class AuthService {
     await _auth.signOut();
   }
 
-  bool get isAppleSignInAvailable => Platform.isIOS;
+  bool get isAppleSignInAvailable => PlatformSupport.isAppleSignInSupported;
 }

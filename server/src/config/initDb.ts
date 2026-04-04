@@ -83,14 +83,24 @@ export async function initDatabase(): Promise<void> {
   try {
     await pool.query(CREATE_TABLES);
 
-    // Seed default admin account jiny/1204
-    const hash = await bcrypt.hash('1204', 10);
-    await pool.query(
-      `INSERT INTO admin_accounts (username, password_hash)
-       VALUES ($1, $2)
-       ON CONFLICT (username) DO NOTHING`,
-      ['jiny', hash],
-    );
+    const adminUsername = process.env.ADMIN_USERNAME?.trim();
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (adminUsername || adminPassword) {
+      if (!adminUsername || !adminPassword) {
+        throw new Error(
+          'Both ADMIN_USERNAME and ADMIN_PASSWORD must be set together.',
+        );
+      }
+
+      const hash = await bcrypt.hash(adminPassword, 10);
+      await pool.query(
+        `INSERT INTO admin_accounts (username, password_hash)
+         VALUES ($1, $2)
+         ON CONFLICT (username) DO NOTHING`,
+        [adminUsername, hash],
+      );
+    }
 
     console.log('Database tables initialized');
   } catch (err) {

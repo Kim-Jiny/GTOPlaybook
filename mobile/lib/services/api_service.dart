@@ -9,6 +9,10 @@ class ApiService {
     _token = token;
   }
 
+  void clearToken() {
+    _token = null;
+  }
+
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
         if (_token != null) 'Authorization': 'Bearer $_token',

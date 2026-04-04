@@ -20,10 +20,18 @@ class _EquityTabScreenState extends State<EquityTabScreen> with SingleTickerProv
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
@@ -49,7 +57,6 @@ class _EquityTabScreenState extends State<EquityTabScreen> with SingleTickerProv
         ],
         bottom: TabBar(
           controller: _tabController,
-          onTap: (_) => setState(() {}),
           indicatorColor: const Color(0xFF4CAF50),
           labelColor: const Color(0xFF4CAF50),
           unselectedLabelColor: Colors.white60,

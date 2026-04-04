@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
@@ -6,6 +7,7 @@ import '../services/api_service.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final ApiService _apiService;
+  late final StreamSubscription<User?> _authSubscription;
 
   User? _user;
   bool _isLoading = false;
@@ -14,7 +16,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isAdmin = false;
 
   AuthProvider(this._apiService) {
-    _authService.authStateChanges.listen(_onAuthStateChanged);
+    _authSubscription = _authService.authStateChanges.listen(_onAuthStateChanged);
   }
 
   User? get user => _user;
@@ -40,9 +42,13 @@ class AuthProvider extends ChangeNotifier {
           final me = await _apiService.get('/api/users/me');
           _isAdmin = me['is_admin'] == true;
         } catch (e) {
+          _isAdmin = false;
           debugPrint('Failed to sync user: $e');
         }
       }
+    } else {
+      _apiService.clearToken();
+      _isAdmin = false;
     }
     _isInitializing = false;
     notifyListeners();
@@ -75,15 +81,23 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> signOut() async {
+    _apiService.clearToken();
     _isAdmin = false;
     await _authService.signOut();
   }
 
   Future<void> deleteAccount() async {
     await _apiService.delete('/api/users/me');
+    _apiService.clearToken();
     _isAdmin = false;
     await _authService.signOut();
   }
 
   bool get isAppleSignInAvailable => _authService.isAppleSignInAvailable;
+
+  @override
+  void dispose() {
+    _authSubscription.cancel();
+    super.dispose();
+  }
 }
