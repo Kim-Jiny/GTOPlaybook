@@ -96,11 +96,24 @@ class _RangePickerState extends State<RangePicker> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l.rangeNHandsPercent(selected.length, pct),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                Row(
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      l.rangeNHandsPercent(selected.length, pct),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
                   children: [
                     TextButton(
                       onPressed: () => setState(() => selected.clear()),

@@ -31,22 +31,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(inquiry.title),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(inquiry.content,
-                style: const TextStyle(color: Colors.white70)),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: l.reply,
-                border: const OutlineInputBorder(),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(inquiry.content,
+                  style: const TextStyle(color: Colors.white70)),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  labelText: l.reply,
+                  border: const OutlineInputBorder(),
+                ),
+                maxLines: 4,
               ),
-              maxLines: 4,
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -221,9 +223,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 )),
           const SizedBox(height: 24),
 
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Expanded(
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
                 child: Text(l.inquiryManagement,
                     style: const TextStyle(
                         color: Colors.white,
@@ -238,7 +244,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   provider.loadAllInquiries();
                 },
               ),
-              const SizedBox(width: 4),
               ChoiceChip(
                 label: Text(l.pending),
                 selected: _statusFilter == 'pending',
@@ -247,7 +252,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   provider.loadAllInquiries(status: 'pending');
                 },
               ),
-              const SizedBox(width: 4),
               ChoiceChip(
                 label: Text(l.replied),
                 selected: _statusFilter == 'replied',
