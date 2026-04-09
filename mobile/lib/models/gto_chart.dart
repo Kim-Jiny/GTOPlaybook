@@ -26,10 +26,12 @@ class GtoChart {
   final String position;
   final String situation;
   final String? vsPosition;
+  final String? callerPosition;
   final int stackDepth;
   final int maxPlayers;
   final String? description;
   final String? category;
+  final String? flopTexture;
   final List<ActionType>? actionTypes;
   final List<HandRange>? ranges;
 
@@ -38,10 +40,12 @@ class GtoChart {
     required this.position,
     required this.situation,
     this.vsPosition,
+    this.callerPosition,
     this.stackDepth = 100,
     this.maxPlayers = 6,
     this.description,
     this.category,
+    this.flopTexture,
     this.actionTypes,
     this.ranges,
   });
@@ -52,10 +56,12 @@ class GtoChart {
       position: json['position'] as String,
       situation: json['situation'] as String,
       vsPosition: json['vs_position'] as String?,
+      callerPosition: json['caller_position'] as String? ?? json['callerPosition'] as String?,
       stackDepth: json['stack_depth'] as int? ?? 100,
       maxPlayers: json['max_players'] as int? ?? 6,
       description: json['description'] as String?,
       category: json['category'] as String?,
+      flopTexture: json['flop_texture'] as String? ?? json['flopTexture'] as String?,
       actionTypes: json['action_types'] != null
           ? (json['action_types'] as List).map((a) => ActionType.fromJson(a)).toList()
           : null,

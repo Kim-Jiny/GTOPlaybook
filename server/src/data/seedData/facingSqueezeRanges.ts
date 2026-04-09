@@ -397,6 +397,7 @@ export function getFacingSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers
           position: opener,
           situation: 'Facing Squeeze',
           vsPosition: squeezer,
+          callerPosition: caller,
           category: 'Facing Squeeze',
           description: `${opener} facing ${squeezer} squeeze after ${caller} call (${depth}bb, ${maxPlayers}-max)`,
           stackDepth: depth,

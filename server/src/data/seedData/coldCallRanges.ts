@@ -282,6 +282,7 @@ export function getColdCallCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
           position: heroPosition,
           situation: 'Cold Call',
           vsPosition: openerPosition,
+          callerPosition: callerPosition,
           category: 'Cold Call',
           description: `${heroPosition} overcall vs ${openerPosition} open + ${callerPosition} call (${depth}bb, ${maxPlayers}-max)`,
           stackDepth: depth,

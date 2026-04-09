@@ -10,8 +10,9 @@ router.get('/positions', requireAuth, async (req, res) => {
     const stackDepth = parseInt(req.query.stack_depth as string) || 100;
     const maxPlayers = parseInt(req.query.max_players as string) || 6;
     const result = await pool.query(
-      `SELECT id, position, situation, vs_position, description, category, action_types
-       FROM gto_charts WHERE stack_depth = $1 AND max_players = $2 ORDER BY position, category, vs_position`,
+      `SELECT id, position, situation, vs_position, caller_position, description, category, action_types, flop_texture
+       FROM gto_charts WHERE stack_depth = $1 AND max_players = $2
+       ORDER BY position, category, vs_position, caller_position, flop_texture`,
       [stackDepth, maxPlayers],
     );
 
@@ -26,8 +27,10 @@ router.get('/positions', requireAuth, async (req, res) => {
         id: row.id,
         situation: row.situation,
         vsPosition: row.vs_position,
+        callerPosition: row.caller_position,
         description: row.description,
         actionTypes: row.action_types,
+        flopTexture: row.flop_texture,
       });
     }
 
@@ -50,7 +53,7 @@ router.get('/positions', requireAuth, async (req, res) => {
 // GET /api/gto/charts — list all charts with optional filters
 router.get('/charts', requireAuth, async (req, res) => {
   try {
-    const { position, situation, vs_position, stack_depth, max_players } = req.query;
+    const { position, situation, vs_position, caller_position, flop_texture, stack_depth, max_players } = req.query;
     const sd = parseInt(stack_depth as string) || 100;
     const mp = parseInt(max_players as string) || 6;
     let query = 'SELECT * FROM gto_charts WHERE stack_depth = $1 AND max_players = $2';
@@ -67,6 +70,14 @@ router.get('/charts', requireAuth, async (req, res) => {
     if (vs_position) {
       params.push(vs_position as string);
       query += ` AND vs_position = $${params.length}`;
+    }
+    if (caller_position) {
+      params.push(caller_position as string);
+      query += ` AND caller_position = $${params.length}`;
+    }
+    if (flop_texture) {
+      params.push(flop_texture as string);
+      query += ` AND flop_texture = $${params.length}`;
     }
 
     query += ' ORDER BY id';

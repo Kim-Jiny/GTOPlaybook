@@ -491,20 +491,35 @@ class _QuickStartCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Text(
-            l.buildYourSpot,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
+          Flexible(
+            flex: 0,
+            child: Text(
+              l.buildYourSpot,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const Spacer(),
-          _QuickInfoChip(label: playerCount == 2 ? l.headsUp : l.nMax(playerCount)),
-          const SizedBox(width: 6),
-          _QuickInfoChip(label: l.nbbView(effectiveBb > 0 ? effectiveBb : stackDepth)),
-          const SizedBox(width: 6),
-          _QuickInfoChip(label: l.nCharts(chartCount)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _QuickInfoChip(label: playerCount == 2 ? l.headsUp : l.nMax(playerCount)),
+                  const SizedBox(width: 6),
+                  _QuickInfoChip(label: l.nbbView(effectiveBb > 0 ? effectiveBb : stackDepth)),
+                  const SizedBox(width: 6),
+                  _QuickInfoChip(label: l.nCharts(chartCount)),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

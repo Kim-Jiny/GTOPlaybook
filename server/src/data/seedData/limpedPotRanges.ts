@@ -121,7 +121,10 @@ function limpedPotRange(raiseSet: Set<string>) {
     const currentKey = raiseSet.has(hand) ? 'raise' : 'check';
     const smooth = smoothFrequencies(row, col, currentKey, [{ key: 'raise', set: raiseSet }]);
     if (smooth) {
-      return { raise: smooth.raise ?? 0, check: smooth.fold ?? 0 };
+      return {
+        raise: smooth.raise ?? 0,
+        check: (smooth.check ?? 0) + (smooth.fold ?? 0),
+      };
     }
     if (raiseSet.has(hand)) return { raise: 1, check: 0 };
     return { raise: 0, check: 1 };

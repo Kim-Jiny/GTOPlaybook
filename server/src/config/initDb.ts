@@ -34,6 +34,7 @@ const CREATE_TABLES = `
     position TEXT NOT NULL,
     situation TEXT NOT NULL,
     vs_position TEXT,
+    caller_position TEXT,
     stack_depth INTEGER DEFAULT 100,
     max_players INTEGER DEFAULT 6,
     description TEXT,
@@ -48,6 +49,7 @@ const CREATE_TABLES = `
   ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS category TEXT;
   ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS action_types JSONB;
   ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS flop_texture TEXT;
+  ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS caller_position TEXT;
 
   CREATE TABLE IF NOT EXISTS gto_ranges (
     id SERIAL PRIMARY KEY,

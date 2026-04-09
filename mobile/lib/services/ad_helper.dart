@@ -7,6 +7,7 @@ enum AdPlacement {
   equity,
   handAnalysis,
   profile,
+  potCalculator,
 }
 
 class AdHelper {
@@ -29,6 +30,7 @@ class AdHelper {
     AdPlacement.equity: 'ca-app-pub-2707874353926722/5814999924',
     AdPlacement.handAnalysis: 'ca-app-pub-2707874353926722/1000956247',
     AdPlacement.profile: 'ca-app-pub-2707874353926722/2640239921',
+    AdPlacement.potCalculator: 'ca-app-pub-2707874353926722/2045297764',
   };
 
   static const _androidBannerIds = {
@@ -38,5 +40,6 @@ class AdHelper {
     AdPlacement.equity: 'ca-app-pub-2707874353926722/1212709231',
     AdPlacement.handAnalysis: 'ca-app-pub-2707874353926722/9889275609',
     AdPlacement.profile: 'ca-app-pub-2707874353926722/1823083324',
+    AdPlacement.potCalculator: 'ca-app-pub-2707874353926722/6153528778',
   };
 }

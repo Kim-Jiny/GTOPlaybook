@@ -396,6 +396,7 @@ export function getSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6):
           position: heroPosition,
           situation: 'Squeeze',
           vsPosition: openerPosition,
+          callerPosition: callerPosition,
           category: 'Squeeze',
           description: `${heroPosition} squeeze vs ${openerPosition} open + ${callerPosition} call (${depth}bb, ${maxPlayers}-max)`,
           stackDepth: depth,

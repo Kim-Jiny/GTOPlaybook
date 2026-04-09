@@ -495,4 +495,164 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sendReply => '답변 보내기';
+
+  @override
+  String get potCalculator => '팟';
+
+  @override
+  String get potCalculatorTitle => '팟 계산기';
+
+  @override
+  String get bbSize => 'BB';
+
+  @override
+  String get sbSize => 'SB';
+
+  @override
+  String get anteSize => '앤티';
+
+  @override
+  String get currentPot => '현재 팟';
+
+  @override
+  String get undo => '되돌리기';
+
+  @override
+  String get reset => '초기화';
+
+  @override
+  String get bbMode => 'BB 모드';
+
+  @override
+  String get absoluteMode => '절대값';
+
+  @override
+  String get fullReset => '전체 초기화';
+
+  @override
+  String get fullResetConfirm => '팟, 블라인드 구조 선택, 앤티 설정을 모두 초기화할까요?';
+
+  @override
+  String get newHand => '새 핸드';
+
+  @override
+  String get lastUndo => '마지막 취소';
+
+  @override
+  String get potDescription => '현재 계산 중인 팟 크기';
+
+  @override
+  String get inputByBb => 'BB 기준 입력';
+
+  @override
+  String get inputByChips => '칩 기준 입력';
+
+  @override
+  String nPlayersLabel(int count) {
+    return '$count명';
+  }
+
+  @override
+  String get currentPotView => '현재 팟 확인';
+
+  @override
+  String get manual => '수동';
+
+  @override
+  String get selectBlindStructure => '블라인드 구조 선택';
+
+  @override
+  String get tapToChangeStructure => '터치해서 구조 변경';
+
+  @override
+  String get selectPresetStructureHint => '프리셋 구조를 선택하면 레벨이 함께 적용됩니다';
+
+  @override
+  String get blindStructure => '블라인드 구조';
+
+  @override
+  String get newStructure => '새 구조';
+
+  @override
+  String get noSavedStructures => '저장된 블라인드 구조가 없습니다';
+
+  @override
+  String get noLevels => '레벨 없음';
+
+  @override
+  String nSteps(int count) {
+    return '$count단계';
+  }
+
+  @override
+  String editLevelN(int n) {
+    return '레벨 $n 수정';
+  }
+
+  @override
+  String get anteType => 'Ante 방식';
+
+  @override
+  String get confirm => '확인';
+
+  @override
+  String get editStructure => '구조 수정';
+
+  @override
+  String get newBlindStructure => '새 블라인드 구조';
+
+  @override
+  String get save => '저장';
+
+  @override
+  String get structureNameHint => '구조 이름 (예: 데일리, 몬스터)';
+
+  @override
+  String get addLevelsHint => '+ 버튼으로 블라인드 레벨을 추가하세요';
+
+  @override
+  String setupSummary(String sb, String bb, String ante, int count) {
+    return 'SB $sb / BB $bb, $ante, $count명';
+  }
+
+  @override
+  String get anteNone => 'Ante 없음';
+
+  @override
+  String anteBbLabel(String value) {
+    return 'BB Ante $value';
+  }
+
+  @override
+  String anteAllLabel(String value, int count) {
+    return 'All Ante $value x $count';
+  }
+
+  @override
+  String get players => '인원';
+
+  @override
+  String get tableSettings => '테이블 설정';
+
+  @override
+  String totalAnteCalc(int count, int ante) {
+    return '전체 Ante 계산: $count명 x $ante';
+  }
+
+  @override
+  String addPreflopPot(String amount) {
+    return '프리플랍 팟 추가  ($amount)';
+  }
+
+  @override
+  String get betPresets => '베팅 프리셋';
+
+  @override
+  String get betPresetsDesc => '현재 팟 비율로 바로 추가합니다';
+
+  @override
+  String get quickChipAdd => '빠른 칩 추가';
+
+  @override
+  String get longPressToRemoveChip => '길게 눌러 커스텀 칩 제거';
 }

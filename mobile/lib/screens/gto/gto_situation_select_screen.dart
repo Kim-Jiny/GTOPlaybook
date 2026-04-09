@@ -304,6 +304,12 @@ class _ChartTile extends StatelessWidget {
     if ((chart.description ?? '').isNotEmpty) {
       return chart.description!;
     }
+    if (chart.flopTexture != null && chart.flopTexture!.isNotEmpty) {
+      return 'vs ${chart.vsPosition} ${chart.flopTexture}';
+    }
+    if (chart.callerPosition != null && chart.callerPosition!.isNotEmpty) {
+      return 'vs ${chart.vsPosition} + ${chart.callerPosition}';
+    }
     final situation = chart.situation.replaceAll('_', ' ').trim();
     if (chart.vsPosition != null) {
       return 'vs ${chart.vsPosition}  $situation';

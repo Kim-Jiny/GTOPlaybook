@@ -8,6 +8,7 @@ import 'providers/equity_provider.dart';
 import 'providers/hand_analysis_provider.dart';
 import 'providers/inquiry_provider.dart';
 import 'providers/admin_inquiry_provider.dart';
+import 'providers/pot_calculator_provider.dart';
 import 'services/api_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
@@ -65,6 +66,7 @@ class GtoPlaybookApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => HandAnalysisProvider()),
         ChangeNotifierProvider(create: (_) => InquiryProvider(apiService)),
         ChangeNotifierProvider(create: (_) => AdminInquiryProvider(apiService)),
+        ChangeNotifierProvider(create: (_) => PotCalculatorProvider()),
       ],
       child: MaterialApp(
         title: 'GTO Playbook',

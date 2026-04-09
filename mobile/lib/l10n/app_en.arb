@@ -277,5 +277,98 @@
   "inquiryManagement": "Inquiry Management",
   "noInquiries": "No inquiries",
   "reply": "Reply",
-  "sendReply": "Send Reply"
+  "sendReply": "Send Reply",
+
+  "potCalculator": "Pot",
+  "potCalculatorTitle": "Pot Calculator",
+  "bbSize": "BB",
+  "sbSize": "SB",
+  "anteSize": "Ante",
+  "currentPot": "Current Pot",
+  "undo": "Undo",
+  "reset": "Reset",
+  "bbMode": "BB Mode",
+  "absoluteMode": "Absolute",
+
+  "fullReset": "Full Reset",
+  "fullResetConfirm": "Reset pot, blind structure selection, and ante settings?",
+  "newHand": "New Hand",
+  "lastUndo": "Last Undo",
+  "potDescription": "Current pot being calculated",
+  "inputByBb": "Input by BB",
+  "inputByChips": "Input by chips",
+  "nPlayersLabel": "{count} players",
+  "@nPlayersLabel": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "currentPotView": "Current Pot",
+  "manual": "Manual",
+  "selectBlindStructure": "Select Blind Structure",
+  "tapToChangeStructure": "Tap to change structure",
+  "selectPresetStructureHint": "Select a preset to apply blind levels",
+  "blindStructure": "Blind Structure",
+  "newStructure": "New",
+  "noSavedStructures": "No saved blind structures",
+  "noLevels": "No levels",
+  "nSteps": "{count} steps",
+  "@nSteps": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "editLevelN": "Edit Level {n}",
+  "@editLevelN": {
+    "placeholders": {
+      "n": { "type": "int" }
+    }
+  },
+  "anteType": "Ante Type",
+  "confirm": "Confirm",
+  "editStructure": "Edit Structure",
+  "newBlindStructure": "New Blind Structure",
+  "save": "Save",
+  "structureNameHint": "Structure name (e.g. Daily, Monster)",
+  "addLevelsHint": "Tap + to add blind levels",
+  "setupSummary": "SB {sb} / BB {bb}, {ante}, {count} players",
+  "@setupSummary": {
+    "placeholders": {
+      "sb": { "type": "String" },
+      "bb": { "type": "String" },
+      "ante": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "anteNone": "No Ante",
+  "anteBbLabel": "BB Ante {value}",
+  "@anteBbLabel": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "anteAllLabel": "All Ante {value} x {count}",
+  "@anteAllLabel": {
+    "placeholders": {
+      "value": { "type": "String" },
+      "count": { "type": "int" }
+    }
+  },
+  "players": "Players",
+  "tableSettings": "Table Settings",
+  "totalAnteCalc": "Total Ante: {count} players x {ante}",
+  "@totalAnteCalc": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "ante": { "type": "int" }
+    }
+  },
+  "addPreflopPot": "Add Preflop Pot  ({amount})",
+  "@addPreflopPot": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "betPresets": "Bet Presets",
+  "betPresetsDesc": "Instantly add a fraction of the current pot",
+  "quickChipAdd": "Quick Chip Add",
+  "longPressToRemoveChip": "Long press to remove custom chip"
 }

@@ -177,6 +177,7 @@ export interface ChartDef {
   position: string;
   situation: string;
   vsPosition?: string;
+  callerPosition?: string;
   category: string;
   description: string;
   flopTexture?: string;

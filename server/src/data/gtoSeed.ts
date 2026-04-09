@@ -21,6 +21,7 @@ async function seed() {
         ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS action_types JSONB;
         ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS flop_texture TEXT;
         ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS max_players INTEGER DEFAULT 6;
+        ALTER TABLE gto_charts ADD COLUMN IF NOT EXISTS caller_position TEXT;
         ALTER TABLE gto_ranges ADD COLUMN IF NOT EXISTS frequencies JSONB;
       EXCEPTION WHEN others THEN NULL;
       END $$;
@@ -32,12 +33,13 @@ async function seed() {
 
     for (const chart of ALL_CHARTS) {
       const chartResult = await client.query(
-        `INSERT INTO gto_charts (position, situation, vs_position, description, stack_depth, max_players, category, action_types, flop_texture)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+        `INSERT INTO gto_charts (position, situation, vs_position, caller_position, description, stack_depth, max_players, category, action_types, flop_texture)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
         [
           chart.position,
           chart.situation,
           chart.vsPosition || null,
+          chart.callerPosition || null,
           chart.description,
           chart.stackDepth ?? 100,
           chart.maxPlayers ?? 6,

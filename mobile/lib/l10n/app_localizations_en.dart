@@ -502,4 +502,166 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendReply => 'Send Reply';
+
+  @override
+  String get potCalculator => 'Pot';
+
+  @override
+  String get potCalculatorTitle => 'Pot Calculator';
+
+  @override
+  String get bbSize => 'BB';
+
+  @override
+  String get sbSize => 'SB';
+
+  @override
+  String get anteSize => 'Ante';
+
+  @override
+  String get currentPot => 'Current Pot';
+
+  @override
+  String get undo => 'Undo';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get bbMode => 'BB Mode';
+
+  @override
+  String get absoluteMode => 'Absolute';
+
+  @override
+  String get fullReset => 'Full Reset';
+
+  @override
+  String get fullResetConfirm =>
+      'Reset pot, blind structure selection, and ante settings?';
+
+  @override
+  String get newHand => 'New Hand';
+
+  @override
+  String get lastUndo => 'Last Undo';
+
+  @override
+  String get potDescription => 'Current pot being calculated';
+
+  @override
+  String get inputByBb => 'Input by BB';
+
+  @override
+  String get inputByChips => 'Input by chips';
+
+  @override
+  String nPlayersLabel(int count) {
+    return '$count players';
+  }
+
+  @override
+  String get currentPotView => 'Current Pot';
+
+  @override
+  String get manual => 'Manual';
+
+  @override
+  String get selectBlindStructure => 'Select Blind Structure';
+
+  @override
+  String get tapToChangeStructure => 'Tap to change structure';
+
+  @override
+  String get selectPresetStructureHint =>
+      'Select a preset to apply blind levels';
+
+  @override
+  String get blindStructure => 'Blind Structure';
+
+  @override
+  String get newStructure => 'New';
+
+  @override
+  String get noSavedStructures => 'No saved blind structures';
+
+  @override
+  String get noLevels => 'No levels';
+
+  @override
+  String nSteps(int count) {
+    return '$count steps';
+  }
+
+  @override
+  String editLevelN(int n) {
+    return 'Edit Level $n';
+  }
+
+  @override
+  String get anteType => 'Ante Type';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
+  String get editStructure => 'Edit Structure';
+
+  @override
+  String get newBlindStructure => 'New Blind Structure';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get structureNameHint => 'Structure name (e.g. Daily, Monster)';
+
+  @override
+  String get addLevelsHint => 'Tap + to add blind levels';
+
+  @override
+  String setupSummary(String sb, String bb, String ante, int count) {
+    return 'SB $sb / BB $bb, $ante, $count players';
+  }
+
+  @override
+  String get anteNone => 'No Ante';
+
+  @override
+  String anteBbLabel(String value) {
+    return 'BB Ante $value';
+  }
+
+  @override
+  String anteAllLabel(String value, int count) {
+    return 'All Ante $value x $count';
+  }
+
+  @override
+  String get players => 'Players';
+
+  @override
+  String get tableSettings => 'Table Settings';
+
+  @override
+  String totalAnteCalc(int count, int ante) {
+    return 'Total Ante: $count players x $ante';
+  }
+
+  @override
+  String addPreflopPot(String amount) {
+    return 'Add Preflop Pot  ($amount)';
+  }
+
+  @override
+  String get betPresets => 'Bet Presets';
+
+  @override
+  String get betPresetsDesc => 'Instantly add a fraction of the current pot';
+
+  @override
+  String get quickChipAdd => 'Quick Chip Add';
+
+  @override
+  String get longPressToRemoveChip => 'Long press to remove custom chip';
 }

@@ -973,6 +973,294 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send Reply'**
   String get sendReply;
+
+  /// No description provided for @potCalculator.
+  ///
+  /// In en, this message translates to:
+  /// **'Pot'**
+  String get potCalculator;
+
+  /// No description provided for @potCalculatorTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pot Calculator'**
+  String get potCalculatorTitle;
+
+  /// No description provided for @bbSize.
+  ///
+  /// In en, this message translates to:
+  /// **'BB'**
+  String get bbSize;
+
+  /// No description provided for @sbSize.
+  ///
+  /// In en, this message translates to:
+  /// **'SB'**
+  String get sbSize;
+
+  /// No description provided for @anteSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Ante'**
+  String get anteSize;
+
+  /// No description provided for @currentPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Pot'**
+  String get currentPot;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @bbMode.
+  ///
+  /// In en, this message translates to:
+  /// **'BB Mode'**
+  String get bbMode;
+
+  /// No description provided for @absoluteMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Absolute'**
+  String get absoluteMode;
+
+  /// No description provided for @fullReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Reset'**
+  String get fullReset;
+
+  /// No description provided for @fullResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset pot, blind structure selection, and ante settings?'**
+  String get fullResetConfirm;
+
+  /// No description provided for @newHand.
+  ///
+  /// In en, this message translates to:
+  /// **'New Hand'**
+  String get newHand;
+
+  /// No description provided for @lastUndo.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Undo'**
+  String get lastUndo;
+
+  /// No description provided for @potDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Current pot being calculated'**
+  String get potDescription;
+
+  /// No description provided for @inputByBb.
+  ///
+  /// In en, this message translates to:
+  /// **'Input by BB'**
+  String get inputByBb;
+
+  /// No description provided for @inputByChips.
+  ///
+  /// In en, this message translates to:
+  /// **'Input by chips'**
+  String get inputByChips;
+
+  /// No description provided for @nPlayersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} players'**
+  String nPlayersLabel(int count);
+
+  /// No description provided for @currentPotView.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Pot'**
+  String get currentPotView;
+
+  /// No description provided for @manual.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual'**
+  String get manual;
+
+  /// No description provided for @selectBlindStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Blind Structure'**
+  String get selectBlindStructure;
+
+  /// No description provided for @tapToChangeStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to change structure'**
+  String get tapToChangeStructure;
+
+  /// No description provided for @selectPresetStructureHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a preset to apply blind levels'**
+  String get selectPresetStructureHint;
+
+  /// No description provided for @blindStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Blind Structure'**
+  String get blindStructure;
+
+  /// No description provided for @newStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get newStructure;
+
+  /// No description provided for @noSavedStructures.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved blind structures'**
+  String get noSavedStructures;
+
+  /// No description provided for @noLevels.
+  ///
+  /// In en, this message translates to:
+  /// **'No levels'**
+  String get noLevels;
+
+  /// No description provided for @nSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} steps'**
+  String nSteps(int count);
+
+  /// No description provided for @editLevelN.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Level {n}'**
+  String editLevelN(int n);
+
+  /// No description provided for @anteType.
+  ///
+  /// In en, this message translates to:
+  /// **'Ante Type'**
+  String get anteType;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
+  /// No description provided for @editStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Structure'**
+  String get editStructure;
+
+  /// No description provided for @newBlindStructure.
+  ///
+  /// In en, this message translates to:
+  /// **'New Blind Structure'**
+  String get newBlindStructure;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @structureNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Structure name (e.g. Daily, Monster)'**
+  String get structureNameHint;
+
+  /// No description provided for @addLevelsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add blind levels'**
+  String get addLevelsHint;
+
+  /// No description provided for @setupSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'SB {sb} / BB {bb}, {ante}, {count} players'**
+  String setupSummary(String sb, String bb, String ante, int count);
+
+  /// No description provided for @anteNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No Ante'**
+  String get anteNone;
+
+  /// No description provided for @anteBbLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'BB Ante {value}'**
+  String anteBbLabel(String value);
+
+  /// No description provided for @anteAllLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'All Ante {value} x {count}'**
+  String anteAllLabel(String value, int count);
+
+  /// No description provided for @players.
+  ///
+  /// In en, this message translates to:
+  /// **'Players'**
+  String get players;
+
+  /// No description provided for @tableSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Table Settings'**
+  String get tableSettings;
+
+  /// No description provided for @totalAnteCalc.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Ante: {count} players x {ante}'**
+  String totalAnteCalc(int count, int ante);
+
+  /// No description provided for @addPreflopPot.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Preflop Pot  ({amount})'**
+  String addPreflopPot(String amount);
+
+  /// No description provided for @betPresets.
+  ///
+  /// In en, this message translates to:
+  /// **'Bet Presets'**
+  String get betPresets;
+
+  /// No description provided for @betPresetsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Instantly add a fraction of the current pot'**
+  String get betPresetsDesc;
+
+  /// No description provided for @quickChipAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Chip Add'**
+  String get quickChipAdd;
+
+  /// No description provided for @longPressToRemoveChip.
+  ///
+  /// In en, this message translates to:
+  /// **'Long press to remove custom chip'**
+  String get longPressToRemoveChip;
 }
 
 class _AppLocalizationsDelegate
