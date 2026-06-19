@@ -60,60 +60,35 @@ class GtoGrid extends StatelessWidget {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: const Color(0xFF121212),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-      ),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: ClipRect(
-          child: InteractiveViewer(
-            panEnabled: true,
-            minScale: 1.0,
-            maxScale: 4.0,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final axisSize = constraints.maxWidth * 0.055;
-                final cellSize = (constraints.maxWidth - axisSize) / 13;
+    return RepaintBoundary(
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF121212),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        ),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final axisSize = constraints.maxWidth * 0.055;
+              final cellSize = (constraints.maxWidth - axisSize) / 13;
 
-                return Column(
-                  children: [
-                    SizedBox(
-                      height: axisSize,
-                      child: Row(
-                        children: [
-                          SizedBox(width: axisSize),
-                          ...List.generate(
-                            13,
-                            (index) => SizedBox(
-                              width: cellSize,
-                              child: Center(
-                                child: Text(
-                                  _ranks[index],
-                                  style: TextStyle(
-                                    color: Colors.white38,
-                                    fontSize: axisSize * 0.42,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    ...List.generate(13, (row) {
-                      return Row(
-                        children: [
-                          SizedBox(
-                            width: axisSize,
-                            height: cellSize,
+              return Column(
+                children: [
+                  SizedBox(
+                    height: axisSize,
+                    child: Row(
+                      children: [
+                        SizedBox(width: axisSize),
+                        ...List.generate(
+                          13,
+                          (index) => SizedBox(
+                            width: cellSize,
                             child: Center(
                               child: Text(
-                                _ranks[row],
+                                _ranks[index],
                                 style: TextStyle(
                                   color: Colors.white38,
                                   fontSize: axisSize * 0.42,
@@ -122,110 +97,122 @@ class GtoGrid extends StatelessWidget {
                               ),
                             ),
                           ),
-                          ...List.generate(13, (col) {
-                            final key = '$row,$col';
-                            final range = grid[key];
-                            final handLabel =
-                                range?.hand ?? _defaultLabel(row, col);
-                            return Semantics(
-                              button: range != null,
-                              selected:
-                                  range != null && selectedHand == range.hand,
-                              label: handLabel,
-                              child: GestureDetector(
-                                onTap: range != null
-                                    ? () => onCellTap?.call(range)
-                                    : null,
-                                child: Container(
-                                  width: cellSize,
-                                  height: cellSize,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade900,
-                                    border: Border.all(
-                                      color: Colors.black26,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      _CellBackground(
-                                        range: range,
-                                        colorMap: colorMap,
-                                        detailedMode: detailedMode,
-                                      ),
-                                      if (range != null &&
-                                          selectedHand == range.hand)
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            border: Border.all(
-                                              color: Colors.white,
-                                              width: cellSize > 32 ? 2 : 1.2,
-                                            ),
-                                          ),
-                                        ),
-                                      Center(
-                                        child: Text(
-                                          handLabel,
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: cellSize * 0.34,
-                                            fontWeight: FontWeight.w700,
-                                            shadows: const [
-                                              Shadow(
-                                                blurRadius: 4,
-                                                color: Colors.black87,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      if (range != null && cellSize >= 20)
-                                        Positioned(
-                                          left: 1,
-                                          right: 1,
-                                          bottom: 1,
-                                          child: FittedBox(
-                                            fit: BoxFit.scaleDown,
-                                            child: Text(
-                                              detailedMode
-                                                  ? _summaryLabel(range)
-                                                  : _primaryActionAbbreviation(
-                                                      range,
-                                                    ),
-                                              textAlign: TextAlign.center,
-                                              maxLines: 1,
-                                              style: TextStyle(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.92,
-                                                ),
-                                                fontSize:
-                                                    cellSize *
-                                                    (detailedMode ? 0.2 : 0.24),
-                                                fontWeight: FontWeight.w700,
-                                                shadows: const [
-                                                  Shadow(
-                                                    blurRadius: 3,
-                                                    color: Colors.black87,
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  ...List.generate(13, (row) {
+                    return Row(
+                      children: [
+                        SizedBox(
+                          width: axisSize,
+                          height: cellSize,
+                          child: Center(
+                            child: Text(
+                              _ranks[row],
+                              style: TextStyle(
+                                color: Colors.white38,
+                                fontSize: axisSize * 0.42,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                        ...List.generate(13, (col) {
+                          final key = '$row,$col';
+                          final range = grid[key];
+                          final handLabel =
+                              range?.hand ?? _defaultLabel(row, col);
+                          return Semantics(
+                            button: range != null,
+                            selected:
+                                range != null && selectedHand == range.hand,
+                            label: handLabel,
+                            child: GestureDetector(
+                              onTap: range != null
+                                  ? () => onCellTap?.call(range)
+                                  : null,
+                              child: Container(
+                                width: cellSize,
+                                height: cellSize,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade900,
+                                  border: Border.all(
+                                    color: Colors.black26,
+                                    width: 0.5,
                                   ),
                                 ),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    _CellBackground(
+                                      range: range,
+                                      colorMap: colorMap,
+                                      detailedMode: detailedMode,
+                                    ),
+                                    if (range != null &&
+                                        selectedHand == range.hand)
+                                      Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: cellSize > 32 ? 2 : 1.2,
+                                          ),
+                                        ),
+                                      ),
+                                    Center(
+                                      child: Text(
+                                        handLabel,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: cellSize * 0.3,
+                                          fontWeight: FontWeight.w600,
+                                          shadows: const [
+                                            Shadow(
+                                              blurRadius: 4,
+                                              color: Colors.black87,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    if (range != null && cellSize >= 28)
+                                      Positioned(
+                                        left: 2,
+                                        right: 2,
+                                        bottom: 2,
+                                        child: Text(
+                                          detailedMode
+                                              ? _summaryLabel(range)
+                                              : _primaryActionAbbreviation(
+                                                  range,
+                                                ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.fade,
+                                          style: TextStyle(
+                                            color: Colors.white.withValues(
+                                              alpha: 0.88,
+                                            ),
+                                            fontSize:
+                                                cellSize *
+                                                (detailedMode ? 0.14 : 0.16),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            );
-                          }),
-                        ],
-                      );
-                    }),
-                  ],
-                );
-              },
-            ),
+                            ),
+                          );
+                        }),
+                      ],
+                    );
+                  }),
+                ],
+              );
+            },
           ),
         ),
       ),

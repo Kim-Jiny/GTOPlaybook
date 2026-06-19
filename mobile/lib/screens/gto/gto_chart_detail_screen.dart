@@ -38,7 +38,9 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
     });
 
     try {
-      final chart = await context.read<GtoProvider>().fetchChartDetail(widget.chartId);
+      final chart = await context.read<GtoProvider>().fetchChartDetail(
+        widget.chartId,
+      );
       if (!mounted) return;
       setState(() {
         _chart = chart;
@@ -85,10 +87,24 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
     }
   }
 
+  void _openZoom(GtoChart chart, HandRange initial) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => _GridZoomScreen(
+          chart: chart,
+          initialRange: initial,
+          detailedMode: _detailedMode,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final chart = _chart;
-    final selectedRange = chart == null ? null : (_selectedRange ?? _defaultRange(chart));
+    final selectedRange = chart == null
+        ? null
+        : (_selectedRange ?? _defaultRange(chart));
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -99,27 +115,27 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_error!, style: const TextStyle(color: Colors.redAccent)),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: _loadChart,
-                        child: Text(l.retry),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.redAccent),
                   ),
-                )
-              : chart == null
-                  ? Center(
-                      child: Text(
-                        l.noData,
-                        style: const TextStyle(color: Colors.white54),
-                      ),
-                    )
-                  : SingleChildScrollView(
+                  const SizedBox(height: 12),
+                  ElevatedButton(onPressed: _loadChart, child: Text(l.retry)),
+                ],
+              ),
+            )
+          : chart == null
+          ? Center(
+              child: Text(
+                l.noData,
+                style: const TextStyle(color: Colors.white54),
+              ),
+            )
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,7 +155,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  _buildLegend(chart),
+                  _chartLegend(chart),
                   const SizedBox(height: 12),
                   GtoGrid(
                     ranges: chart.ranges ?? [],
@@ -148,6 +164,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                     detailedMode: _detailedMode,
                     onCellTap: (range) {
                       setState(() => _selectedRange = range);
+                      _openZoom(chart, range);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -157,7 +174,9 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                       actionTypes: chart.actionTypes,
                     ),
                   const SizedBox(height: 16),
-                  const Center(child: BannerAdWidget(placement: AdPlacement.chart)),
+                  const Center(
+                    child: BannerAdWidget(placement: AdPlacement.chart),
+                  ),
                 ],
               ),
             ),
@@ -175,34 +194,40 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
 
   double _primaryFrequency(HandRange range) {
     if (range.frequencies.isNotEmpty) {
-      return range.frequencies.values.fold<double>(0, (best, value) => value > best ? value : best);
-    }
-    return [range.raiseFreq, range.callFreq, range.foldFreq]
-        .fold<double>(0, (best, value) => value > best ? value : best);
-  }
-
-  Widget _buildLegend(GtoChart chart) {
-    if (chart.actionTypes != null && chart.actionTypes!.isNotEmpty) {
-      return Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 16,
-        children: chart.actionTypes!
-            .map((at) => _LegendItem(color: at.toColor(), label: at.label))
-            .toList(),
+      return range.frequencies.values.fold<double>(
+        0,
+        (best, value) => value > best ? value : best,
       );
     }
-    // Fallback legacy legend
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _LegendItem(color: Colors.red.shade700, label: 'Raise'),
-        const SizedBox(width: 16),
-        _LegendItem(color: Colors.green.shade700, label: 'Call'),
-        const SizedBox(width: 16),
-        _LegendItem(color: Colors.grey.shade700, label: 'Fold'),
-      ],
+    return [
+      range.raiseFreq,
+      range.callFreq,
+      range.foldFreq,
+    ].fold<double>(0, (best, value) => value > best ? value : best);
+  }
+}
+
+Widget _chartLegend(GtoChart chart) {
+  if (chart.actionTypes != null && chart.actionTypes!.isNotEmpty) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 16,
+      children: chart.actionTypes!
+          .map((at) => _LegendItem(color: at.toColor(), label: at.label))
+          .toList(),
     );
   }
+  // Fallback legacy legend
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      _LegendItem(color: Colors.red.shade700, label: 'Raise'),
+      const SizedBox(width: 16),
+      _LegendItem(color: Colors.green.shade700, label: 'Call'),
+      const SizedBox(width: 16),
+      _LegendItem(color: Colors.grey.shade700, label: 'Fold'),
+    ],
+  );
 }
 
 class _LegendItem extends StatelessWidget {
@@ -224,7 +249,10 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
       ],
     );
   }
@@ -260,7 +288,10 @@ class _HandDetail extends StatelessWidget {
                 ),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: summary.color.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(999),
@@ -278,10 +309,7 @@ class _HandDetail extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               summary.description,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 14),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -327,23 +355,43 @@ class _HandDetail extends StatelessWidget {
                 if (freq <= 0) return const SizedBox.shrink();
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: _FreqBar(label: at.label, freq: freq, color: at.toColor()),
+                  child: _FreqBar(
+                    label: at.label,
+                    freq: freq,
+                    color: at.toColor(),
+                  ),
                 );
               })
             else ...[
-              _FreqBar(label: 'Raise', freq: range.raiseFreq, color: Colors.red.shade700),
+              _FreqBar(
+                label: 'Raise',
+                freq: range.raiseFreq,
+                color: Colors.red.shade700,
+              ),
               const SizedBox(height: 8),
-              _FreqBar(label: 'Call', freq: range.callFreq, color: Colors.green.shade700),
+              _FreqBar(
+                label: 'Call',
+                freq: range.callFreq,
+                color: Colors.green.shade700,
+              ),
               const SizedBox(height: 8),
-              _FreqBar(label: 'Fold', freq: range.foldFreq, color: Colors.grey.shade600),
+              _FreqBar(
+                label: 'Fold',
+                freq: range.foldFreq,
+                color: Colors.grey.shade600,
+              ),
             ],
           ],
         ),
       ),
-      );
-    }
+    );
+  }
 
-  _ActionSummary _actionSummary(HandRange range, List<ActionType>? actionTypes, AppLocalizations l) {
+  _ActionSummary _actionSummary(
+    HandRange range,
+    List<ActionType>? actionTypes,
+    AppLocalizations l,
+  ) {
     final frequencies = <String, double>{};
     if (range.frequencies.isNotEmpty) {
       frequencies.addAll(range.frequencies);
@@ -369,14 +417,16 @@ class _HandDetail extends StatelessWidget {
     final isMixed = secondary != null && secondary.value >= 0.12;
 
     final labels = {
-      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.label,
+      for (final action in actionTypes ?? const <ActionType>[])
+        action.key: action.label,
       'raise': 'Raise',
       'call': 'Call',
       'fold': 'Fold',
     };
 
     final colors = {
-      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.toColor(),
+      for (final action in actionTypes ?? const <ActionType>[])
+        action.key: action.toColor(),
       'raise': Colors.red.shade700,
       'call': Colors.green.shade700,
       'fold': Colors.grey.shade700,
@@ -395,7 +445,12 @@ class _HandDetail extends StatelessWidget {
 
     final mixText = sorted
         .take(3)
-        .map((entry) => l.nPercentAction(labels[entry.key] ?? entry.key, (entry.value * 100).round()))
+        .map(
+          (entry) => l.nPercentAction(
+            labels[entry.key] ?? entry.key,
+            (entry.value * 100).round(),
+          ),
+        )
         .join(' / ');
     return _ActionSummary(
       title: l.mixedStrategy,
@@ -405,15 +460,20 @@ class _HandDetail extends StatelessWidget {
     );
   }
 
-  List<_RankedAction> _rankedActions(HandRange range, List<ActionType>? actionTypes) {
+  List<_RankedAction> _rankedActions(
+    HandRange range,
+    List<ActionType>? actionTypes,
+  ) {
     final labels = {
-      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.label,
+      for (final action in actionTypes ?? const <ActionType>[])
+        action.key: action.label,
       'raise': 'Raise',
       'call': 'Call',
       'fold': 'Fold',
     };
     final colors = {
-      for (final action in actionTypes ?? const <ActionType>[]) action.key: action.toColor(),
+      for (final action in actionTypes ?? const <ActionType>[])
+        action.key: action.toColor(),
       'raise': Colors.red.shade700,
       'call': Colors.green.shade700,
       'fold': Colors.grey.shade700,
@@ -428,10 +488,9 @@ class _HandDetail extends StatelessWidget {
       if (range.foldFreq > 0) frequencies['fold'] = range.foldFreq;
     }
 
-    final sorted = frequencies.entries
-        .where((entry) => entry.value > 0)
-        .toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
+    final sorted =
+        frequencies.entries.where((entry) => entry.value > 0).toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
 
     return sorted
         .map(
@@ -459,7 +518,11 @@ class _HandDetail extends StatelessWidget {
     return 0;
   }
 
-  String _studyNote(HandRange range, List<_RankedAction> rankedActions, AppLocalizations l) {
+  String _studyNote(
+    HandRange range,
+    List<_RankedAction> rankedActions,
+    AppLocalizations l,
+  ) {
     if (rankedActions.isEmpty) {
       return l.studyNoteEmpty;
     }
@@ -472,7 +535,12 @@ class _HandDetail extends StatelessWidget {
     }
 
     final gap = ((primary.freq - secondary.freq) * 100).round();
-    return l.studyNoteMixed(range.hand, primary.label.toLowerCase(), secondary.label.toLowerCase(), gap);
+    return l.studyNoteMixed(
+      range.hand,
+      primary.label.toLowerCase(),
+      secondary.label.toLowerCase(),
+      gap,
+    );
   }
 }
 
@@ -480,13 +548,20 @@ class _FreqBar extends StatelessWidget {
   final String label;
   final double freq;
   final Color color;
-  const _FreqBar({required this.label, required this.freq, required this.color});
+  const _FreqBar({
+    required this.label,
+    required this.freq,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        SizedBox(width: 50, child: Text(label, style: const TextStyle(color: Colors.white70))),
+        SizedBox(
+          width: 50,
+          child: Text(label, style: const TextStyle(color: Colors.white70)),
+        ),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
@@ -548,10 +623,12 @@ class _ChartSummaryCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MetaChip(label: chart.position),
-                if (chart.vsPosition != null) _MetaChip(label: 'vs ${chart.vsPosition}'),
+                if (chart.vsPosition != null)
+                  _MetaChip(label: 'vs ${chart.vsPosition}'),
                 _MetaChip(label: '${chart.stackDepth}bb'),
                 _MetaChip(label: '${chart.maxPlayers}-max'),
-                if ((chart.category ?? '').isNotEmpty) _MetaChip(label: chart.category!),
+                if ((chart.category ?? '').isNotEmpty)
+                  _MetaChip(label: chart.category!),
               ],
             ),
           ],
@@ -727,10 +804,7 @@ class _ModeButton extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               description,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
             ),
           ],
         ),
@@ -836,4 +910,88 @@ class _RankedAction {
     required this.freq,
     required this.color,
   });
+}
+
+// Fullscreen, pinch-zoomable view of the range grid. Opened on cell tap so
+// the inline grid stays light (no InteractiveViewer in the scroll path).
+class _GridZoomScreen extends StatefulWidget {
+  final GtoChart chart;
+  final HandRange? initialRange;
+  final bool detailedMode;
+
+  const _GridZoomScreen({
+    required this.chart,
+    required this.initialRange,
+    required this.detailedMode,
+  });
+
+  @override
+  State<_GridZoomScreen> createState() => _GridZoomScreenState();
+}
+
+class _GridZoomScreenState extends State<_GridZoomScreen> {
+  HandRange? _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    _selected = widget.initialRange;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final chart = widget.chart;
+    final l = AppLocalizations.of(context)!;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(chart.description ?? l.gtoCharts),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 8),
+            _chartLegend(chart),
+            const SizedBox(height: 8),
+            Expanded(
+              child: InteractiveViewer(
+                panEnabled: true,
+                minScale: 1.0,
+                maxScale: 5.0,
+                child: Center(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: GtoGrid(
+                        ranges: chart.ranges ?? [],
+                        actionTypes: chart.actionTypes,
+                        selectedHand: _selected?.hand,
+                        detailedMode: widget.detailedMode,
+                        onCellTap: (range) => setState(() => _selected = range),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            if (_selected != null)
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.35,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: _HandDetail(
+                    range: _selected!,
+                    actionTypes: chart.actionTypes,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }
