@@ -6,7 +6,9 @@
     "dev": "ts-node-dev --respawn src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed": "ts-node src/data/gtoSeed.ts"
+    "seed": "ts-node src/data/gtoSeed.ts",
+    "validate:charts": "ts-node src/data/validateCharts.ts",
+    "verify:tiers": "ts-node src/data/verifyTierSwitch.ts"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
