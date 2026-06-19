@@ -17,6 +17,9 @@ const app = express();
 const PgStore = connectPgSimple(session);
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionSecret = process.env.SESSION_SECRET;
+if (!sessionSecret) {
+  throw new Error('SESSION_SECRET environment variable is required');
+}
 const allowedOrigins = (process.env.CORS_ORIGIN ?? '')
   .split(',')
   .map((origin) => origin.trim())
@@ -52,7 +55,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   session({
-    secret: sessionSecret ?? 'gto-admin-secret-key',
+    secret: sessionSecret,
     store: new PgStore({
       pool,
       tableName: 'user_sessions',
