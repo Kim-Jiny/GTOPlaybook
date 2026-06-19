@@ -6,6 +6,7 @@ import 'ad_helper.dart';
 /// Manages the page-transition interstitial shown in the chart tab.
 ///
 /// Guards (so users aren't hammered):
+/// - nothing within [_launchGrace] of app start
 /// - 35% chance per eligible transition
 /// - at most one ad every [_cooldown]
 /// - the first [_graceTransitions] transition(s) are skipped (let users settle)
@@ -15,6 +16,7 @@ class InterstitialAdManager {
   InterstitialAdManager._();
   static final InterstitialAdManager instance = InterstitialAdManager._();
 
+  static const Duration _launchGrace = Duration(minutes: 2);
   static const Duration _cooldown = Duration(minutes: 3);
   static const int _graceTransitions = 1;
   static const int _maxPerSession = 5;
@@ -24,12 +26,14 @@ class InterstitialAdManager {
 
   InterstitialAd? _ad;
   bool _isLoading = false;
+  DateTime? _appStartedAt;
   DateTime? _lastShownAt;
   int _transitionCount = 0;
   int _shownThisSession = 0;
 
   /// Preload an interstitial so it can show instantly later.
   void preload() {
+    _appStartedAt ??= DateTime.now();
     if (!AdHelper.isInterstitialAdsSupported) return;
     if (_ad != null || _isLoading) return;
     final adUnitId = AdHelper.getInterstitialAdUnitId();
@@ -72,6 +76,12 @@ class InterstitialAdManager {
 
     _transitionCount++;
     if (_ad == null) preload();
+
+    final startedAt = _appStartedAt;
+    if (startedAt != null &&
+        DateTime.now().difference(startedAt) < _launchGrace) {
+      return;
+    }
 
     if (_transitionCount <= _graceTransitions) return;
     if (_shownThisSession >= _maxPerSession) return;
