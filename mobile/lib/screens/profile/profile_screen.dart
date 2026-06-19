@@ -135,15 +135,22 @@ void _showDeleteAccountDialog(
         ),
         TextButton(
           onPressed: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            final navigator = Navigator.of(context);
             Navigator.pop(ctx);
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
             try {
               await auth.deleteAccount();
+              if (context.mounted) navigator.pop(); // dismiss loading
             } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString())),
-                );
-              }
+              if (context.mounted) navigator.pop(); // dismiss loading
+              messenger.showSnackBar(
+                SnackBar(content: Text(e.toString())),
+              );
             }
           },
           style: TextButton.styleFrom(foregroundColor: Colors.redAccent),

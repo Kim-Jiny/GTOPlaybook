@@ -27,6 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void _showReplyDialog(Inquiry inquiry) {
     final controller = TextEditingController();
     final l = AppLocalizations.of(context)!;
+    bool isReplying = false;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -55,31 +56,51 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(l.cancel),
           ),
-          FilledButton(
-            onPressed: () async {
-              if (controller.text.trim().isEmpty) return;
-              final provider = context.read<AdminInquiryProvider>();
-              final success = await provider.replyToInquiry(
-                inquiry.id,
-                controller.text.trim(),
+          StatefulBuilder(
+            builder: (ctx, setLocalState) {
+              return FilledButton(
+                onPressed: isReplying
+                    ? null
+                    : () async {
+                        if (controller.text.trim().isEmpty) return;
+                        final provider = context.read<AdminInquiryProvider>();
+                        final messenger = ScaffoldMessenger.of(context);
+                        setLocalState(() => isReplying = true);
+                        final success = await provider.replyToInquiry(
+                          inquiry.id,
+                          controller.text.trim(),
+                        );
+                        if (!ctx.mounted) {
+                          isReplying = false;
+                          return;
+                        }
+                        if (success) {
+                          Navigator.pop(ctx);
+                          messenger.showSnackBar(
+                            SnackBar(content: Text(l.replySent)),
+                          );
+                          await provider.loadAllInquiries(status: _statusFilter);
+                          await provider.loadAdminStats();
+                        } else {
+                          setLocalState(() => isReplying = false);
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                provider.replyError ?? l.failedToSendReply,
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                child: isReplying
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l.sendReply),
               );
-              if (!ctx.mounted) return;
-              final messenger = ScaffoldMessenger.of(ctx);
-              if (success) {
-                Navigator.pop(ctx);
-                await provider.loadAllInquiries(status: _statusFilter);
-                await provider.loadAdminStats();
-              } else {
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      provider.replyError ?? l.failedToSendReply,
-                    ),
-                  ),
-                );
-              }
             },
-            child: Text(l.sendReply),
           ),
         ],
       ),

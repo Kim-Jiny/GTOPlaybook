@@ -54,7 +54,16 @@ class LoginScreen extends StatelessWidget {
                   height: 52,
                   child: ElevatedButton.icon(
                     onPressed: auth.isLoading ? null : () => auth.signInWithGoogle(),
-                    icon: const Icon(Icons.g_mobiledata, size: 28),
+                    icon: auth.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.black54,
+                            ),
+                          )
+                        : const Icon(Icons.g_mobiledata, size: 28),
                     label: Text(l.continueWithGoogle),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
@@ -72,7 +81,16 @@ class LoginScreen extends StatelessWidget {
                     height: 52,
                     child: ElevatedButton.icon(
                       onPressed: auth.isLoading ? null : () => auth.signInWithApple(),
-                      icon: const Icon(Icons.apple, size: 28),
+                      icon: auth.isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white70,
+                              ),
+                            )
+                          : const Icon(Icons.apple, size: 28),
                       label: Text(l.continueWithApple),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.black,
@@ -83,10 +101,6 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                ],
-                if (auth.isLoading) ...[
-                  const SizedBox(height: 24),
-                  const CircularProgressIndicator(),
                 ],
               ],
             ),

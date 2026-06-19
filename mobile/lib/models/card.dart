@@ -49,6 +49,22 @@ class PlayingCard {
 
   bool get isRed => suit == 'h' || suit == 'd';
 
+  /// Spoken suit name for accessibility (screen readers).
+  String get suitName {
+    switch (suit) {
+      case 'h':
+        return 'hearts';
+      case 'd':
+        return 'diamonds';
+      case 'c':
+        return 'clubs';
+      case 's':
+        return 'spades';
+      default:
+        return suit;
+    }
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

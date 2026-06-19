@@ -974,6 +974,12 @@ abstract class AppLocalizations {
   /// **'Send Reply'**
   String get sendReply;
 
+  /// No description provided for @replySent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply sent'**
+  String get replySent;
+
   /// No description provided for @potCalculator.
   ///
   /// In en, this message translates to:

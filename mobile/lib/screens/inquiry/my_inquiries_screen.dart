@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/inquiry.dart';
 import '../../providers/inquiry_provider.dart';
@@ -137,8 +138,10 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
                           title: Text(inq.title,
                               style: const TextStyle(color: Colors.white)),
                           subtitle: Text(
-                            inq.createdAt.toLocal().toString().substring(0, 10),
-                            style: const TextStyle(color: Colors.white38),
+                            DateFormat.yMMMd(
+                              Localizations.localeOf(context).toString(),
+                            ).format(inq.createdAt.toLocal()),
+                            style: const TextStyle(color: Colors.white54),
                           ),
                           trailing: _StatusBadge(
                               status: inq.status, label: inq.statusLabel(l)),

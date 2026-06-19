@@ -13,7 +13,10 @@ class PlayingCardWidget extends StatelessWidget {
     final w = 44.0 * size;
     final h = 62.0 * size;
 
-    return Container(
+    return Semantics(
+      label: '${card.rank} of ${card.suitName}',
+      image: true,
+      child: Container(
       width: w,
       height: h,
       decoration: BoxDecoration(
@@ -49,6 +52,7 @@ class PlayingCardWidget extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 }
@@ -59,19 +63,23 @@ class CardBackWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 44.0 * size,
-      height: 62.0 * size,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1565C0),
-        borderRadius: BorderRadius.circular(6 * size),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.casino,
-          color: Colors.white30,
-          size: 20 * size,
+    return Semantics(
+      label: 'Hidden card',
+      image: true,
+      child: Container(
+        width: 44.0 * size,
+        height: 62.0 * size,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1565C0),
+          borderRadius: BorderRadius.circular(6 * size),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Center(
+          child: Icon(
+            Icons.casino,
+            color: Colors.white30,
+            size: 20 * size,
+          ),
         ),
       ),
     );

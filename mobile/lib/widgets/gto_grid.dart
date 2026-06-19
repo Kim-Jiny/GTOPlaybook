@@ -106,7 +106,12 @@ class GtoGrid extends StatelessWidget {
                       ...List.generate(13, (col) {
                         final key = '$row,$col';
                         final range = grid[key];
-                        return GestureDetector(
+                        final handLabel = range?.hand ?? _defaultLabel(row, col);
+                        return Semantics(
+                          button: range != null,
+                          selected: range != null && selectedHand == range.hand,
+                          label: handLabel,
+                          child: GestureDetector(
                           onTap: range != null ? () => onCellTap?.call(range) : null,
                           child: Container(
                             width: cellSize,
@@ -134,7 +139,7 @@ class GtoGrid extends StatelessWidget {
                                   ),
                                 Center(
                                   child: Text(
-                                    range?.hand ?? _defaultLabel(row, col),
+                                    handLabel,
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: cellSize * 0.3,
@@ -170,6 +175,7 @@ class GtoGrid extends StatelessWidget {
                               ],
                             ),
                           ),
+                        ),
                         );
                       }),
                     ],

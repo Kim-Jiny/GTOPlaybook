@@ -497,6 +497,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get sendReply => '답변 보내기';
 
   @override
+  String get replySent => '답변을 보냈습니다';
+
+  @override
   String get potCalculator => '팟';
 
   @override

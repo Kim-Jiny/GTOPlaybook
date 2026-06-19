@@ -504,6 +504,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sendReply => 'Send Reply';
 
   @override
+  String get replySent => 'Reply sent';
+
+  @override
   String get potCalculator => 'Pot';
 
   @override
