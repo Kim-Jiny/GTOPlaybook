@@ -17,7 +17,21 @@ class GtoGrid extends StatelessWidget {
     this.detailedMode = true,
   });
 
-  static const _ranks = ['A', 'K', 'Q', 'J', 'T', '9', '8', '7', '6', '5', '4', '3', '2'];
+  static const _ranks = [
+    'A',
+    'K',
+    'Q',
+    'J',
+    'T',
+    '9',
+    '8',
+    '7',
+    '6',
+    '5',
+    '4',
+    '3',
+    '2',
+  ];
   static const _actionPriority = {
     'allin': 0,
     '5bet': 1,
@@ -55,135 +69,164 @@ class GtoGrid extends StatelessWidget {
       ),
       child: AspectRatio(
         aspectRatio: 1,
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final axisSize = constraints.maxWidth * 0.055;
-            final cellSize = (constraints.maxWidth - axisSize) / 13;
+        child: ClipRect(
+          child: InteractiveViewer(
+            panEnabled: true,
+            minScale: 1.0,
+            maxScale: 4.0,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final axisSize = constraints.maxWidth * 0.055;
+                final cellSize = (constraints.maxWidth - axisSize) / 13;
 
-            return Column(
-              children: [
-                SizedBox(
-                  height: axisSize,
-                  child: Row(
-                    children: [
-                      SizedBox(width: axisSize),
-                      ...List.generate(
-                        13,
-                        (index) => SizedBox(
-                          width: cellSize,
-                          child: Center(
-                            child: Text(
-                              _ranks[index],
-                              style: TextStyle(
-                                color: Colors.white38,
-                                fontSize: axisSize * 0.42,
-                                fontWeight: FontWeight.w700,
+                return Column(
+                  children: [
+                    SizedBox(
+                      height: axisSize,
+                      child: Row(
+                        children: [
+                          SizedBox(width: axisSize),
+                          ...List.generate(
+                            13,
+                            (index) => SizedBox(
+                              width: cellSize,
+                              child: Center(
+                                child: Text(
+                                  _ranks[index],
+                                  style: TextStyle(
+                                    color: Colors.white38,
+                                    fontSize: axisSize * 0.42,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-                ...List.generate(13, (row) {
-                  return Row(
-                    children: [
-                      SizedBox(
-                        width: axisSize,
-                        height: cellSize,
-                        child: Center(
-                          child: Text(
-                            _ranks[row],
-                            style: TextStyle(
-                              color: Colors.white38,
-                              fontSize: axisSize * 0.42,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      ...List.generate(13, (col) {
-                        final key = '$row,$col';
-                        final range = grid[key];
-                        final handLabel = range?.hand ?? _defaultLabel(row, col);
-                        return Semantics(
-                          button: range != null,
-                          selected: range != null && selectedHand == range.hand,
-                          label: handLabel,
-                          child: GestureDetector(
-                          onTap: range != null ? () => onCellTap?.call(range) : null,
-                          child: Container(
-                            width: cellSize,
+                    ),
+                    ...List.generate(13, (row) {
+                      return Row(
+                        children: [
+                          SizedBox(
+                            width: axisSize,
                             height: cellSize,
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade900,
-                              border: Border.all(color: Colors.black26, width: 0.5),
-                            ),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                _CellBackground(
-                                  range: range,
-                                  colorMap: colorMap,
-                                  detailedMode: detailedMode,
+                            child: Center(
+                              child: Text(
+                                _ranks[row],
+                                style: TextStyle(
+                                  color: Colors.white38,
+                                  fontSize: axisSize * 0.42,
+                                  fontWeight: FontWeight.w700,
                                 ),
-                                if (range != null && selectedHand == range.hand)
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.white,
-                                        width: cellSize > 32 ? 2 : 1.2,
-                                      ),
-                                    ),
-                                  ),
-                                Center(
-                                  child: Text(
-                                    handLabel,
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: cellSize * 0.3,
-                                      fontWeight: FontWeight.w600,
-                                      shadows: const [
-                                        Shadow(
-                                          blurRadius: 4,
-                                          color: Colors.black87,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                if (range != null && cellSize >= 28)
-                                  Positioned(
-                                    left: 2,
-                                    right: 2,
-                                    bottom: 2,
-                                    child: Text(
-                                      detailedMode
-                                          ? _summaryLabel(range)
-                                          : _primaryActionAbbreviation(range),
-                                      textAlign: TextAlign.center,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.fade,
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.88),
-                                        fontSize: cellSize * (detailedMode ? 0.14 : 0.16),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                        );
-                      }),
-                    ],
-                  );
-                }),
-              ],
-            );
-          },
+                          ...List.generate(13, (col) {
+                            final key = '$row,$col';
+                            final range = grid[key];
+                            final handLabel =
+                                range?.hand ?? _defaultLabel(row, col);
+                            return Semantics(
+                              button: range != null,
+                              selected:
+                                  range != null && selectedHand == range.hand,
+                              label: handLabel,
+                              child: GestureDetector(
+                                onTap: range != null
+                                    ? () => onCellTap?.call(range)
+                                    : null,
+                                child: Container(
+                                  width: cellSize,
+                                  height: cellSize,
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade900,
+                                    border: Border.all(
+                                      color: Colors.black26,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      _CellBackground(
+                                        range: range,
+                                        colorMap: colorMap,
+                                        detailedMode: detailedMode,
+                                      ),
+                                      if (range != null &&
+                                          selectedHand == range.hand)
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            border: Border.all(
+                                              color: Colors.white,
+                                              width: cellSize > 32 ? 2 : 1.2,
+                                            ),
+                                          ),
+                                        ),
+                                      Center(
+                                        child: Text(
+                                          handLabel,
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: cellSize * 0.34,
+                                            fontWeight: FontWeight.w700,
+                                            shadows: const [
+                                              Shadow(
+                                                blurRadius: 4,
+                                                color: Colors.black87,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      if (range != null && cellSize >= 20)
+                                        Positioned(
+                                          left: 1,
+                                          right: 1,
+                                          bottom: 1,
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            child: Text(
+                                              detailedMode
+                                                  ? _summaryLabel(range)
+                                                  : _primaryActionAbbreviation(
+                                                      range,
+                                                    ),
+                                              textAlign: TextAlign.center,
+                                              maxLines: 1,
+                                              style: TextStyle(
+                                                color: Colors.white.withValues(
+                                                  alpha: 0.92,
+                                                ),
+                                                fontSize:
+                                                    cellSize *
+                                                    (detailedMode ? 0.2 : 0.24),
+                                                fontWeight: FontWeight.w700,
+                                                shadows: const [
+                                                  Shadow(
+                                                    blurRadius: 3,
+                                                    color: Colors.black87,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    }),
+                  ],
+                );
+              },
+            ),
+          ),
         ),
       ),
     );
@@ -192,8 +235,11 @@ class GtoGrid extends StatelessWidget {
   String _summaryLabel(HandRange range) {
     final freqs = range.frequencies;
     if (freqs.isEmpty) {
-      final primaryFreq = [range.raiseFreq, range.callFreq, range.foldFreq]
-          .reduce((a, b) => a > b ? a : b);
+      final primaryFreq = [
+        range.raiseFreq,
+        range.callFreq,
+        range.foldFreq,
+      ].reduce((a, b) => a > b ? a : b);
       return '${(primaryFreq * 100).round()}%';
     }
 
@@ -293,9 +339,7 @@ class _CellBackground extends StatelessWidget {
       if (range.foldFreq > 0) freqs['fold'] = range.foldFreq;
     }
 
-    final ordered = freqs.entries
-        .where((entry) => entry.value > 0)
-        .toList()
+    final ordered = freqs.entries.where((entry) => entry.value > 0).toList()
       ..sort((a, b) {
         final pa = GtoGrid._actionPriority[a.key] ?? 99;
         final pb = GtoGrid._actionPriority[b.key] ?? 99;
@@ -347,8 +391,5 @@ class _ColorSegment {
   final Color color;
   final int flex;
 
-  const _ColorSegment({
-    required this.color,
-    required this.flex,
-  });
+  const _ColorSegment({required this.color, required this.flex});
 }
