@@ -122,6 +122,11 @@
   "spot": "Spot",
 
   "noChartsAvailable": "No charts available",
+  "stackLabel": "Stack",
+  "noChartForStack": "No chart for {stack}bb at this spot",
+  "@noChartForStack": {
+    "placeholders": { "stack": { "type": "int" } }
+  },
 
   "viewMode": "View Mode",
   "simple": "Simple",

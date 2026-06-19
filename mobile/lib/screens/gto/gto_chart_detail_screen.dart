@@ -21,6 +21,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
   GtoChart? _chart;
   String? _error;
   bool _isLoading = true;
+  bool _switchingTier = false;
 
   @override
   void initState() {
@@ -50,6 +51,37 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _onTierSelected(int tier) async {
+    final chart = _chart;
+    if (chart == null || tier == chart.stackDepth || _switchingTier) return;
+
+    final l = AppLocalizations.of(context)!;
+    final messenger = ScaffoldMessenger.of(context);
+    final provider = context.read<GtoProvider>();
+    setState(() => _switchingTier = true);
+
+    try {
+      final next = await provider.fetchChartForTier(chart, tier);
+      if (!mounted) return;
+      if (next == null) {
+        messenger.showSnackBar(
+          SnackBar(content: Text(l.noChartForStack(tier))),
+        );
+        setState(() => _switchingTier = false);
+        return;
+      }
+      setState(() {
+        _chart = next;
+        _selectedRange = null;
+        _switchingTier = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(e.toString())));
+      setState(() => _switchingTier = false);
     }
   }
 
@@ -93,7 +125,13 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _ChartSummaryCard(chart: chart),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
+                  _StackTierSelector(
+                    current: chart.stackDepth,
+                    switching: _switchingTier,
+                    onSelected: _onTierSelected,
+                  ),
+                  const SizedBox(height: 12),
                   _DisplayModeToggle(
                     detailedMode: _detailedMode,
                     onChanged: (value) {
@@ -527,6 +565,63 @@ class _ChartSummaryCard extends StatelessWidget {
       return '${chart.position} ${chart.situation} vs ${chart.vsPosition}';
     }
     return '${chart.position} ${chart.situation}';
+  }
+}
+
+class _StackTierSelector extends StatelessWidget {
+  final int current;
+  final bool switching;
+  final ValueChanged<int> onSelected;
+
+  const _StackTierSelector({
+    required this.current,
+    required this.switching,
+    required this.onSelected,
+  });
+
+  static const _tiers = [7, 15, 25, 40, 60, 100];
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+
+    return Row(
+      children: [
+        Text(
+          l.stackLabel,
+          style: const TextStyle(fontSize: 13, color: Colors.white70),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final t in _tiers) ...[
+                  ChoiceChip(
+                    label: Text('${t}bb'),
+                    selected: t == current,
+                    onSelected: switching ? null : (_) => onSelected(t),
+                    visualDensity: VisualDensity.compact,
+                    labelStyle: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+              ],
+            ),
+          ),
+        ),
+        if (switching)
+          const Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+      ],
+    );
   }
 }
 

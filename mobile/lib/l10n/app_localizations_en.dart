@@ -235,6 +235,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noChartsAvailable => 'No charts available';
 
   @override
+  String get stackLabel => 'Stack';
+
+  @override
+  String noChartForStack(int stack) {
+    return 'No chart for ${stack}bb at this spot';
+  }
+
+  @override
   String get viewMode => 'View Mode';
 
   @override

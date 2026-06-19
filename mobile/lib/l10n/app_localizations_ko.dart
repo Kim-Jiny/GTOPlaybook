@@ -230,6 +230,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get noChartsAvailable => '차트가 없습니다';
 
   @override
+  String get stackLabel => '스택';
+
+  @override
+  String noChartForStack(int stack) {
+    return '이 상황의 ${stack}bb 차트가 없습니다';
+  }
+
+  @override
   String get viewMode => '보기 모드';
 
   @override

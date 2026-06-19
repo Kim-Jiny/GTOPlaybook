@@ -77,6 +77,8 @@
   "spot": "스팟",
 
   "noChartsAvailable": "차트가 없습니다",
+  "stackLabel": "스택",
+  "noChartForStack": "이 상황의 {stack}bb 차트가 없습니다",
 
   "viewMode": "보기 모드",
   "simple": "심플",

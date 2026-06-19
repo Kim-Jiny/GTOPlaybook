@@ -500,6 +500,18 @@ abstract class AppLocalizations {
   /// **'No charts available'**
   String get noChartsAvailable;
 
+  /// No description provided for @stackLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stack'**
+  String get stackLabel;
+
+  /// No description provided for @noChartForStack.
+  ///
+  /// In en, this message translates to:
+  /// **'No chart for {stack}bb at this spot'**
+  String noChartForStack(int stack);
+
   /// No description provided for @viewMode.
   ///
   /// In en, this message translates to:

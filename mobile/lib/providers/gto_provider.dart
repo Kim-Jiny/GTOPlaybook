@@ -170,4 +170,29 @@ class GtoProvider extends ChangeNotifier {
     final data = await _apiService.get('/api/gto/charts/$chartId');
     return GtoChart.fromJson(data);
   }
+
+  /// Finds the sibling chart for the same spot at a different stack depth,
+  /// fully loaded with ranges. Returns null if no chart exists for that
+  /// spot at the given tier.
+  Future<GtoChart?> fetchChartForTier(GtoChart base, int tier) async {
+    final params = <String, String>{
+      'stack_depth': tier.toString(),
+      'max_players': base.maxPlayers.toString(),
+      'position': base.position,
+      'situation': base.situation,
+    };
+
+    final list = (await _apiService.get('/api/gto/charts', params: params)
+            as List)
+        .map((j) => GtoChart.fromJson(j))
+        // Exact match on nullable attributes (server filter ignores nulls).
+        .where((c) =>
+            c.vsPosition == base.vsPosition &&
+            c.callerPosition == base.callerPosition &&
+            c.flopTexture == base.flopTexture)
+        .toList();
+
+    if (list.isEmpty) return null;
+    return fetchChartDetail(list.first.id);
+  }
 }
