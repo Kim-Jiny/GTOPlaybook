@@ -87,18 +87,6 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
     }
   }
 
-  void _openZoom(GtoChart chart, HandRange initial) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => _GridZoomScreen(
-          chart: chart,
-          initialRange: initial,
-          detailedMode: _detailedMode,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final chart = _chart;
@@ -164,7 +152,6 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                     detailedMode: _detailedMode,
                     onCellTap: (range) {
                       setState(() => _selectedRange = range);
-                      _openZoom(chart, range);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -910,88 +897,4 @@ class _RankedAction {
     required this.freq,
     required this.color,
   });
-}
-
-// Fullscreen, pinch-zoomable view of the range grid. Opened on cell tap so
-// the inline grid stays light (no InteractiveViewer in the scroll path).
-class _GridZoomScreen extends StatefulWidget {
-  final GtoChart chart;
-  final HandRange? initialRange;
-  final bool detailedMode;
-
-  const _GridZoomScreen({
-    required this.chart,
-    required this.initialRange,
-    required this.detailedMode,
-  });
-
-  @override
-  State<_GridZoomScreen> createState() => _GridZoomScreenState();
-}
-
-class _GridZoomScreenState extends State<_GridZoomScreen> {
-  HandRange? _selected;
-
-  @override
-  void initState() {
-    super.initState();
-    _selected = widget.initialRange;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final chart = widget.chart;
-    final l = AppLocalizations.of(context)!;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(chart.description ?? l.gtoCharts),
-        centerTitle: true,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            _chartLegend(chart),
-            const SizedBox(height: 8),
-            Expanded(
-              child: InteractiveViewer(
-                panEnabled: true,
-                minScale: 1.0,
-                maxScale: 5.0,
-                child: Center(
-                  child: AspectRatio(
-                    aspectRatio: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: GtoGrid(
-                        ranges: chart.ranges ?? [],
-                        actionTypes: chart.actionTypes,
-                        selectedHand: _selected?.hand,
-                        detailedMode: widget.detailedMode,
-                        onCellTap: (range) => setState(() => _selected = range),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            if (_selected != null)
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.35,
-                ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: _HandDetail(
-                    range: _selected!,
-                    actionTypes: chart.actionTypes,
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 }
