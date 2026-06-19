@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import crypto from 'crypto';
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
@@ -16,9 +17,18 @@ import adminWebRoutes from './routes/adminWeb';
 const app = express();
 const PgStore = connectPgSimple(session);
 const isProduction = process.env.NODE_ENV === 'production';
-const sessionSecret = process.env.SESSION_SECRET;
-if (!sessionSecret) {
-  throw new Error('SESSION_SECRET environment variable is required');
+// Prefer the configured secret. If it's missing, fall back to a random
+// ephemeral secret so the server still boots — but never to a hardcoded
+// value. The trade-off: admin web sessions reset whenever the process
+// restarts, so SESSION_SECRET should always be set in production.
+const sessionSecret =
+  process.env.SESSION_SECRET ?? crypto.randomBytes(32).toString('hex');
+if (!process.env.SESSION_SECRET) {
+  console.warn(
+    '[WARN] SESSION_SECRET is not set — using a random ephemeral secret. ' +
+      'Admin sessions will be invalidated on every restart. ' +
+      'Set SESSION_SECRET in production.',
+  );
 }
 const allowedOrigins = (process.env.CORS_ORIGIN ?? '')
   .split(',')
