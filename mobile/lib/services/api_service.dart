@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 
 class ApiService {
+  static const Duration _timeout = Duration(seconds: 30);
+
   String? _token;
 
   void setToken(String token) {
@@ -21,23 +23,25 @@ class ApiService {
   Future<dynamic> get(String path, {Map<String, String>? params}) async {
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path')
         .replace(queryParameters: params);
-    final response = await http.get(uri, headers: _headers);
+    final response = await http.get(uri, headers: _headers).timeout(_timeout);
     return _handleResponse(response);
   }
 
   Future<dynamic> post(String path, {Map<String, dynamic>? body}) async {
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: body != null ? jsonEncode(body) : null,
-    );
+    final response = await http
+        .post(
+          uri,
+          headers: _headers,
+          body: body != null ? jsonEncode(body) : null,
+        )
+        .timeout(_timeout);
     return _handleResponse(response);
   }
 
   Future<dynamic> delete(String path) async {
     final uri = Uri.parse('${AppConfig.apiBaseUrl}$path');
-    final response = await http.delete(uri, headers: _headers);
+    final response = await http.delete(uri, headers: _headers).timeout(_timeout);
     return _handleResponse(response);
   }
 

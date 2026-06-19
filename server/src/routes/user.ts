@@ -55,11 +55,12 @@ router.delete('/me', requireAuth, async (req: AuthRequest, res) => {
   try {
     const uid = req.uid!;
 
-    // Delete from database (cascades to inquiries, etc.)
-    await pool.query('DELETE FROM users WHERE id = $1', [uid]);
-
-    // Delete from Firebase Auth
+    // Delete from Firebase Auth first. If this fails, the DB row stays intact
+    // so the account is not left in a half-deleted state.
     await firebaseApp.auth().deleteUser(uid);
+
+    // Then delete from database (cascades to inquiries, etc.)
+    await pool.query('DELETE FROM users WHERE id = $1', [uid]);
 
     res.json({ success: true });
   } catch (err) {

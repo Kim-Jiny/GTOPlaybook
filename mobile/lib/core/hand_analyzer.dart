@@ -47,6 +47,9 @@ class HandAnalyzer {
 
   static int _category(int evalScore) => evalScore ~/ 100000000;
 
+  // Equities within this margin are treated as a split (tie).
+  static const double _tieEpsilon = 0.001;
+
   static Future<HandAnalysisResult> analyze({
     required List<PlayingCard> heroCards,
     required List<PlayingCard> board,
@@ -135,7 +138,7 @@ class HandAnalyzer {
               final cat = _category(bestVillainBoard);
               beatingByCategory.putIfAbsent(cat, () => []);
               beatingByCategory[cat]!.add(villainCards);
-            } else if ((villainEquity - heroEquity).abs() < 0.001) {
+            } else if ((villainEquity - heroEquity).abs() < _tieEpsilon) {
               ties++;
             } else {
               wins++;
@@ -145,8 +148,9 @@ class HandAnalyzer {
       }
     } else {
       // Flop: Monte Carlo with equal samples per villain combo.
-      final rng = Random(42);
-      const simsPerCombo = 24;
+      // No fixed seed so successive analyses sample different runouts.
+      final rng = Random();
+      const simsPerCombo = 48;
       final villainCombos = <List<PlayingCard>>[];
       for (int i = 0; i < remainingDeck.length - 1; i++) {
         for (int j = i + 1; j < remainingDeck.length; j++) {
@@ -192,7 +196,7 @@ class HandAnalyzer {
             beatingByCategory.putIfAbsent(bestCat, () => []);
             beatingByCategory[bestCat]!.add(villainCards);
           }
-        } else if ((villainEq - heroEq).abs() < 0.01) {
+        } else if ((villainEq - heroEq).abs() < _tieEpsilon) {
           ties++;
         } else {
           wins++;
