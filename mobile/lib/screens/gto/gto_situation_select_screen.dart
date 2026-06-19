@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import '../../models/position_situations.dart';
 import '../../services/ad_helper.dart';
+import '../../services/interstitial_ad_manager.dart';
 import '../../widgets/banner_ad_widget.dart';
 import 'gto_chart_detail_screen.dart';
 
@@ -209,6 +210,7 @@ class _ChartTile extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
+          InterstitialAdManager.instance.maybeShowOnTransition();
           Navigator.push(
             context,
             MaterialPageRoute(

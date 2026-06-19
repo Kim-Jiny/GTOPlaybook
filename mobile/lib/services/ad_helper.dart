@@ -13,6 +13,8 @@ enum AdPlacement {
 class AdHelper {
   static bool get isBannerAdsSupported => PlatformSupport.isAdsSupported;
 
+  static bool get isInterstitialAdsSupported => PlatformSupport.isAdsSupported;
+
   static String? getBannerAdUnitId(AdPlacement placement) {
     if (!isBannerAdsSupported) {
       return null;
@@ -22,6 +24,21 @@ class AdHelper {
     }
     return _androidBannerIds[placement];
   }
+
+  /// Interstitial used for chart-tab page transitions.
+  static String? getInterstitialAdUnitId() {
+    if (!isInterstitialAdsSupported) {
+      return null;
+    }
+    return PlatformSupport.isAppleSignInSupported
+        ? _iosTransitionInterstitialId
+        : _androidTransitionInterstitialId;
+  }
+
+  static const _iosTransitionInterstitialId =
+      'ca-app-pub-2707874353926722/1894641955';
+  static const _androidTransitionInterstitialId =
+      'ca-app-pub-2707874353926722/1800218706';
 
   static const _iosBannerIds = {
     AdPlacement.main: 'ca-app-pub-2707874353926722/7401612013',

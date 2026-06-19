@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/position_situations.dart';
 import '../../services/ad_helper.dart';
+import '../../services/interstitial_ad_manager.dart';
 import '../../widgets/banner_ad_widget.dart';
 import 'gto_situation_select_screen.dart';
 
@@ -211,14 +212,17 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
             chartCount: chartCount,
             categories: categories,
             onTap: hasSituations
-                ? () => Navigator.push(
+                ? () {
+                    InterstitialAdManager.instance.maybeShowOnTransition();
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (_) => GtoSituationSelectScreen(
                           positionSituations: treeMap[pos]!,
                         ),
                       ),
-                    )
+                    );
+                  }
                 : null,
           );
         }),

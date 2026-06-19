@@ -3,6 +3,7 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
 import '../../models/gto_chart.dart';
+import '../../services/interstitial_ad_manager.dart';
 import 'gto_chart_detail_screen.dart';
 
 class GtoChartListScreen extends StatefulWidget {
@@ -154,6 +155,7 @@ class _ChartCard extends StatelessWidget {
         ),
         trailing: const Icon(Icons.chevron_right, color: Colors.white54),
         onTap: () {
+          InterstitialAdManager.instance.maybeShowOnTransition();
           Navigator.push(
             context,
             MaterialPageRoute(

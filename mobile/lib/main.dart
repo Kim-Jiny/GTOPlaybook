@@ -5,6 +5,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:app_tracking_transparency/app_tracking_transparency.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import 'app.dart';
+import 'services/interstitial_ad_manager.dart';
 import 'config/platform_support.dart';
 import 'firebase_options.dart';
 
@@ -24,6 +25,7 @@ void main() async {
 
   if (PlatformSupport.isAdsSupported) {
     await MobileAds.instance.initialize();
+    InterstitialAdManager.instance.preload();
   }
 
   if (PlatformSupport.isTrackingTransparencySupported) {
