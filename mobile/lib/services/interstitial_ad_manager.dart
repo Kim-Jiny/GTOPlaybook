@@ -10,7 +10,8 @@ import 'ad_helper.dart';
 /// - 35% chance per eligible transition
 /// - at most one ad every [_cooldown]
 /// - the first [_graceTransitions] transition(s) are skipped (let users settle)
-/// - at most [_maxPerSession] ads per app session
+/// - at most [_maxPerSession] ads, then a [_sessionCapCooldown] pause before
+///   the quota refreshes
 /// - always preloaded; if not ready it is skipped silently (never blocks nav)
 class InterstitialAdManager {
   InterstitialAdManager._();
@@ -18,8 +19,9 @@ class InterstitialAdManager {
 
   static const Duration _launchGrace = Duration(minutes: 2);
   static const Duration _cooldown = Duration(minutes: 3);
+  static const Duration _sessionCapCooldown = Duration(hours: 2);
   static const int _graceTransitions = 1;
-  static const int _maxPerSession = 5;
+  static const int _maxPerSession = 8;
   static const double _probability = 0.35;
 
   final Random _random = Random();
@@ -84,9 +86,21 @@ class InterstitialAdManager {
     }
 
     if (_transitionCount <= _graceTransitions) return;
-    if (_shownThisSession >= _maxPerSession) return;
 
     final last = _lastShownAt;
+
+    // Per-session cap with refresh: after _maxPerSession ads, pause for
+    // _sessionCapCooldown rather than blocking until the app process dies
+    // (mobile apps are usually backgrounded, not killed, so the counter would
+    // otherwise never reset). Once that pause elapses, the quota resets.
+    if (_shownThisSession >= _maxPerSession) {
+      if (last == null ||
+          DateTime.now().difference(last) < _sessionCapCooldown) {
+        return;
+      }
+      _shownThisSession = 0;
+    }
+
     if (last != null && DateTime.now().difference(last) < _cooldown) return;
 
     if (_random.nextDouble() >= _probability) return;

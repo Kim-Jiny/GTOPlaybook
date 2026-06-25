@@ -20,22 +20,42 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   // AdWidget from the tree so its WebView stops drawing — otherwise the
   // AdMob SDK keeps invalidating it every frame and janks the whole app.
   bool _visible = false;
+  // Guards against re-requesting when dependencies (e.g. MediaQuery) change.
+  bool _adRequested = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadAd();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Adaptive banner sizing needs the screen width, so load here (where
+    // MediaQuery is available) rather than in initState.
+    if (!_adRequested) {
+      _adRequested = true;
+      _loadAd();
+    }
   }
 
-  void _loadAd() {
+  Future<void> _loadAd() async {
     final adUnitId = AdHelper.getBannerAdUnitId(widget.placement);
     if (adUnitId == null) {
       return;
     }
 
+    // Anchored adaptive banner: full screen width, height optimized per device.
+    // Falls back to the fixed 320x50 banner if a size can't be resolved.
+    final width = MediaQuery.of(context).size.width.truncate();
+    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
+          Orientation.portrait,
+          width,
+        ) ??
+        AdSize.banner;
+
+    if (!mounted) {
+      return;
+    }
+
     _bannerAd = BannerAd(
       adUnitId: adUnitId,
-      size: AdSize.banner,
+      size: size,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {
@@ -44,6 +64,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
           }
         },
         onAdFailedToLoad: (ad, error) {
+          debugPrint('Banner[${widget.placement}] FAILED: $error');
           ad.dispose();
         },
       ),
