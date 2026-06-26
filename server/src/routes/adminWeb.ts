@@ -1,11 +1,23 @@
 import { Router, Request, Response } from 'express';
+import express from 'express';
 import path from 'path';
 import bcrypt from 'bcrypt';
 import pool from '../config/db';
 import {
   getAdminInquiries,
   getAdminStats,
+  getUsers,
+  getUserDetail,
+  getUserInquiries,
+  setUserAdmin,
+  deleteUser,
+  getUsersForExport,
   replyToInquiry,
+  updateInquiryReply,
+  deleteInquiryReply,
+  updateInquiryStatus,
+  getInquiriesForExport,
+  isValidInquiryStatus,
 } from '../services/adminService';
 
 const router = Router();
@@ -20,16 +32,29 @@ declare module 'express-session' {
 function requireAdminSession(req: Request, res: Response, next: () => void) {
   if (req.session.adminId) {
     next();
+  } else if (req.path.startsWith('/api/')) {
+    res.status(401).json({ error: 'Unauthorized' });
   } else {
     res.redirect('/admin/login');
   }
 }
 
-const viewsDir = path.join(__dirname, '..', 'views');
+const publicDir = path.join(__dirname, '..', 'public', 'admin');
+
+// Express types route params as string | string[]; normalize to a single string.
+function paramId(req: Request): string {
+  const id = req.params.id;
+  return Array.isArray(id) ? id[0] : id;
+}
+
+// Static assets (css/js) — non-sensitive, no session required.
+router.use('/static', express.static(publicDir));
+
+/* ────────────────────────── Auth ────────────────────────── */
 
 // GET /admin/login
 router.get('/login', (_req: Request, res: Response) => {
-  res.sendFile(path.join(viewsDir, 'login.html'));
+  res.sendFile(path.join(publicDir, 'login.html'));
 });
 
 // POST /admin/login
@@ -69,24 +94,34 @@ router.post('/logout', (req: Request, res: Response) => {
   });
 });
 
-// GET /admin — dashboard
+// GET /admin — dashboard shell
 router.get('/', requireAdminSession, (_req: Request, res: Response) => {
-  res.sendFile(path.join(viewsDir, 'dashboard.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
+
+// GET /admin/api/me — current admin session info
+router.get('/api/me', requireAdminSession, (req: Request, res: Response) => {
+  res.json({ username: req.session.adminUser });
+});
+
+/* ────────────────────────── Stats ────────────────────────── */
 
 // GET /admin/api/stats
 router.get('/api/stats', requireAdminSession, async (_req: Request, res: Response) => {
   try {
     const stats = await getAdminStats();
-
     res.json({
       totalUsers: stats.totalUsers,
       totalInquiries: stats.totalInquiries,
       inquiryStats: stats.inquiryStats,
       dailySignups: stats.dailySignupsAsc,
       todaySignups: stats.todaySignups,
+      todayActiveUsers: stats.todayActiveUsers,
       weeklyActiveUsers: stats.weeklyActiveUsers,
       monthlyActiveUsers: stats.monthlyActiveUsers,
+      returningUsers: stats.returningUsers,
+      responseRate: stats.responseRate,
+      avgResponseHours: stats.avgResponseHours,
     });
   } catch (err) {
     console.error('Admin stats error:', err);
@@ -94,69 +129,108 @@ router.get('/api/stats', requireAdminSession, async (_req: Request, res: Respons
   }
 });
 
-// GET /admin/api/users — user list with search and pagination
+/* ────────────────────────── Users ────────────────────────── */
+
+// GET /admin/api/users — list with search, sort, pagination
 router.get('/api/users', requireAdminSession, async (req: Request, res: Response) => {
   try {
-    const search = (req.query.search as string) || '';
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 20;
-    const offset = (page - 1) * limit;
-
-    let whereClause = '';
-    const params: (string | number)[] = [];
-
-    if (search) {
-      whereClause = 'WHERE email ILIKE $1 OR display_name ILIKE $1 OR id ILIKE $1';
-      params.push(`%${search}%`);
-    }
-
-    const countResult = await pool.query(
-      `SELECT COUNT(*) FROM users ${whereClause}`,
-      params,
-    );
-    const total = parseInt(countResult.rows[0].count);
-
-    const dataParams = [...params, limit, offset];
-    const result = await pool.query(
-      `SELECT id, email, display_name, photo_url, is_admin,
-              created_at, last_active_at
-       FROM users ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-      dataParams,
-    );
-
-    res.json({ users: result.rows, total, page, limit });
+    const data = await getUsers({
+      search: (req.query.search as string) || '',
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 20,
+      sort: req.query.sort as string,
+      order: req.query.order as string,
+    });
+    res.json(data);
   } catch (err) {
     console.error('Admin users error:', err);
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
 
-// GET /admin/api/users/:id — user detail
+// GET /admin/api/users/export — CSV
+router.get('/api/users/export', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const rows = await getUsersForExport((req.query.search as string) || '');
+    sendCsv(res, 'users', ['id', 'email', 'display_name', 'is_admin', 'created_at', 'last_active_at'], rows);
+  } catch (err) {
+    console.error('Admin users export error:', err);
+    res.status(500).json({ error: 'Failed to export users' });
+  }
+});
+
+// GET /admin/api/users/:id — detail
 router.get('/api/users/:id', requireAdminSession, async (req: Request, res: Response) => {
   try {
-    const result = await pool.query(
-      `SELECT id, email, display_name, photo_url, is_admin,
-              created_at, last_active_at, updated_at
-       FROM users WHERE id = $1`,
-      [req.params.id],
-    );
-    if (result.rows.length === 0) {
+    const user = await getUserDetail(paramId(req));
+    if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
-    res.json(result.rows[0]);
+    res.json(user);
   } catch (err) {
     console.error('Admin user detail error:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 });
 
-// GET /admin/api/inquiries
+// GET /admin/api/users/:id/inquiries
+router.get('/api/users/:id/inquiries', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const rows = await getUserInquiries(paramId(req));
+    res.json(rows);
+  } catch (err) {
+    console.error('Admin user inquiries error:', err);
+    res.status(500).json({ error: 'Failed to fetch user inquiries' });
+  }
+});
+
+// PATCH /admin/api/users/:id/admin — grant / revoke admin
+router.patch('/api/users/:id/admin', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const { isAdmin } = req.body;
+    if (typeof isAdmin !== 'boolean') {
+      res.status(400).json({ error: 'isAdmin (boolean) is required' });
+      return;
+    }
+    const updated = await setUserAdmin(paramId(req), isAdmin);
+    if (!updated) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json(updated);
+  } catch (err) {
+    console.error('Admin set-admin error:', err);
+    res.status(500).json({ error: 'Failed to update admin status' });
+  }
+});
+
+// DELETE /admin/api/users/:id
+router.delete('/api/users/:id', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const deleted = await deleteUser(paramId(req));
+    if (!deleted) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    res.json({ ok: true, id: deleted.id });
+  } catch (err) {
+    console.error('Admin delete user error:', err);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+/* ────────────────────────── Inquiries ────────────────────────── */
+
+// GET /admin/api/inquiries — list with status filter, search, sort
 router.get('/api/inquiries', requireAdminSession, async (req: Request, res: Response) => {
   try {
-    const result = await getAdminInquiries(req.query.status as string | undefined);
+    const result = await getAdminInquiries({
+      status: req.query.status as string | undefined,
+      search: (req.query.search as string) || '',
+      sort: req.query.sort as string,
+      order: req.query.order as string,
+    });
     res.json(result);
   } catch (err) {
     console.error('Admin inquiries error:', err);
@@ -164,29 +238,131 @@ router.get('/api/inquiries', requireAdminSession, async (req: Request, res: Resp
   }
 });
 
-// POST /admin/api/inquiries/:id/reply
+// GET /admin/api/inquiries/export — CSV
+router.get('/api/inquiries/export', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const rows = await getInquiriesForExport(req.query.status as string | undefined);
+    sendCsv(
+      res,
+      'inquiries',
+      ['id', 'email', 'display_name', 'title', 'content', 'status', 'admin_reply', 'created_at', 'replied_at'],
+      rows,
+    );
+  } catch (err) {
+    console.error('Admin inquiries export error:', err);
+    res.status(500).json({ error: 'Failed to export inquiries' });
+  }
+});
+
+// POST /admin/api/inquiries/:id/reply — create reply
 router.post('/api/inquiries/:id/reply', requireAdminSession, async (req: Request, res: Response) => {
   try {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { reply } = req.body;
-
-    if (!reply) {
+    if (!reply || !reply.trim()) {
       res.status(400).json({ error: 'Reply is required' });
       return;
     }
-
-    const result = await replyToInquiry(id, reply);
-
+    const result = await replyToInquiry(paramId(req), reply);
     if (!result) {
       res.status(404).json({ error: 'Inquiry not found' });
       return;
     }
-
     res.json(result);
   } catch (err) {
     console.error('Admin reply error:', err);
     res.status(500).json({ error: 'Failed to reply' });
   }
 });
+
+// PUT /admin/api/inquiries/:id/reply — edit reply
+router.put('/api/inquiries/:id/reply', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const { reply } = req.body;
+    if (!reply || !reply.trim()) {
+      res.status(400).json({ error: 'Reply is required' });
+      return;
+    }
+    const result = await updateInquiryReply(paramId(req), reply);
+    if (!result) {
+      res.status(404).json({ error: 'Inquiry not found' });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Admin edit reply error:', err);
+    res.status(500).json({ error: 'Failed to update reply' });
+  }
+});
+
+// DELETE /admin/api/inquiries/:id/reply — remove reply (reopen)
+router.delete('/api/inquiries/:id/reply', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const result = await deleteInquiryReply(paramId(req));
+    if (!result) {
+      res.status(404).json({ error: 'Inquiry not found' });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Admin delete reply error:', err);
+    res.status(500).json({ error: 'Failed to delete reply' });
+  }
+});
+
+// PATCH /admin/api/inquiries/:id/status — change status
+router.patch('/api/inquiries/:id/status', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const { status } = req.body;
+    if (!isValidInquiryStatus(status)) {
+      res.status(400).json({ error: 'Invalid status' });
+      return;
+    }
+    const result = await updateInquiryStatus(paramId(req), status);
+    if (!result) {
+      res.status(404).json({ error: 'Inquiry not found' });
+      return;
+    }
+    res.json(result);
+  } catch (err) {
+    console.error('Admin update status error:', err);
+    res.status(500).json({ error: 'Failed to update status' });
+  }
+});
+
+/* ────────────────────────── CSV helper ────────────────────────── */
+
+function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  let str: string;
+  if (value instanceof Date) {
+    str = value.toISOString();
+  } else if (typeof value === 'object') {
+    str = JSON.stringify(value);
+  } else {
+    str = String(value);
+  }
+  if (/[",\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+function sendCsv(
+  res: Response,
+  name: string,
+  columns: string[],
+  rows: Record<string, unknown>[],
+) {
+  const header = columns.join(',');
+  const body = rows
+    .map((row) => columns.map((col) => csvCell(row[col])).join(','))
+    .join('\n');
+  // Prefix BOM so Excel reads UTF-8 (Korean) correctly.
+  const csv = '﻿' + header + '\n' + body;
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${name}-${stamp}.csv"`);
+  res.send(csv);
+}
 
 export default router;
