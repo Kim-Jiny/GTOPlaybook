@@ -1,5 +1,9 @@
 import dotenv from 'dotenv';
 dotenv.config();
+// Local-dev overrides (gitignored). Lets you point at a local Postgres without
+// editing the committed .env that Docker uses. No-op in production where the
+// file is absent.
+dotenv.config({ path: '.env.local', override: true });
 
 import crypto from 'crypto';
 import express from 'express';
