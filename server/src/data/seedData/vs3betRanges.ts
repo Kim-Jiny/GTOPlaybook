@@ -3,6 +3,7 @@ import {
   handLabel, inSet,
   positionsForPlayerCount, openerClass, shallowOpenerClass,
 } from './helpers';
+import { monotoneRange } from './thresholdRange';
 import { FACING_3BET_ACTIONS, FACING_3BET_JAM_ACTIONS } from './actionColors';
 import { VS_3BET_100, Vs3betEntry, scaleCalls } from './vs3betTables';
 
@@ -170,13 +171,12 @@ function facing3betRange(
   callSet: Set<string>,
   mixedMap: false | FacingMixedMap = false,
 ) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (mixedMap && h in mixedMap && !inSet(h, fourBetSet)) return mixedMap[h];
     if (inSet(h, fourBetSet)) return { '4bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '4bet': 0, call: 1.0, fold: 0 };
     return { '4bet': 0, call: 0, fold: 1.0 };
-  };
+  }, ['4bet', 'call']);
 }
 
 // ── Opener data lookup ──
@@ -335,11 +335,7 @@ const FACING_15_DATA: Record<Facing15Key, Facing15Data> = {
 };
 
 function facing3betJamRange(jamSet: Set<string>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
-    if (inSet(h, jamSet)) return { allin: 1.0, fold: 0 };
-    return { allin: 0, fold: 1.0 };
-  };
+  return monotoneRange((h) => (inSet(h, jamSet) ? { allin: 1.0, fold: 0 } : { allin: 0, fold: 1.0 }), ['allin']);
 }
 
 // ── 40 / 60 / 100bb: explicit tables ──

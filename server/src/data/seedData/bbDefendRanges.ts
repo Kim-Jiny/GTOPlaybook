@@ -1,4 +1,5 @@
 import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, StackDepth } from './helpers';
+import { monotoneRange } from './thresholdRange';
 import { bbDefendEntry } from './bbDefendTables';
 import { BB_DEFEND_ACTIONS, BB_DEFEND_JAM_ACTIONS } from './actionColors';
 
@@ -446,23 +447,21 @@ const BB_VS_HU_CALL_15 = new Set(['AA', 'KK']);
 // ---------------------------------------------------------------------------
 
 function bbDefendRange(threeBetSet: Set<string>, callSet: Set<string>, useMixed: false | Record<string, { '3bet': number; call: number; fold: number }> = false) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (useMixed && h in useMixed && !inSet(h, threeBetSet)) return useMixed[h];
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '3bet': 0, call: 1.0, fold: 0 };
     return { '3bet': 0, call: 0, fold: 1.0 };
-  };
+  }, ['3bet', 'call']);
 }
 
 function bbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>, callSet: Set<string>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (inSet(h, jamSet)) return { '3bet': 0, allin: 1.0, call: 0, fold: 0 };
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, allin: 0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '3bet': 0, allin: 0, call: 1.0, fold: 0 };
     return { '3bet': 0, allin: 0, call: 0, fold: 1.0 };
-  };
+  }, ['allin', '3bet', 'call']);
 }
 
 // Explicit-table range for 40 / 60 / 100bb (non-HU).

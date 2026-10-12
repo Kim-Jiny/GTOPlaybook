@@ -1,6 +1,6 @@
 import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, StackDepth } from './helpers';
 import { enforceMonotone } from './rfiTables';
-import { lazyRange } from './thresholdRange';
+import { lazyRange, monotoneRange } from './thresholdRange';
 import { SB_DEFEND_ACTIONS, SB_DEFEND_JAM_ACTIONS } from './actionColors';
 
 // SB Defend (3bet or fold) vs various openers
@@ -247,12 +247,11 @@ function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {
 }
 
 function sbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (inSet(h, jamSet)) return { '3bet': 0, allin: 1.0, fold: 0 };
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, allin: 0, fold: 0 };
     return { '3bet': 0, allin: 0, fold: 1.0 };
-  };
+  }, ['allin', '3bet']);
 }
 
 // ---------------------------------------------------------------------------

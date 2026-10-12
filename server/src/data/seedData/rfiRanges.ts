@@ -1,4 +1,5 @@
 import { ChartDef, handLabel, inSet, StackDepth, MaxPlayers, rfiPositions } from './helpers';
+import { monotoneRange } from './thresholdRange';
 import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
 import { FreqTable, trimTail, UTG_FULL_100, UTG1_FULL_100, UTG_100, HJ_100, CO_100, BTN_100, SB_100 } from './rfiTables';
 
@@ -546,22 +547,20 @@ const HU_SB_60_MIXED: Record<string, number> = { 'J4s': 0.43, 'T5s': 0.43, '94s'
 // RFI ranges are authored explicitly (raise set + mixed map). No neighbour smoothing:
 // it diluted interior hands (JJ, TT, ...) with the folds around them.
 function rfiRange(raiseSet: Set<string>, mixedMap: Record<string, number>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, fold: 1 - f }; }
     if (inSet(h, raiseSet)) return { raise: 1.0, fold: 0 };
     return { raise: 0, fold: 1.0 };
-  };
+  }, ['raise']);
 }
 
 function rfiJamRange(raiseSet: Set<string>, jamSet: Set<string>, mixedMap: Record<string, number>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, allin: 0, fold: 1 - f }; }
     if (inSet(h, raiseSet)) return { raise: 1.0, allin: 0, fold: 0 };
     if (inSet(h, jamSet)) return { raise: 0, allin: 1.0, fold: 0 };
     return { raise: 0, allin: 0, fold: 1.0 };
-  };
+  }, ['allin', 'raise']);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
