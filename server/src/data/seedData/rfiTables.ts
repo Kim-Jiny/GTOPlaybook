@@ -139,6 +139,68 @@ export function monotoneTable(table: FreqTable): FreqTable {
   return out;
 }
 
+export function comboCount(hand: string): number {
+  return hand.length === 2 ? 6 : hand.endsWith('s') ? 4 : 12;
+}
+
+/** Share of all 1326 combos covered by a per-hand frequency table. */
+export function tableShare(table: FreqTable): number {
+  let total = 0;
+  for (const [h, f] of Object.entries(table)) total += f * comboCount(h);
+  return total / 1326;
+}
+
+/**
+ * Scale the `call` frequencies (bisection) until fourBet + call covers `target`
+ * of all combos. Per-hand totals are capped at 1. Shape is authored; only the
+ * overall width is fitted.
+ */
+export function fitCalls(fourBet: FreqTable, call: FreqTable, target: number): FreqTable {
+  const scaled = (k: number): FreqTable => {
+    const out: FreqTable = {};
+    for (const [h, f] of Object.entries(call)) {
+      const v = Math.min(f * k, 1 - (fourBet[h] ?? 0));
+      if (v >= 0.02) out[h] = Math.round(v * 100) / 100;
+    }
+    return out;
+  };
+  const share = (k: number) => {
+    const c = scaled(k);
+    const hands = new Set([...Object.keys(fourBet), ...Object.keys(c)]);
+    let t = 0;
+    for (const h of hands) t += ((fourBet[h] ?? 0) + (c[h] ?? 0)) * comboCount(h);
+    return t / 1326;
+  };
+  let lo = 0.2;
+  let hi = 4;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (share(mid) < target) lo = mid;
+    else hi = mid;
+  }
+  return scaled((lo + hi) / 2);
+}
+
+/** Scale only the mixed (<1) entries until the table covers `target` of all combos. */
+export function fitMixed(table: FreqTable, target: number): FreqTable {
+  const scaled = (k: number): FreqTable => {
+    const out: FreqTable = {};
+    for (const [h, f] of Object.entries(table)) {
+      const v = f >= 1 ? 1 : Math.min(f * k, 1);
+      if (v >= 0.02) out[h] = Math.round(v * 100) / 100;
+    }
+    return out;
+  };
+  let lo = 0.2;
+  let hi = 8;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (tableShare(scaled(mid)) < target) lo = mid;
+    else hi = mid;
+  }
+  return scaled((lo + hi) / 2);
+}
+
 // Parsed tables are made monotone (see bottom of file) so a typo can't leave a hole.
 function monotoneRaw(src: string): FreqTable {
   return monotoneTable(parseRange(src));

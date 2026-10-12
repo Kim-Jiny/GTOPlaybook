@@ -1,4 +1,5 @@
-import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, smoothFrequencies, StackDepth } from './helpers';
+import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, StackDepth } from './helpers';
+import { bbDefendEntry } from './bbDefendTables';
 import { BB_DEFEND_ACTIONS, BB_DEFEND_JAM_ACTIONS } from './actionColors';
 
 // BB Defend ranges vs each position's open
@@ -448,12 +449,6 @@ function bbDefendRange(threeBetSet: Set<string>, callSet: Set<string>, useMixed:
   return (row: number, col: number) => {
     const h = handLabel(row, col);
     if (useMixed && h in useMixed && !inSet(h, threeBetSet)) return useMixed[h];
-    const currentKey = inSet(h, threeBetSet) ? '3bet' : inSet(h, callSet) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '3bet', set: threeBetSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '3bet': 0, call: 1.0, fold: 0 };
     return { '3bet': 0, call: 0, fold: 1.0 };
@@ -463,17 +458,21 @@ function bbDefendRange(threeBetSet: Set<string>, callSet: Set<string>, useMixed:
 function bbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>, callSet: Set<string>) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    const currentKey = inSet(h, jamSet) ? 'allin' : inSet(h, threeBetSet) ? '3bet' : inSet(h, callSet) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '3bet', set: threeBetSet },
-      { key: 'allin', set: jamSet },
-      { key: 'call', set: callSet },
-    ], 0.88, 0.1);
-    if (smooth) return smooth;
     if (inSet(h, jamSet)) return { '3bet': 0, allin: 1.0, call: 0, fold: 0 };
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, allin: 0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '3bet': 0, allin: 0, call: 1.0, fold: 0 };
     return { '3bet': 0, allin: 0, call: 0, fold: 1.0 };
+  };
+}
+
+// Explicit-table range for 40 / 60 / 100bb (non-HU).
+function bbDefendTableRange(cls: 'ep-tight' | 'hj' | 'co' | 'btn' | 'sb', depth: 100 | 60 | 40) {
+  const entry = bbDefendEntry(cls, depth);
+  return (row: number, col: number) => {
+    const h = handLabel(row, col);
+    const threeBet = entry.threeBet[h] ?? 0;
+    const call = entry.call[h] ?? 0;
+    return { '3bet': threeBet, call, fold: Math.max(0, Math.round((1 - threeBet - call) * 100) / 100) };
   };
 }
 
@@ -627,12 +626,7 @@ export function getBbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
         ranges: bbDefendJamRange(data.threeBet, data.jam, data.call),
       });
     } else {
-      // 40, 60, 100
-      const data = depth === 40
-        ? getRangeData40(cls)
-        : depth === 60
-          ? getRangeData60(cls)
-          : getRangeData100(cls);
+      // 40, 60, 100: explicit tables
       charts.push({
         position: 'BB',
         situation: 'Defend',
@@ -642,7 +636,7 @@ export function getBbDefendCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
         maxPlayers,
         description: `BB Defend vs ${opener} open (${depth}bb)`,
         actionTypes: BB_DEFEND_ACTIONS,
-        ranges: bbDefendRange(data.threeBet, data.call, data.mixed),
+        ranges: bbDefendTableRange(cls, depth as 100 | 60 | 40),
       });
     }
   }
