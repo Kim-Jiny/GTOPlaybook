@@ -6,8 +6,8 @@ import {
   StackDepth,
   handLabel,
   positionsForPlayerCount,
-  smoothFrequencies,
 } from './helpers';
+import { lazyRange, thresholdGrid } from './thresholdRange';
 import { ISO_RAISE_ACTIONS } from './actionColors';
 
 type HeroClass = 'hj' | 'co' | 'btn' | 'sb';
@@ -192,61 +192,17 @@ function limperAdjustment(limper: LimperClass): number {
   }
 }
 
-function decideAction(
-  hand: string,
-  hero: HeroClass,
-  limper: LimperClass,
-  depth: StackDepth,
-): 'raise' | 'call' | 'fold' {
-  const features = analyzeHand(hand);
-  const base = isoScore(features) + heroAdjustment(hero) + limperAdjustment(limper);
+function isoGrid(hero: HeroClass, limper: LimperClass, depth: StackDepth) {
   const profile = ISO_PROFILES[hero][limper];
   const depthAdj = depthAdjustment(depth);
-
-  const raiseThreshold = profile.raiseThreshold + depthAdj.raise;
-  const callThreshold = profile.callThreshold + depthAdj.call;
-
-  if (base >= raiseThreshold) return 'raise';
-  if (base >= callThreshold) return 'call';
-  return 'fold';
-}
-
-function buildIsoSets(hero: HeroClass, limper: LimperClass, depth: StackDepth) {
-  const raise = new Set<string>();
-  const call = new Set<string>();
-
-  for (let row = 0; row < 13; row++) {
-    for (let col = 0; col < 13; col++) {
-      const hand = handLabel(row, col);
-      switch (decideAction(hand, hero, limper, depth)) {
-        case 'raise':
-          raise.add(hand);
-          break;
-        case 'call':
-          call.add(hand);
-          break;
-        case 'fold':
-          break;
-      }
-    }
-  }
-
-  return { raise, call };
-}
-
-function isoRange(raiseSet: Set<string>, callSet: Set<string>) {
-  return (row: number, col: number): FreqMap => {
-    const hand = handLabel(row, col);
-    const currentKey = raiseSet.has(hand) ? 'raise' : callSet.has(hand) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: 'raise', set: raiseSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
-    if (raiseSet.has(hand)) return { raise: 1, call: 0, fold: 0 };
-    if (callSet.has(hand)) return { raise: 0, call: 1, fold: 0 };
-    return { raise: 0, call: 0, fold: 1 };
-  };
+  return thresholdGrid(
+    (hand) => isoScore(analyzeHand(hand)) + heroAdjustment(hero) + limperAdjustment(limper),
+    [
+      { key: 'raise', threshold: profile.raiseThreshold + depthAdj.raise },
+      { key: 'call', threshold: profile.callThreshold + depthAdj.call },
+    ],
+    'fold',
+  );
 }
 
 export function getIsoRaiseCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
@@ -269,11 +225,8 @@ export function getIsoRaiseCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       const limperClass = positionClass(limperPosition);
       if (!limperClass || limperClass == 'sb') continue;
 
-      const { raise, call } = buildIsoSets(
-        heroClass as HeroClass,
-        limperClass as LimperClass,
-        depth,
-      );
+      const hero = heroClass as HeroClass;
+      const limper = limperClass as LimperClass;
 
       charts.push({
         position: heroPosition,
@@ -284,7 +237,7 @@ export function getIsoRaiseCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
         stackDepth: depth,
         maxPlayers,
         actionTypes: ISO_RAISE_ACTIONS,
-        ranges: isoRange(raise, call),
+        ranges: lazyRange(() => isoGrid(hero, limper, depth)),
       });
     }
   }
