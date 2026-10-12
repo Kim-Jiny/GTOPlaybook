@@ -110,6 +110,24 @@ const WHEEL = new Set(['A5s', 'A4s', 'A3s', 'A2s', 'A5o']);
 const DOMINANCE: Array<[string, string]> = [];
 for (const x of ALL_HANDS) for (const y of ALL_HANDS) if (dominates(x, y) && !WHEEL.has(y)) DOMINANCE.push([x, y]);
 
+const STRICT_DOMINANCE: Array<[string, string]> = [];
+for (const x of ALL_HANDS) for (const y of ALL_HANDS) if (dominates(x, y)) STRICT_DOMINANCE.push([x, y]);
+
+/** Like `enforceMonotone`, but with no blocker-bluff exemption (e.g. push/fold sets). */
+export function enforceMonotoneStrict(get: (h: string) => number, set: (h: string, f: number) => void): void {
+  for (let pass = 0; pass < 13; pass++) {
+    let changed = false;
+    for (const [x, y] of STRICT_DOMINANCE) {
+      const fy = get(y);
+      if (fy > get(x) + 1e-9) {
+        set(x, fy);
+        changed = true;
+      }
+    }
+    if (!changed) return;
+  }
+}
+
 /**
  * Make a per-hand frequency non-decreasing with hand strength: a hand that
  * dominates another is raised to at least the weaker hand's frequency.

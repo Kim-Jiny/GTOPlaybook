@@ -3,6 +3,7 @@ import {
   handLabel, inSet,
   positionsForPlayerCount, rfiPositions,
 } from './helpers';
+import { enforceMonotoneStrict } from './rfiTables';
 import { PUSH_FOLD_ACTIONS, CALL_SHOVE_ACTIONS } from './actionColors';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -339,18 +340,32 @@ const SB_CALL_VS_BB_7 = new Set([
 
 // ── Range builders ──
 
+// Sets are hand-typed, so close any holes (a stronger hand is never left out while
+// a weaker one is in).
+function closedSet(source: Set<string>): Set<string> {
+  const freq = new Map<string, number>();
+  for (let row = 0; row < 13; row++) for (let col = 0; col < 13; col++) {
+    const h = handLabel(row, col);
+    freq.set(h, inSet(h, source) ? 1 : 0);
+  }
+  enforceMonotoneStrict((h) => freq.get(h)!, (h, f) => freq.set(h, f));
+  return new Set([...freq].filter(([, f]) => f > 0).map(([h]) => h));
+}
+
 function pushFoldRange(pushSet: Set<string>) {
+  const closed = closedSet(pushSet);
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, pushSet)) return { allin: 1.0, fold: 0 };
+    if (inSet(h, closed)) return { allin: 1.0, fold: 0 };
     return { allin: 0, fold: 1.0 };
   };
 }
 
 function callShoveRange(callSet: Set<string>) {
+  const closed = closedSet(callSet);
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, callSet)) return { call: 1.0, fold: 0 };
+    if (inSet(h, closed)) return { call: 1.0, fold: 0 };
     return { call: 0, fold: 1.0 };
   };
 }
