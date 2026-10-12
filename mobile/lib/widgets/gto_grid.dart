@@ -219,33 +219,35 @@ class GtoGrid extends StatelessWidget {
     );
   }
 
-  String _summaryLabel(HandRange range) {
-    final freqs = range.frequencies;
-    if (freqs.isEmpty) {
-      final primaryFreq = [
-        range.raiseFreq,
-        range.callFreq,
-        range.foldFreq,
-      ].reduce((a, b) => a > b ? a : b);
-      return '${(primaryFreq * 100).round()}%';
-    }
+  Map<String, double> _freqsOf(HandRange range) {
+    if (range.frequencies.isNotEmpty) return range.frequencies;
+    return {
+      if (range.raiseFreq > 0) 'raise': range.raiseFreq,
+      if (range.callFreq > 0) 'call': range.callFreq,
+      if (range.foldFreq > 0) 'fold': range.foldFreq,
+    };
+  }
 
-    final best = freqs.entries.reduce((a, b) => a.value >= b.value ? a : b);
-    return '${(best.value * 100).round()}%';
+  /// Detailed mode: top two actions, e.g. "R60 F40". A pure hand shows "R100".
+  String _summaryLabel(HandRange range) {
+    final sorted = _freqsOf(range).entries.where((e) => e.value > 0).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    if (sorted.isEmpty) return '';
+    return sorted
+        .take(2)
+        .map((e) => '${_abbr(e.key)}${(e.value * 100).round()}')
+        .join(' ');
   }
 
   String _primaryActionAbbreviation(HandRange range) {
-    final freqs = range.frequencies.isNotEmpty
-        ? range.frequencies
-        : <String, double>{
-            if (range.raiseFreq > 0) 'raise': range.raiseFreq,
-            if (range.callFreq > 0) 'call': range.callFreq,
-            if (range.foldFreq > 0) 'fold': range.foldFreq,
-          };
+    final freqs = _freqsOf(range);
     if (freqs.isEmpty) return '';
-
     final best = freqs.entries.reduce((a, b) => a.value >= b.value ? a : b);
-    switch (best.key) {
+    return _abbr(best.key);
+  }
+
+  String _abbr(String key) {
+    switch (key) {
       case 'allin':
         return 'AI';
       case '5bet':
@@ -265,7 +267,7 @@ class GtoGrid extends StatelessWidget {
       case 'fold':
         return 'F';
       default:
-        return best.key.substring(0, 1).toUpperCase();
+        return key.substring(0, 1).toUpperCase();
     }
   }
 

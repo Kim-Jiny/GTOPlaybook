@@ -196,12 +196,16 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
 
 Widget _chartLegend(GtoChart chart) {
   if (chart.actionTypes != null && chart.actionTypes!.isNotEmpty) {
+    final shares = chart.actionShares();
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 16,
-      children: chart.actionTypes!
-          .map((at) => _LegendItem(color: at.toColor(), label: at.label))
-          .toList(),
+      runSpacing: 6,
+      children: chart.actionTypes!.map((at) {
+        final share = shares[at.key];
+        final pct = share == null ? '' : ' ${(share * 100).toStringAsFixed(1)}%';
+        return _LegendItem(color: at.toColor(), label: '${at.label}$pct');
+      }).toList(),
     );
   }
   // Fallback legacy legend
