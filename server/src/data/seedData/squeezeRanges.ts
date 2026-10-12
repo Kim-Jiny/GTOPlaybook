@@ -6,9 +6,9 @@ import {
   StackDepth,
   handLabel,
   positionsForPlayerCount,
-  smoothFrequencies,
 } from './helpers';
 import { SQUEEZE_ACTIONS } from './actionColors';
+import { enforceMonotone, parseRange, monotoneTable, tableShare, comboCount, FreqTable } from './rfiTables';
 
 type HeroClass = 'co' | 'btn' | 'sb' | 'bb';
 type OpenerClass = 'ep' | 'hj' | 'co' | 'btn' | 'sb';
@@ -296,70 +296,130 @@ function callerAdjustment(caller: CallerClass): number {
   }
 }
 
-function decideAction(
+// Half-width (in score units) of the band around a threshold where a hand mixes.
+const MIX_HALF_WIDTH = 0.35;
+
+const ramp = (score: number, threshold: number): number =>
+  Math.min(1, Math.max(0, (score - (threshold - MIX_HALF_WIDTH)) / (2 * MIX_HALF_WIDTH)));
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/**
+ * Frequencies from the hand score: 3bet ramps up around the squeeze threshold,
+ * continue (3bet + call) ramps up around the call threshold. Hands far from
+ * both thresholds are pure, so nothing leaks into unrelated hands.
+ */
+function squeezeFreqs(
   hand: string,
   hero: HeroClass,
   opener: OpenerClass,
   caller: CallerClass,
   depth: StackDepth,
-): '3bet' | 'call' | 'fold' {
-  const features = analyzeHand(hand);
-  const base = squeezeScore(features)
+): FreqMap {
+  const base = squeezeScore(analyzeHand(hand))
     + heroAdjustment(hero)
     + openerAdjustment(opener)
     + callerAdjustment(caller);
   const profile = PROFILES[hero][opener][caller];
   const depthAdj = depthAdjustment(depth);
 
-  const squeezeThreshold = profile.squeezeThreshold + depthAdj.squeeze;
-  const callThreshold = profile.callThreshold + depthAdj.call;
-
-  if (base >= squeezeThreshold) return '3bet';
-  if (base >= callThreshold) return 'call';
-  return 'fold';
+  const threeBet = ramp(base, profile.squeezeThreshold + depthAdj.squeeze);
+  const play = Math.max(threeBet, ramp(base, profile.callThreshold + depthAdj.call));
+  return {
+    '3bet': round2(threeBet),
+    call: round2(play - threeBet),
+    fold: round2(1 - play),
+  };
 }
 
-function buildSqueezeSets(
+// Authored shapes. The score model above is only used for how WIDE each spot is;
+// which hands fill that width comes from these (linear-ish value core, bluff tail).
+const THREE_BET_SHAPE = `
+  AA KK QQ AKs AKo JJ:0.8 TT:0.4 AQs:0.7 AQo:0.3 A5s:0.5 A4s:0.4 A3s:0.2 A2s:0.1
+  KQs:0.3 99:0.25 88:0.15 77:0.1 66:0.05 AJs:0.3 ATs:0.15 A9s:0.08 A8s:0.06
+  KJs:0.1 KTs:0.06 QJs:0.08 JTs:0.08 T9s:0.08 98s:0.08 87s:0.08 76s:0.1 65s:0.1 54s:0.1
+  AJo:0.08 KQo:0.1 K9s:0.05 Q9s:0.04
+`;
+const CALL_SHAPE = `
+  JJ:0.2 TT:0.6 99 88 77 66 55 44 33 22 AQs:0.3 AQo:0.5 AJs ATs A9s A8s A7s A6s A5s:0.5 A4s:0.6 A3s A2s
+  KQs KJs KTs K9s K8s:0.5 K7s:0.2 QJs QTs Q9s Q8s:0.4 JTs J9s J8s:0.3 T9s T8s T7s:0.2 98s 97s 87s 86s 76s 75s:0.6 65s 64s:0.4 54s 53s:0.3 43s:0.2
+  KQo AJo ATo:0.7 A9o:0.4 A8o:0.2 KJo QJo:0.8 KTo:0.4 QTo:0.4 JTo:0.4 T9o:0.2 98o:0.1
+`;
+
+// How much of the model's call width each hero actually flats (SB rarely does).
+const CALL_WIDTH_FACTOR: Record<HeroClass, number> = { co: 1, btn: 1, sb: 0.6, bb: 1 };
+
+function modelWidths(
   hero: HeroClass,
   opener: OpenerClass,
   caller: CallerClass,
   depth: StackDepth,
-) {
-  const squeeze = new Set<string>();
-  const call = new Set<string>();
-
+): { threeBet: number; play: number } {
+  let t = 0;
+  let p = 0;
   for (let row = 0; row < 13; row++) {
     for (let col = 0; col < 13; col++) {
       const hand = handLabel(row, col);
-      switch (decideAction(hand, hero, opener, caller, depth)) {
-        case '3bet':
-          squeeze.add(hand);
-          break;
-        case 'call':
-          call.add(hand);
-          break;
-        case 'fold':
-          break;
-      }
+      const f = squeezeFreqs(hand, hero, opener, caller, depth);
+      const n = hand.length === 2 ? 6 : hand.endsWith('s') ? 4 : 12;
+      t += f['3bet'] * n;
+      p += (1 - f.fold) * n;
     }
   }
-
-  return { squeeze, call };
+  return { threeBet: t / 1326, play: p / 1326 };
 }
 
-function squeezeRange(squeezeSet: Set<string>, callSet: Set<string>) {
-  return (row: number, col: number): FreqMap => {
-    const hand = handLabel(row, col);
-    const currentKey = squeezeSet.has(hand) ? '3bet' : callSet.has(hand) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '3bet', set: squeezeSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
-    if (squeezeSet.has(hand)) return { '3bet': 1, call: 0, fold: 0 };
-    if (callSet.has(hand)) return { '3bet': 0, call: 1, fold: 0 };
-    return { '3bet': 0, call: 0, fold: 1 };
-  };
+/**
+ * Fill a range up to `budget` (share of all combos): hands are taken in priority
+ * order (authored frequency, then model score) at full frequency; only the last
+ * hand is partial. `taken` lists frequency already used by another action.
+ */
+function fillByPriority(shape: FreqTable, budget: number, taken: FreqTable = {}): FreqTable {
+  const score = (hand: string) => squeezeScore(analyzeHand(hand));
+  const order = Object.keys(shape).sort((a, b) => shape[b] - shape[a] || score(b) - score(a));
+  const out: FreqTable = {};
+  let remaining = budget * 1326;
+  for (const hand of order) {
+    if (remaining <= 0) break;
+    const room = 1 - (taken[hand] ?? 0);
+    if (room <= 0) continue;
+    const n = comboCount(hand);
+    const f = Math.min(room, remaining / n);
+    if (f >= 0.02) out[hand] = round2(f);
+    remaining -= f * n;
+  }
+  return out;
+}
+
+/** The whole 169-hand grid for one spot: authored shapes filled to the model's widths. */
+function squeezeGrid(
+  hero: HeroClass,
+  opener: OpenerClass,
+  caller: CallerClass,
+  depth: StackDepth,
+): Map<string, FreqMap> {
+  const widths = modelWidths(hero, opener, caller, depth);
+  const callWidth = (widths.play - widths.threeBet) * CALL_WIDTH_FACTOR[hero];
+
+  const threeBet: FreqTable = monotoneTable(fillByPriority(parseRange(THREE_BET_SHAPE), widths.threeBet));
+  const call: FreqTable = fillByPriority(parseRange(CALL_SHAPE), callWidth, threeBet);
+
+  // A dominating hand must continue (3bet + call) at least as often.
+  enforceMonotone(
+    (h) => (threeBet[h] ?? 0) + (call[h] ?? 0),
+    (h, f) => { call[h] = round2(Math.min(f, 1) - (threeBet[h] ?? 0)); },
+  );
+
+  const out = new Map<string, FreqMap>();
+  for (let row = 0; row < 13; row++) {
+    for (let col = 0; col < 13; col++) {
+      const hand = handLabel(row, col);
+      const t = threeBet[hand] ?? 0;
+      const c = Math.min(call[hand] ?? 0, 1 - t);
+      out.set(hand, { '3bet': round2(t), call: round2(c), fold: round2(1 - t - c) });
+    }
+  }
+  return out;
 }
 
 export function getSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
@@ -385,12 +445,8 @@ export function getSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6):
         if (!openerClass) continue;
 
         const callerClass = classifyCaller(callerPosition);
-        const { squeeze, call } = buildSqueezeSets(
-          heroClass as HeroClass,
-          openerClass as OpenerClass,
-          callerClass,
-          depth,
-        );
+        const hero = heroClass as HeroClass;
+        const opener = openerClass as OpenerClass;
 
         charts.push({
           position: heroPosition,
@@ -402,7 +458,11 @@ export function getSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6):
           stackDepth: depth,
           maxPlayers,
           actionTypes: SQUEEZE_ACTIONS,
-          ranges: squeezeRange(squeeze, call),
+          ranges: (() => {
+            let grid: Map<string, FreqMap> | undefined;
+            return (row: number, col: number) =>
+              (grid ??= squeezeGrid(hero, opener, callerClass, depth)).get(handLabel(row, col))!;
+          })(),
         });
       }
     }
