@@ -1,5 +1,6 @@
 import { ChartDef, handLabel, inSet, StackDepth, MaxPlayers, rfiPositions } from './helpers';
 import { monotoneRange } from './thresholdRange';
+import { fillByPriority } from './squeezeRanges';
 import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
 import { FreqTable, trimTail, UTG_FULL_100, UTG1_FULL_100, UTG_100, HJ_100, CO_100, BTN_100, SB_100 } from './rfiTables';
 
@@ -593,9 +594,9 @@ function rangeDataFor(position: string, depth: StackDepth, maxPlayers: MaxPlayer
   // Determine the "range key" based on position + maxPlayers
   const key = resolveRangeKey(position, maxPlayers);
 
-  // 15bb (jam ranges) and heads-up keep their legacy sets; everything else is
-  // derived from the explicit 100bb tables.
-  if (key !== 'hu_sb' && depth !== 15) return tableRangeData(key, depth);
+  // Heads-up keeps its legacy sets; everything else is derived from the explicit
+  // 100bb tables (15bb as a jam-or-fold range filled to a target width).
+  if (key !== 'hu_sb') return depth === 15 ? jamRangeData15(key) : tableRangeData(key, depth);
 
   switch (depth) {
     case 15: return rangeData15(key);
@@ -640,6 +641,17 @@ function baseTable(key: RangeKey): FreqTable {
     case 'utg1':    return UTG1_FULL_100;
     default:    return trimTail(UTG_100, EARLY_TRIM[key] ?? 0);
   }
+}
+
+// Share of all hands jammed at 15bb, by position (jam-or-fold).
+const JAM_15_WIDTH: Partial<Record<RangeKey, number>> = {
+  utg9max: 0.08, utg1: 0.095, utg2: 0.115, utg: 0.115, hj: 0.14, co: 0.21, btn: 0.38, sb: 0.48,
+};
+
+function jamRangeData15(key: RangeKey): RangeData {
+  const filled = fillByPriority(baseTable(key), JAM_15_WIDTH[key] ?? 0.12);
+  const jam = new Set(Object.entries(filled).filter(([, f]) => f >= 0.5).map(([h]) => h));
+  return { raise: new Set<string>(), jam, mixed: {} };
 }
 
 function tableRangeData(key: RangeKey, depth: StackDepth): RangeData {
