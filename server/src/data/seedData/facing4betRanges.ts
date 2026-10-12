@@ -1,9 +1,10 @@
 import {
   ChartDef, StackDepth, MaxPlayers,
   handLabel, inSet,
-  positionsForPlayerCount, openerClass, smoothFrequencies,
+  positionsForPlayerCount, openerClass,
 } from './helpers';
 import { FACING_4BET_ACTIONS } from './actionColors';
+import { facing4betEntry } from './facing4betTables';
 
 // Facing 4bet ranges: 5bet(allin) / call / fold
 // After opening and facing a 4bet, options are very narrow
@@ -98,15 +99,20 @@ function facing4betRange(
   return (row: number, col: number) => {
     const h = handLabel(row, col);
     if (mixedMap && h in mixedMap && !inSet(h, fiveBetSet)) return mixedMap[h];
-    const currentKey = inSet(h, fiveBetSet) ? '5bet' : inSet(h, callSet) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '5bet', set: fiveBetSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
     if (inSet(h, fiveBetSet)) return { '5bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '5bet': 0, call: 1.0, fold: 0 };
     return { '5bet': 0, call: 0, fold: 1.0 };
+  };
+}
+
+// 40 / 60 / 100bb: explicit per-opener tables.
+function facing4betTableRange(opCls: OpenerCls, depth: 100 | 60 | 40) {
+  const entry = facing4betEntry(opCls, depth);
+  return (row: number, col: number) => {
+    const h = handLabel(row, col);
+    const fiveBet = entry.fiveBet[h] ?? 0;
+    const call = entry.call[h] ?? 0;
+    return { '5bet': fiveBet, call, fold: Math.max(0, Math.round((1 - fiveBet - call) * 100) / 100) };
   };
 }
 
@@ -215,23 +221,7 @@ function generateCharts(
           actionTypes: FACING_4BET_ACTIONS,
           ranges: jamOrFoldRange(jamSet),
         });
-      } else if (depth === 40) {
-        const data40 = getRangeData40(opCls, vsPos);
-        charts.push({
-          position: opener,
-          situation: 'Facing 4bet',
-          vsPosition: vsPos,
-          category: 'Facing 4bet',
-          description: `${opener} facing 4bet from ${vsPos} (${tag})`,
-          stackDepth: d,
-          maxPlayers,
-          actionTypes: FACING_4BET_ACTIONS,
-          ranges: data40.callSet
-            ? facing4betRange(data40.jamSet, data40.callSet, data40.mixed)
-            : jamOrFoldRange(data40.jamSet),
-        });
       } else {
-        const data = depth === 60 ? getRangeData60(opCls, vsPos) : getRangeData100(opCls, vsPos);
         charts.push({
           position: opener,
           situation: 'Facing 4bet',
@@ -241,7 +231,7 @@ function generateCharts(
           stackDepth: d,
           maxPlayers,
           actionTypes: FACING_4BET_ACTIONS,
-          ranges: facing4betRange(data.fiveBet, data.call, data.mixed),
+          ranges: facing4betTableRange(opCls, depth as 100 | 60 | 40),
         });
       }
     }
