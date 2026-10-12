@@ -334,13 +334,13 @@ function squeezeFreqs(
 
 // Authored shapes. The score model above is only used for how WIDE each spot is;
 // which hands fill that width comes from these (linear-ish value core, bluff tail).
-const THREE_BET_SHAPE = `
+export const THREE_BET_SHAPE = `
   AA KK QQ AKs AKo JJ:0.8 TT:0.4 AQs:0.7 AQo:0.3 A5s:0.5 A4s:0.4 A3s:0.2 A2s:0.1
   KQs:0.3 99:0.25 88:0.15 77:0.1 66:0.05 AJs:0.3 ATs:0.15 A9s:0.08 A8s:0.06
   KJs:0.1 KTs:0.06 QJs:0.08 JTs:0.08 T9s:0.08 98s:0.08 87s:0.08 76s:0.1 65s:0.1 54s:0.1
   AJo:0.08 KQo:0.1 K9s:0.05 Q9s:0.04
 `;
-const CALL_SHAPE = `
+export const CALL_SHAPE = `
   JJ:0.2 TT:0.6 99 88 77 66 55 44 33 22 AQs:0.3 AQo:0.5 AJs ATs A9s A8s A7s A6s A5s:0.5 A4s:0.6 A3s A2s
   KQs KJs KTs K9s K8s:0.5 K7s:0.2 QJs QTs Q9s Q8s:0.4 JTs J9s J8s:0.3 T9s T8s T7s:0.2 98s 97s 87s 86s 76s 75s:0.6 65s 64s:0.4 54s 53s:0.3 43s:0.2
   KQo AJo ATo:0.7 A9o:0.4 A8o:0.2 KJo QJo:0.8 KTo:0.4 QTo:0.4 JTo:0.4 T9o:0.2 98o:0.1
