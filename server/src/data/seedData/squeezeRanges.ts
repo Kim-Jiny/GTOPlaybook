@@ -8,7 +8,7 @@ import {
   positionsForPlayerCount,
 } from './helpers';
 import { SQUEEZE_ACTIONS } from './actionColors';
-import { enforceMonotone, parseRange, monotoneTable, tableShare, comboCount, FreqTable } from './rfiTables';
+import { enforceMonotone, parseRange, monotoneTable, comboCount, FreqTable } from './rfiTables';
 
 type HeroClass = 'co' | 'btn' | 'sb' | 'bb';
 type OpenerClass = 'ep' | 'hj' | 'co' | 'btn' | 'sb';

@@ -11,55 +11,6 @@ import { facing4betEntry } from './facing4betTables';
 
 // ── Range data by opener class ──
 
-// "ep-tight" facing 4bet (UTG, UTG+1, UTG+2, MP at 7+)
-const EP_TIGHT_5BET   = new Set(['AA', 'KK']);
-const EP_TIGHT_CALL   = new Set(['QQ', 'AKs']);
-const EP_TIGHT_CALL_60 = new Set(['QQ']);
-const EP_TIGHT_5BET_40 = new Set(['AA']);
-
-// HJ facing 4bet (was MP in 6-max)
-const HJ_F4B_5BET     = new Set(['AA', 'KK']);
-const HJ_F4B_CALL     = new Set(['QQ', 'AKs', 'AKo']);
-const HJ_F4B_CALL_60  = new Set(['QQ', 'AKs']);
-const HJ_F4B_5BET_40  = new Set(['AA', 'KK']);
-
-// HJ facing 4bet specifically from CO
-const HJ_F4B_VS_CO_5BET   = new Set(['AA', 'KK']);
-const HJ_F4B_VS_CO_CALL   = new Set(['QQ', 'AKs']);
-const HJ_F4B_VS_CO_CALL_60 = new Set(['AKs']);
-const HJ_F4B_VS_CO_5BET_40 = new Set(['AA']);
-
-// CO facing 4bet (general — from blinds)
-const CO_F4B_5BET     = new Set(['AA', 'KK', 'AKs']);
-const CO_F4B_CALL     = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
-const CO_F4B_CALL_60  = new Set(['QQ', 'JJ', 'AKo']);
-const CO_F4B_5BET_40  = new Set(['AA', 'KK']);
-
-// CO facing 4bet from BTN specifically
-const CO_F4B_VS_BTN_5BET   = new Set(['AA', 'KK', 'AKs']);
-const CO_F4B_VS_BTN_CALL   = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
-const CO_F4B_VS_BTN_CALL_60 = new Set(['QQ', 'JJ', 'AKo']);
-const CO_F4B_VS_BTN_5BET_40 = new Set(['AA', 'KK']);
-
-// BTN facing 4bet from SB
-const BTN_F4B_VS_SB_5BET     = new Set(['AA', 'KK', 'QQ', 'AKs']);
-const BTN_F4B_VS_SB_CALL     = new Set(['JJ', 'TT', 'AKo', 'AQs', 'AQo']);
-const BTN_F4B_VS_SB_CALL_60  = new Set(['JJ', 'TT', 'AKo', 'AQs']);
-const BTN_F4B_VS_SB_5BET_40  = new Set(['AA', 'KK', 'QQ']);
-const BTN_F4B_VS_SB_CALL_40  = new Set(['AKs']);
-
-// BTN facing 4bet from BB
-const BTN_F4B_VS_BB_5BET    = new Set(['AA', 'KK', 'AKs']);
-const BTN_F4B_VS_BB_CALL    = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
-const BTN_F4B_VS_BB_CALL_60 = new Set(['QQ', 'JJ', 'AKo']);
-const BTN_F4B_VS_BB_5BET_40 = new Set(['AA', 'KK']);
-
-// SB facing 4bet from BB
-const SB_F4B_5BET    = new Set(['AA', 'KK']);
-const SB_F4B_CALL    = new Set(['QQ', 'AKs', 'AKo']);
-const SB_F4B_CALL_60 = new Set(['QQ', 'AKs']);
-const SB_F4B_5BET_40 = new Set(['AA', 'KK']);
-
 // ── 25bb ranges — pure jam-or-fold ──
 
 const EP_TIGHT_5BET_25 = new Set(['AA', 'KK']);
@@ -72,38 +23,6 @@ const SB_F4B_5BET_25 = new Set(['AA', 'KK']);
 // ── Range builders ──
 
 type F4bMixedMap = false | Record<string, { '5bet': number; call: number; fold: number }>;
-
-// Facing 4bet has very narrow call sets (3-5 premium hands), so smoothFrequencies
-// can't produce good values for boundary hands. Keep all boundary hands in mixed map.
-const FACING_4BET_MIXED_DEFAULT: Record<string, { '5bet': number; call: number; fold: number }> = {
-  'QQ': { '5bet': 0.34, call: 0.66, fold: 0 },
-  'JJ': { '5bet': 0.12, call: 0.7, fold: 0.18 },
-  'TT': { '5bet': 0.08, call: 0.52, fold: 0.4 },
-  'AKs': { '5bet': 0.42, call: 0.58, fold: 0 },
-  'AKo': { '5bet': 0.28, call: 0.52, fold: 0.2 },
-  'AQs': { '5bet': 0.15, call: 0.45, fold: 0.4 },
-  'AQo': { '5bet': 0.06, call: 0.3, fold: 0.64 },
-};
-
-const FACING_4BET_MIXED_40: Record<string, { '5bet': number; call: number; fold: number }> = {
-  'AKs': { '5bet': 0.58, call: 0.42, fold: 0 },
-  'QQ': { '5bet': 0.18, call: 0.52, fold: 0.3 },
-  'JJ': { '5bet': 0.1, call: 0.38, fold: 0.52 },
-};
-
-function facing4betRange(
-  fiveBetSet: Set<string>,
-  callSet: Set<string>,
-  mixedMap: F4bMixedMap = false,
-) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
-    if (mixedMap && h in mixedMap && !inSet(h, fiveBetSet)) return mixedMap[h];
-    if (inSet(h, fiveBetSet)) return { '5bet': 1.0, call: 0, fold: 0 };
-    if (inSet(h, callSet)) return { '5bet': 0, call: 1.0, fold: 0 };
-    return { '5bet': 0, call: 0, fold: 1.0 };
-  };
-}
 
 // 40 / 60 / 100bb: explicit per-opener tables.
 function facing4betTableRange(opCls: OpenerCls, depth: 100 | 60 | 40) {
@@ -133,47 +52,6 @@ interface F4bData {
   fiveBet: Set<string>;
   call: Set<string>;
   mixed?: F4bMixedMap;
-}
-
-function getRangeData100(opCls: OpenerCls, vsPos?: string): F4bData {
-  // Specific matchups first
-  if (opCls === 'hj' && vsPos === 'CO') return { fiveBet: HJ_F4B_VS_CO_5BET, call: HJ_F4B_VS_CO_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'co' && vsPos === 'BTN') return { fiveBet: CO_F4B_VS_BTN_5BET, call: CO_F4B_VS_BTN_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'btn' && vsPos === 'SB') return { fiveBet: BTN_F4B_VS_SB_5BET, call: BTN_F4B_VS_SB_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'btn' && vsPos === 'BB') return { fiveBet: BTN_F4B_VS_BB_5BET, call: BTN_F4B_VS_BB_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'sb') return { fiveBet: SB_F4B_5BET, call: SB_F4B_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  // General (facing 4bet from blinds or further behind)
-  if (opCls === 'ep-tight') return { fiveBet: EP_TIGHT_5BET, call: EP_TIGHT_CALL, mixed: { 'QQ': { '5bet': 0.18, call: 0.72, fold: 0.1 }, 'AKs': { '5bet': 0.34, call: 0.66, fold: 0 } } };
-  if (opCls === 'hj') return { fiveBet: HJ_F4B_5BET, call: HJ_F4B_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'co') return { fiveBet: CO_F4B_5BET, call: CO_F4B_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'btn') return { fiveBet: BTN_F4B_VS_BB_5BET, call: BTN_F4B_VS_BB_CALL, mixed: FACING_4BET_MIXED_DEFAULT };
-  return { fiveBet: EP_TIGHT_5BET, call: EP_TIGHT_CALL, mixed: false };
-}
-
-function getRangeData60(opCls: OpenerCls, vsPos?: string): F4bData {
-  if (opCls === 'hj' && vsPos === 'CO') return { fiveBet: HJ_F4B_VS_CO_5BET, call: HJ_F4B_VS_CO_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'co' && vsPos === 'BTN') return { fiveBet: CO_F4B_VS_BTN_5BET, call: CO_F4B_VS_BTN_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'btn' && vsPos === 'SB') return { fiveBet: BTN_F4B_VS_SB_5BET, call: BTN_F4B_VS_SB_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'btn' && vsPos === 'BB') return { fiveBet: BTN_F4B_VS_BB_5BET, call: BTN_F4B_VS_BB_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'sb') return { fiveBet: SB_F4B_5BET, call: SB_F4B_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'ep-tight') return { fiveBet: EP_TIGHT_5BET, call: EP_TIGHT_CALL_60, mixed: { 'AKs': { '5bet': 0.4, call: 0.6, fold: 0 } } };
-  if (opCls === 'hj') return { fiveBet: HJ_F4B_5BET, call: HJ_F4B_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'co') return { fiveBet: CO_F4B_5BET, call: CO_F4B_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  if (opCls === 'btn') return { fiveBet: BTN_F4B_VS_BB_5BET, call: BTN_F4B_VS_BB_CALL_60, mixed: FACING_4BET_MIXED_DEFAULT };
-  return { fiveBet: EP_TIGHT_5BET, call: EP_TIGHT_CALL_60, mixed: false };
-}
-
-function getRangeData40(opCls: OpenerCls, vsPos?: string): { jamSet: Set<string>; callSet?: Set<string>; mixed?: F4bMixedMap } {
-  if (opCls === 'hj' && vsPos === 'CO') return { jamSet: HJ_F4B_VS_CO_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'co' && vsPos === 'BTN') return { jamSet: CO_F4B_VS_BTN_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'btn' && vsPos === 'SB') return { jamSet: BTN_F4B_VS_SB_5BET_40, callSet: BTN_F4B_VS_SB_CALL_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'btn' && vsPos === 'BB') return { jamSet: BTN_F4B_VS_BB_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'sb') return { jamSet: SB_F4B_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'ep-tight') return { jamSet: EP_TIGHT_5BET_40, mixed: { 'AKs': { '5bet': 0.46, call: 0.18, fold: 0.36 } } };
-  if (opCls === 'hj') return { jamSet: HJ_F4B_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'co') return { jamSet: CO_F4B_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  if (opCls === 'btn') return { jamSet: BTN_F4B_VS_BB_5BET_40, mixed: FACING_4BET_MIXED_40 };
-  return { jamSet: EP_TIGHT_5BET_40, mixed: false };
 }
 
 function getRangeData25(opCls: OpenerCls, vsPos?: string): Set<string> {

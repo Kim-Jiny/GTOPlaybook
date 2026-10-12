@@ -1,11 +1,4 @@
-import {
-  ChartDef,
-  FreqMap,
-  MaxPlayers,
-  RANKS,
-  StackDepth,
-  handLabel,
-} from './helpers';
+import { ChartDef, MaxPlayers, RANKS, StackDepth } from './helpers';
 import { lazyRange, thresholdGrid } from './thresholdRange';
 import { LIMPED_POT_ACTIONS } from './actionColors';
 

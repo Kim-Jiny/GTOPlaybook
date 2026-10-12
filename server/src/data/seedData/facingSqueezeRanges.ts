@@ -127,20 +127,6 @@ const PROFILES: Record<HeroClass, Record<CallerClass, Record<SqueezerClass, Faci
   },
 };
 
-const FACING_SQUEEZE_MIXED: FacingSqueezeMixed = {
-  'QQ': { '4bet': 0.38, call: 0.62, fold: 0 },
-  'JJ': { '4bet': 0.18, call: 0.68, fold: 0.14 },
-  'TT': { '4bet': 0.06, call: 0.62, fold: 0.32 },
-  'AKs': { '4bet': 0.48, call: 0.52, fold: 0 },
-  'AKo': { '4bet': 0.32, call: 0.5, fold: 0.18 },
-  'AQs': { '4bet': 0.18, call: 0.56, fold: 0.26 },
-  'AQo': { '4bet': 0.08, call: 0.42, fold: 0.5 },
-  'AJs': { '4bet': 0.04, call: 0.48, fold: 0.48 },
-  'KQs': { '4bet': 0.02, call: 0.54, fold: 0.44 },
-  'A5s': { '4bet': 0.28, call: 0.18, fold: 0.54 },
-  'A4s': { '4bet': 0.22, call: 0.14, fold: 0.64 },
-};
-
 function positionClass(position: string): HeroClass | null {
   switch (position) {
     case 'HJ':

@@ -1,4 +1,4 @@
-import { ChartDef, handLabel, inSet, StackDepth, MaxPlayers, rfiPositions } from './helpers';
+import { ChartDef, inSet, StackDepth, MaxPlayers, rfiPositions } from './helpers';
 import { monotoneRange } from './thresholdRange';
 import { fillByPriority } from './squeezeRanges';
 import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
