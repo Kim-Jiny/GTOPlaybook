@@ -33,7 +33,9 @@ const VALUE_BY_RANK: Record<string, number> = Object.fromEntries(
   RANKS.map((rank, index) => [rank, 14 - index]),
 ) as Record<string, number>;
 
-const HERO_CLASSES: HeroClass[] = ['hj', 'co', 'btn', 'sb', 'bb'];
+// BB is intentionally absent: its spots are the 'Defend' (vs a single open) and 'Squeeze'
+// (vs open + caller) charts. Duplicates here disagreed with them (BB vs UTG: 30% vs 12%).
+const HERO_CLASSES: HeroClass[] = ['hj', 'co', 'btn', 'sb'];
 
 const PROFILES: Record<HeroClass, Record<OpenerClass, Record<ContextClass, CallProfile>>> = {
   hj: {
