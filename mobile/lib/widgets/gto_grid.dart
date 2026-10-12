@@ -123,6 +123,8 @@ class GtoGrid extends StatelessWidget {
                           final range = grid[key];
                           final handLabel =
                               range?.hand ?? _defaultLabel(row, col);
+                          // Cells are ~25dp on phones: keep the action label, just smaller.
+                          final showSub = range != null && cellSize >= 22;
                           return Semantics(
                             button: range != null,
                             selected:
@@ -160,13 +162,16 @@ class GtoGrid extends StatelessWidget {
                                           ),
                                         ),
                                       ),
-                                    Center(
+                                    Align(
+                                      alignment: showSub
+                                          ? const Alignment(0, -0.42)
+                                          : Alignment.center,
                                       child: Text(
                                         handLabel,
                                         style: TextStyle(
                                           color: Colors.white,
-                                          fontSize: cellSize * 0.3,
-                                          fontWeight: FontWeight.w600,
+                                          fontSize: cellSize * 0.34,
+                                          fontWeight: FontWeight.w700,
                                           shadows: const [
                                             Shadow(
                                               blurRadius: 4,
@@ -176,14 +181,17 @@ class GtoGrid extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-                                    if (range != null && cellSize >= 28)
+                                    if (showSub)
                                       Positioned(
-                                        left: 2,
-                                        right: 2,
-                                        bottom: 2,
+                                        left: 1,
+                                        right: 1,
+                                        bottom: 1,
                                         child: Text(
                                           detailedMode
-                                              ? _summaryLabel(range)
+                                              ? _summaryLabel(
+                                                  range,
+                                                  compact: cellSize < 30,
+                                                )
                                               : _primaryActionAbbreviation(
                                                   range,
                                                 ),
@@ -192,12 +200,17 @@ class GtoGrid extends StatelessWidget {
                                           overflow: TextOverflow.fade,
                                           style: TextStyle(
                                             color: Colors.white.withValues(
-                                              alpha: 0.88,
+                                              alpha: 0.92,
                                             ),
-                                            fontSize:
-                                                cellSize *
-                                                (detailedMode ? 0.14 : 0.16),
-                                            fontWeight: FontWeight.w700,
+                                            fontSize: cellSize *
+                                                (cellSize < 30 ? 0.25 : 0.2),
+                                            fontWeight: FontWeight.w800,
+                                            shadows: const [
+                                              Shadow(
+                                                blurRadius: 3,
+                                                color: Colors.black87,
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
@@ -228,13 +241,14 @@ class GtoGrid extends StatelessWidget {
     };
   }
 
-  /// Detailed mode: top two actions, e.g. "R60 F40". A pure hand shows "R100".
-  String _summaryLabel(HandRange range) {
+  /// Detailed mode: top two actions, e.g. "R60 F40" (only the top one when the cell
+  /// is small). A pure hand shows "R100".
+  String _summaryLabel(HandRange range, {bool compact = false}) {
     final sorted = _freqsOf(range).entries.where((e) => e.value > 0).toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     if (sorted.isEmpty) return '';
     return sorted
-        .take(2)
+        .take(compact ? 1 : 2)
         .map((e) => '${_abbr(e.key)}${(e.value * 100).round()}')
         .join(' ');
   }
