@@ -89,14 +89,14 @@ const SHAPES: Record<OpenerCls, Shape> = {
 
 const cache = new Map<string, BbDefendEntry>();
 
-/** depth 100 | 60 | 40: lower depth narrows the continue share. */
-export function bbDefendEntry(cls: OpenerCls, depth: 100 | 60 | 40): BbDefendEntry {
+/** Lower depth narrows the continue share (100 → 15bb). */
+export function bbDefendEntry(cls: OpenerCls, depth: 100 | 60 | 40 | 25 | 15): BbDefendEntry {
   const key = `${cls}:${depth}`;
   const hit = cache.get(key);
   if (hit) return hit;
 
   const shape = SHAPES[cls];
-  const factor = depth === 100 ? 1 : depth === 60 ? 0.94 : 0.85;
+  const factor = { 100: 1, 60: 0.94, 40: 0.85, 25: 0.75, 15: 0.6 }[depth];
   const threeBet = monotoneTable(fitMixed(monotoneTable(parseRange(shape.threeBet)), shape.threeBetTarget));
   const call = fitCalls(threeBet, monotoneTable(parseRange(shape.call)), shape.target * factor);
   const entry = { threeBet, call };
