@@ -465,7 +465,7 @@ export function getShortStackCharts(depth: StackDepth, maxPlayers: MaxPlayers = 
       position: pos,
       situation: 'Push/Fold',
       category: 'Push/Fold',
-      description: `${pos} Push or Fold (${depth}bb)`,
+      description: pos === 'BB' ? `BB Push or Fold vs limp (${depth}bb)` : `${pos} Push or Fold (${depth}bb)`,
       stackDepth: depth,
       maxPlayers,
       actionTypes: PUSH_FOLD_ACTIONS,

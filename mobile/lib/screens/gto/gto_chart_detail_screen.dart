@@ -22,6 +22,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
   String? _error;
   bool _isLoading = true;
   bool _switchingTier = false;
+  Set<int>? _availableTiers; // null = unknown, keep every tier enabled
 
   @override
   void initState() {
@@ -46,6 +47,11 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
         _chart = chart;
         _selectedRange = null;
       });
+      final tiers = await context.read<GtoProvider>().fetchAvailableTiers(
+        widget.chartId,
+      );
+      if (!mounted) return;
+      setState(() => _availableTiers = tiers);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e.toString());
@@ -132,6 +138,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                   const SizedBox(height: 12),
                   _StackTierSelector(
                     current: chart.stackDepth,
+                    available: _availableTiers,
                     switching: _switchingTier,
                     onSelected: _onTierSelected,
                   ),
@@ -638,11 +645,13 @@ class _ChartSummaryCard extends StatelessWidget {
 
 class _StackTierSelector extends StatelessWidget {
   final int current;
+  final Set<int>? available;
   final bool switching;
   final ValueChanged<int> onSelected;
 
   const _StackTierSelector({
     required this.current,
+    required this.available,
     required this.switching,
     required this.onSelected,
   });
@@ -669,7 +678,9 @@ class _StackTierSelector extends StatelessWidget {
                   ChoiceChip(
                     label: Text('${t}bb'),
                     selected: t == current,
-                    onSelected: switching ? null : (_) => onSelected(t),
+                    onSelected: switching || !(available?.contains(t) ?? true)
+                        ? null
+                        : (_) => onSelected(t),
                     visualDensity: VisualDensity.compact,
                     labelStyle: const TextStyle(fontSize: 12),
                   ),
