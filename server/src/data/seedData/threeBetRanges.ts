@@ -290,11 +290,13 @@ function get3betRangeData(
   // Determine which reference 3bettor's data to use
   const refSeat = threeBettorRefSeat(threeBettor);
 
+  // Shallow stacks reuse the same authored tables (so widths shrink smoothly with depth);
+  // the legacy getters only decide which matchups exist.
   if (depth === 15) {
-    return get15bbRange(refSeat, oClass);
+    return get15bbRange(refSeat, oClass) ? deepTableRange(refSeat, oClass, 15) : null;
   }
   if (depth === 25) {
-    return get25bbRange(refSeat, oClass);
+    return get25bbRange(refSeat, oClass) ? deepTableRange(refSeat, oClass, 25) : null;
   }
 
   // 100/60/40bb: keep the same available matchups, but fit authored shapes to
@@ -320,10 +322,10 @@ const DEEP_WIDTHS: Record<string, [number, number]> = {
 function deepTableRange(
   refSeat: 'HJ' | 'CO' | 'BTN' | 'SB',
   oClass: ReturnType<typeof openerClass>,
-  depth: 100 | 60 | 40,
+  depth: 100 | 60 | 40 | 25 | 15,
 ) {
   const [threeBetW, callW] = DEEP_WIDTHS[`${refSeat}:${oClass}`] ?? [0.04, 0.04];
-  const callFactor = depth === 100 ? 1 : depth === 60 ? 0.9 : 0.8;
+  const callFactor = { 100: 1, 60: 0.9, 40: 0.8, 25: 0.6, 15: 0.5 }[depth];
 
   return lazyRange(() => {
     const threeBet: FreqTable = monotoneTable(fillByPriority(parseRange(THREE_BET_SHAPE), threeBetW));
@@ -339,7 +341,13 @@ function deepTableRange(
         const h = handLabel(row, col);
         const t = threeBet[h] ?? 0;
         const c = Math.min(call[h] ?? 0, 1 - t);
-        out.set(h, { '3bet': roundTo2(t), call: roundTo2(c), fold: roundTo2(1 - t - c) });
+        if (depth === 15) {
+          // 15bb is reshove-or-fold: part of the calling range becomes a jam.
+          const jam = Math.min(1, t + 0.35 * c);
+          out.set(h, { '3bet': roundTo2(jam), fold: roundTo2(1 - jam) });
+        } else {
+          out.set(h, { '3bet': roundTo2(t), call: roundTo2(c), fold: roundTo2(1 - t - c) });
+        }
       }
     }
     return out;

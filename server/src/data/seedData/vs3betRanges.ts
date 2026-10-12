@@ -219,7 +219,18 @@ function tableEntry(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBetto
   if (!base) return null;
   if (depth === 60) return scaleCalls(base, 0.85);
   if (depth === 40) return scaleCalls(base, 0.7);
+  if (depth === 25) return scaleCalls(base, 0.5);
+  if (depth === 15) return scaleCalls(base, 0.4);
   return base;
+}
+
+// 15bb is jam-or-fold: the 4bet range jams and part of the calling range turns into a jam.
+function facing3betJamTableRange(entry: Vs3betEntry) {
+  return (row: number, col: number) => {
+    const h = handLabel(row, col);
+    const jam = Math.min(1, (entry.fourBet[h] ?? 0) + 1.2 * (entry.call[h] ?? 0));
+    return { allin: Math.round(jam * 100) / 100, fold: Math.round((1 - jam) * 100) / 100 };
+  };
 }
 
 function facing3betTableRange(entry: Vs3betEntry) {
@@ -255,6 +266,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
         const key = `${opClass}_vs_${tbClass}`;
         const data15 = FACING_15_DATA[key];
         if (!data15) continue;
+        const entry15 = tableEntry(opClass, tbClass, 15);
 
         charts.push({
           position: opener,
@@ -265,12 +277,13 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_JAM_ACTIONS,
-          ranges: facing3betJamRange(data15.jam),
+          ranges: entry15 ? facing3betJamTableRange(entry15) : facing3betJamRange(data15.jam),
         });
       } else if (depth === 25) {
         const key = `${opClass}_vs_${tbClass}`;
         const data = FACING_25_DATA[key];
         if (!data) continue;
+        const entry25 = tableEntry(opClass, tbClass, 25);
 
         charts.push({
           position: opener,
@@ -281,7 +294,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_ACTIONS,
-          ranges: facing3betRange(data.fourBet, data.call, data.mixed ?? false),
+          ranges: entry25 ? facing3betTableRange(entry25) : facing3betRange(data.fourBet, data.call, data.mixed ?? false),
         });
       } else {
         // 40bb, 60bb, 100bb: 4bet / call / fold from the explicit tables
