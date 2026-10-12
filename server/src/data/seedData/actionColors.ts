@@ -38,6 +38,13 @@ export const COLD_CALL_ACTIONS: ActionType[] = [
   { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
 ];
 
+// Cold call spots where premium hands 3bet instead of flatting.
+export const COLD_CALL_3BET_ACTIONS: ActionType[] = [
+  { key: '3bet', label: '3bet', color: ACTION_COLORS['3bet'] },
+  { key: 'call', label: 'Call', color: ACTION_COLORS.call },
+  { key: 'fold', label: 'Fold', color: ACTION_COLORS.fold },
+];
+
 export const LIMPED_POT_ACTIONS: ActionType[] = [
   { key: 'raise', label: 'Raise', color: ACTION_COLORS.raise },
   { key: 'check', label: 'Check', color: ACTION_COLORS.check },

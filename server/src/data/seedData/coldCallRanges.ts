@@ -6,9 +6,9 @@ import {
   StackDepth,
   handLabel,
   positionsForPlayerCount,
-  smoothFrequencies,
 } from './helpers';
-import { COLD_CALL_ACTIONS } from './actionColors';
+import { COLD_CALL_3BET_ACTIONS } from './actionColors';
+import { enforceMonotone } from './rfiTables';
 
 type HeroClass = 'hj' | 'co' | 'btn' | 'sb' | 'bb';
 type OpenerClass = 'ep' | 'hj' | 'co' | 'btn' | 'sb';
@@ -200,48 +200,63 @@ function contextAdjustment(context: ContextClass): number {
   }
 }
 
-function decideAction(
+// Max share a premium hand flats; the rest of the time it 3bets (never folds).
+const PREMIUM_FLAT_CAP: Record<string, number> = { AA: 0.1, KK: 0.15, QQ: 0.5, AKs: 0.4, AKo: 0.3 };
+
+// Half-width (score units) of the band around the call threshold where a hand mixes.
+const MIX_HALF_WIDTH = 0.35;
+
+function callFrequency(
   hand: string,
   hero: HeroClass,
   opener: OpenerClass,
   context: ContextClass,
   depth: StackDepth,
-): 'call' | 'fold' {
+): number {
   const base = callScore(analyzeHand(hand))
     + heroAdjustment(hero)
     + openerAdjustment(opener)
     + contextAdjustment(context);
   const threshold = PROFILES[hero][opener][context].callThreshold + depthAdjustment(depth);
-  return base >= threshold ? 'call' : 'fold';
+  const f = (base - (threshold - MIX_HALF_WIDTH)) / (2 * MIX_HALF_WIDTH);
+  return Math.min(1, Math.max(0, f));
 }
 
-function buildCallSet(
+/**
+ * Call frequency grid for one spot. Frequencies ramp around the threshold (so only
+ * borderline hands mix, nothing leaks into distant hands) and are made monotone in
+ * hand strength, since the raw score can rank e.g. KJs above AQs.
+ */
+function coldCallGrid(
   hero: HeroClass,
   opener: OpenerClass,
   context: ContextClass,
   depth: StackDepth,
-) {
-  const call = new Set<string>();
+): Map<string, FreqMap> {
+  const freq = new Map<string, number>();
   for (let row = 0; row < 13; row++) {
     for (let col = 0; col < 13; col++) {
       const hand = handLabel(row, col);
-      if (decideAction(hand, hero, opener, context, depth) == 'call') {
-        call.add(hand);
-      }
+      freq.set(hand, callFrequency(hand, hero, opener, context, depth));
     }
   }
-  return call;
+  enforceMonotone((h) => freq.get(h)!, (h, f) => freq.set(h, f));
+  return new Map([...freq].map(([h, f]): [string, FreqMap] => {
+    const cap = PREMIUM_FLAT_CAP[h];
+    if (cap !== undefined) {
+      // Premiums mostly 3bet; only a slowplay share flats (deliberate exception to monotonicity).
+      const call = Math.round(Math.min(f, cap) * 100) / 100;
+      return [h, { '3bet': Math.round((1 - call) * 100) / 100, call }];
+    }
+    const call = Math.round(f * 100) / 100;
+    return [h, { call, fold: Math.round((1 - call) * 100) / 100 }];
+  }));
 }
 
-function coldCallRange(callSet: Set<string>) {
-  return (row: number, col: number): FreqMap => {
-    const hand = handLabel(row, col);
-    const currentKey = callSet.has(hand) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [{ key: 'call', set: callSet }]);
-    if (smooth) return smooth;
-    if (callSet.has(hand)) return { call: 1, fold: 0 };
-    return { call: 0, fold: 1 };
-  };
+function coldCallRange(hero: HeroClass, opener: OpenerClass, context: ContextClass, depth: StackDepth) {
+  let grid: Map<string, FreqMap> | undefined;
+  return (row: number, col: number): FreqMap =>
+    (grid ??= coldCallGrid(hero, opener, context, depth)).get(handLabel(row, col))!;
 }
 
 export function getColdCallCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
@@ -261,7 +276,6 @@ export function getColdCallCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       const openerClass = positionClass(openerPosition);
       if (!openerClass) continue;
 
-      const headsupSet = buildCallSet(heroClass as HeroClass, openerClass as OpenerClass, 'headsup', depth);
       charts.push({
         position: heroPosition,
         situation: 'Cold Call',
@@ -270,14 +284,13 @@ export function getColdCallCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
         description: `${heroPosition} call vs ${openerPosition} open (${depth}bb, ${maxPlayers}-max)`,
         stackDepth: depth,
         maxPlayers,
-        actionTypes: COLD_CALL_ACTIONS,
-        ranges: coldCallRange(headsupSet),
+        actionTypes: COLD_CALL_3BET_ACTIONS,
+        ranges: coldCallRange(heroClass as HeroClass, openerClass as OpenerClass, 'headsup', depth),
       });
 
       for (let callerIndex = openerIndex + 1; callerIndex < heroIndex; callerIndex++) {
         const callerPosition = positions[callerIndex];
         if (callerPosition == 'BB') continue;
-        const multiwaySet = buildCallSet(heroClass as HeroClass, openerClass as OpenerClass, 'multiway', depth);
         charts.push({
           position: heroPosition,
           situation: 'Cold Call',
@@ -287,8 +300,8 @@ export function getColdCallCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
           description: `${heroPosition} overcall vs ${openerPosition} open + ${callerPosition} call (${depth}bb, ${maxPlayers}-max)`,
           stackDepth: depth,
           maxPlayers,
-          actionTypes: COLD_CALL_ACTIONS,
-          ranges: coldCallRange(multiwaySet),
+          actionTypes: COLD_CALL_3BET_ACTIONS,
+          ranges: coldCallRange(heroClass as HeroClass, openerClass as OpenerClass, 'multiway', depth),
         });
       }
     }
