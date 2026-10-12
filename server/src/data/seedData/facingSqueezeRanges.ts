@@ -6,9 +6,10 @@ import {
   StackDepth,
   handLabel,
   positionsForPlayerCount,
-  smoothFrequencies,
 } from './helpers';
 import { FACING_3BET_ACTIONS } from './actionColors';
+import { enforceMonotone, parseRange, monotoneTable, FreqTable } from './rfiTables';
+import { fillByPriority, round2 } from './squeezeRanges';
 
 type HeroClass = 'ep' | 'hj' | 'co' | 'btn' | 'sb';
 type CallerClass = 'tight' | 'late' | 'blind';
@@ -346,22 +347,54 @@ function buildSets(
   return { fourBet, call };
 }
 
-function facingSqueezeRange(fourBetSet: Set<string>, callSet: Set<string>) {
-  return (row: number, col: number): FreqMap => {
-    const hand = handLabel(row, col);
-    if (hand in FACING_SQUEEZE_MIXED) return FACING_SQUEEZE_MIXED[hand];
+// Authored shapes; the score model above only decides how wide each spot is.
+const FOUR_BET_SHAPE = `
+  AA KK QQ:0.8 AKs AKo:0.8 JJ:0.3 AQs:0.2 A5s:0.4 A4s:0.25 A3s:0.1 TT:0.1 KQs:0.05
+`;
+const CALL_SHAPE = `
+  QQ:0.2 JJ TT 99 88 77:0.9 66:0.6 55:0.4 44:0.2 AKo:0.2 AQs AQo:0.5 AJs ATs:0.7 A9s:0.3
+  KQs KJs:0.8 KTs:0.4 QJs:0.8 QTs:0.4 JTs:0.8 J9s:0.2 T9s:0.6 98s:0.5 87s:0.4 76s:0.3 65s:0.2
+  KQo:0.4 AJo:0.3 A5s:0.5 A4s:0.4 A3s:0.2 A2s:0.2 ATo:0.1
+`;
 
-    const currentKey = fourBetSet.has(hand) ? '4bet' : callSet.has(hand) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '4bet', set: fourBetSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
+const tieScore = (hand: string) => continueScore(analyzeHand(hand));
 
-    if (fourBetSet.has(hand)) return { '4bet': 1, call: 0, fold: 0 };
-    if (callSet.has(hand)) return { '4bet': 0, call: 1, fold: 0 };
-    return { '4bet': 0, call: 0, fold: 1 };
+function facingSqueezeGrid(
+  hero: HeroClass,
+  caller: CallerClass,
+  squeezer: SqueezerClass,
+  depth: StackDepth,
+): Map<string, FreqMap> {
+  const sets = buildSets(hero, caller, squeezer, depth);
+  const share = (hands: Iterable<string>) => {
+    let n = 0;
+    for (const h of hands) n += h.length === 2 ? 6 : h.endsWith('s') ? 4 : 12;
+    return n / 1326;
   };
+  const fourBetWidth = share(sets.fourBet);
+  const callWidth = share(sets.call);
+
+  const fourBet: FreqTable = monotoneTable(
+    fillByPriority(parseRange(FOUR_BET_SHAPE), fourBetWidth, {}, tieScore),
+  );
+  const call: FreqTable = fillByPriority(parseRange(CALL_SHAPE), callWidth, fourBet, tieScore);
+
+  // A dominating hand must continue (4bet + call) at least as often.
+  enforceMonotone(
+    (h) => (fourBet[h] ?? 0) + (call[h] ?? 0),
+    (h, f) => { call[h] = round2(Math.min(f, 1) - (fourBet[h] ?? 0)); },
+  );
+
+  const out = new Map<string, FreqMap>();
+  for (let row = 0; row < 13; row++) {
+    for (let col = 0; col < 13; col++) {
+      const hand = handLabel(row, col);
+      const f4 = fourBet[hand] ?? 0;
+      const c = Math.min(call[hand] ?? 0, 1 - f4);
+      out.set(hand, { '4bet': round2(f4), call: round2(c), fold: round2(1 - f4 - c) });
+    }
+  }
+  return out;
 }
 
 export function getFacingSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
@@ -386,12 +419,8 @@ export function getFacingSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers
         const squeezer = positions[squeezerIndex];
         if (squeezer == 'BB' && caller == 'BB') continue;
 
-        const { fourBet, call } = buildSets(
-          heroClass,
-          classifyCaller(caller),
-          classifySqueezer(squeezer),
-          depth,
-        );
+        const callerClass = classifyCaller(caller);
+        const squeezerClass = classifySqueezer(squeezer);
 
         charts.push({
           position: opener,
@@ -403,7 +432,11 @@ export function getFacingSqueezeCharts(depth: StackDepth, maxPlayers: MaxPlayers
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_ACTIONS,
-          ranges: facingSqueezeRange(fourBet, call),
+          ranges: (() => {
+            let grid: Map<string, FreqMap> | undefined;
+            return (row: number, col: number) =>
+              (grid ??= facingSqueezeGrid(heroClass, callerClass, squeezerClass, depth)).get(handLabel(row, col))!;
+          })(),
         });
       }
     }

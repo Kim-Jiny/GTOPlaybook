@@ -302,7 +302,7 @@ const MIX_HALF_WIDTH = 0.35;
 const ramp = (score: number, threshold: number): number =>
   Math.min(1, Math.max(0, (score - (threshold - MIX_HALF_WIDTH)) / (2 * MIX_HALF_WIDTH)));
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
+export const round2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Frequencies from the hand score: 3bet ramps up around the squeeze threshold,
@@ -374,8 +374,12 @@ function modelWidths(
  * order (authored frequency, then model score) at full frequency; only the last
  * hand is partial. `taken` lists frequency already used by another action.
  */
-function fillByPriority(shape: FreqTable, budget: number, taken: FreqTable = {}): FreqTable {
-  const score = (hand: string) => squeezeScore(analyzeHand(hand));
+export function fillByPriority(
+  shape: FreqTable,
+  budget: number,
+  taken: FreqTable = {},
+  score: (hand: string) => number = (hand) => squeezeScore(analyzeHand(hand)),
+): FreqTable {
   const order = Object.keys(shape).sort((a, b) => shape[b] - shape[a] || score(b) - score(a));
   const out: FreqTable = {};
   let remaining = budget * 1326;
