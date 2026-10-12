@@ -1,9 +1,10 @@
 import {
   ChartDef, StackDepth, MaxPlayers,
   handLabel, inSet,
-  positionsForPlayerCount, openerClass, shallowOpenerClass, smoothFrequencies,
+  positionsForPlayerCount, openerClass, shallowOpenerClass,
 } from './helpers';
 import { FACING_3BET_ACTIONS, FACING_3BET_JAM_ACTIONS } from './actionColors';
+import { VS_3BET_100, Vs3betEntry, scaleCalls } from './vs3betTables';
 
 // When facing a 3bet, decisions are: 4bet, call, or fold
 // Ranges vary by opener position and 3bettor position
@@ -172,12 +173,6 @@ function facing3betRange(
   return (row: number, col: number) => {
     const h = handLabel(row, col);
     if (mixedMap && h in mixedMap && !inSet(h, fourBetSet)) return mixedMap[h];
-    const currentKey = inSet(h, fourBetSet) ? '4bet' : inSet(h, callSet) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '4bet', set: fourBetSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
     if (inSet(h, fourBetSet)) return { '4bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '4bet': 0, call: 1.0, fold: 0 };
     return { '4bet': 0, call: 0, fold: 1.0 };
@@ -342,13 +337,31 @@ const FACING_15_DATA: Record<Facing15Key, Facing15Data> = {
 function facing3betJamRange(jamSet: Set<string>) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    const currentKey = inSet(h, jamSet) ? 'allin' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: 'allin', set: jamSet },
-    ]);
-    if (smooth) return smooth;
     if (inSet(h, jamSet)) return { allin: 1.0, fold: 0 };
     return { allin: 0, fold: 1.0 };
+  };
+}
+
+// ── 40 / 60 / 100bb: explicit tables ──
+
+function tableEntry(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass, depth: StackDepth): Vs3betEntry | null {
+  const group = tbClass === 'sb' || tbClass === 'bb' ? 'blind'
+    : tbClass === 'tight' ? 'tight'
+    : tbClass === 'co' && opClass === 'btn' ? 'co'
+    : 'late';
+  const base = VS_3BET_100[`${opClass}:${group}`];
+  if (!base) return null;
+  if (depth === 60) return scaleCalls(base, 0.85);
+  if (depth === 40) return scaleCalls(base, 0.7);
+  return base;
+}
+
+function facing3betTableRange(entry: Vs3betEntry) {
+  return (row: number, col: number) => {
+    const h = handLabel(row, col);
+    const fourBet = entry.fourBet[h] ?? 0;
+    const call = entry.call[h] ?? 0;
+    return { '4bet': fourBet, call, fold: Math.max(0, Math.round((1 - fourBet - call) * 100) / 100) };
   };
 }
 
@@ -441,12 +454,9 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           ranges: facing3betRange(data.fourBet, data.call, data.mixed ?? false),
         });
       } else {
-        // 40bb, 60bb, 100bb: 4bet / call / fold
-        const fourBetSet = getFourBetSet(opClass, tbClass);
-        const callSet = getCallSet(opClass, tbClass, depth);
-        if (!fourBetSet || !callSet) continue;
-
-        const mixed = useMixedFor(opClass, tbClass, depth) ? FACING_3BET_MIXED : false;
+        // 40bb, 60bb, 100bb: 4bet / call / fold from the explicit tables
+        const entry = tableEntry(opClass, tbClass, depth);
+        if (!entry) continue;
 
         charts.push({
           position: opener,
@@ -457,7 +467,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_ACTIONS,
-          ranges: facing3betRange(fourBetSet, callSet, mixed),
+          ranges: facing3betTableRange(entry),
         });
       }
     }

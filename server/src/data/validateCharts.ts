@@ -11,6 +11,8 @@ type Issue = { chart: string; hand?: string; msg: string };
 const charts = getAllCharts();
 const issues: Issue[] = [];
 
+const PREMIUMS = new Set(['AA', 'KK']);
+const RFI_NEVER_FOLD = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
 const SUM_TOL = 0.02; // allow rounding noise around 1.0
 
 function chartId(c: (typeof charts)[number]): string {
@@ -102,6 +104,11 @@ for (const c of charts) {
       }
       if (Math.abs(sum - 1) > SUM_TOL) {
         issues.push({ chart: id, hand, msg: `freq sum=${sum.toFixed(3)} (≠1)` });
+      }
+      // premium hands must never fold preflop
+      const neverFold = c.situation === 'RFI' ? RFI_NEVER_FOLD : PREMIUMS;
+      if (!c.flopTexture && neverFold.has(hand) && (freqs['fold'] ?? 0) > 0) {
+        issues.push({ chart: id, hand, msg: `premium hand folds ${(freqs['fold'] * 100).toFixed(0)}%` });
       }
     }
   }
