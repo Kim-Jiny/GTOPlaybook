@@ -2,7 +2,7 @@ import { ChartDef, handLabel, inSet, StackDepth, MaxPlayers, rfiPositions } from
 import { monotoneRange } from './thresholdRange';
 import { fillByPriority } from './squeezeRanges';
 import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
-import { FreqTable, trimTail, UTG_FULL_100, UTG1_FULL_100, UTG_100, HJ_100, CO_100, BTN_100, SB_100 } from './rfiTables';
+import { ALL_HANDS, FreqTable, trimTail, UTG_FULL_100, UTG1_FULL_100, UTG_100, HJ_100, CO_100, BTN_100, SB_100 } from './rfiTables';
 
 // ═══════════════════════════════════════════════════════════════════════
 //  100bb ranges
@@ -647,11 +647,31 @@ function baseTable(key: RangeKey): FreqTable {
 const JAM_15_WIDTH: Partial<Record<RangeKey, number>> = {
   utg9max: 0.08, utg1: 0.095, utg2: 0.115, utg: 0.115, hj: 0.14, co: 0.21, btn: 0.38, sb: 0.48,
 };
+// 7bb is shove-or-fold with a much wider range.
+const JAM_7_WIDTH: Partial<Record<RangeKey, number>> = {
+  utg9max: 0.14, utg1: 0.16, utg2: 0.22, utg: 0.22, hj: 0.27, co: 0.36, btn: 0.52, sb: 0.66,
+};
+
+function jamSet(key: RangeKey, depth: 7 | 15): Set<string> {
+  const widths = depth === 7 ? JAM_7_WIDTH : JAM_15_WIDTH;
+  // Hands outside the authored table follow it at the lowest priority (by strength),
+  // so very wide spots (7bb SB) can still be filled.
+  const shape: FreqTable = { ...Object.fromEntries(ALL_HANDS.map((h) => [h, 0.01])), ...baseTable(key) };
+  const filled = fillByPriority(shape, widths[key] ?? 0.12);
+  return new Set(Object.entries(filled).filter(([, f]) => f >= 0.5).map(([h]) => h));
+}
 
 function jamRangeData15(key: RangeKey): RangeData {
-  const filled = fillByPriority(baseTable(key), JAM_15_WIDTH[key] ?? 0.12);
-  const jam = new Set(Object.entries(filled).filter(([, f]) => f >= 0.5).map(([h]) => h));
-  return { raise: new Set<string>(), jam, mixed: {} };
+  return { raise: new Set<string>(), jam: jamSet(key, 15), mixed: {} };
+}
+
+/**
+ * Shove-or-fold range for an unopened pot at 7bb / 15bb, shared by the RFI and
+ * Push/Fold charts so they always agree. Returns null for heads-up SB (legacy sets).
+ */
+export function pushSetFor(position: string, maxPlayers: MaxPlayers, depth: 7 | 15): Set<string> | null {
+  const key = resolveRangeKey(position, maxPlayers);
+  return key === 'hu_sb' ? null : jamSet(key, depth);
 }
 
 function tableRangeData(key: RangeKey, depth: StackDepth): RangeData {

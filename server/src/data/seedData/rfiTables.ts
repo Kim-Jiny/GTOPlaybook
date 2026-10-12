@@ -80,7 +80,7 @@ export function trimTail(table: FreqTable, min: number): FreqTable {
 
 // ── Monotonicity ─────────────────────────────────────────────────────
 
-const ALL_HANDS: string[] = (() => {
+export const ALL_HANDS: string[] = (() => {
   const out: string[] = [];
   for (let i = 0; i < 13; i++) {
     for (let j = i; j < 13; j++) {

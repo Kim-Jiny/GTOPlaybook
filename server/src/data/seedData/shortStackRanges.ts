@@ -4,6 +4,7 @@ import {
   positionsForPlayerCount, rfiPositions,
 } from './helpers';
 import { enforceMonotoneStrict } from './rfiTables';
+import { pushSetFor } from './rfiRanges';
 import { PUSH_FOLD_ACTIONS, CALL_SHOVE_ACTIONS } from './actionColors';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -373,6 +374,9 @@ function callShoveRange(callSet: Set<string>) {
 // ── Push range lookup by position and depth ──
 
 function getPushRange(position: string, maxPlayers: MaxPlayers, depth: 7 | 15): Set<string> {
+  // Positions that can open share the RFI jam ranges (heads-up SB and BB keep legacy sets).
+  const shared = position === 'BB' ? null : pushSetFor(position, maxPlayers, depth);
+  if (shared) return shared;
   if (depth === 7) return getPushRange7bb(position, maxPlayers);
   return getPushRange15bb(position, maxPlayers);
 }
