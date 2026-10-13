@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../providers/purchase_provider.dart';
+import '../../services/admin_push_service.dart';
+import '../../services/api_service.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../inquiry/inquiry_screen.dart';
@@ -127,9 +129,13 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.logout,
             title: l.signOut,
             iconColor: Colors.redAccent,
-            onTap: () {
+            onTap: () async {
               context.read<PurchaseProvider>().onSignedOut();
-              auth.signOut();
+              // Stop admin alerts on this device while the API token is still valid.
+              await AdminPushService.instance.unregister(
+                context.read<ApiService>(),
+              );
+              await auth.signOut();
             },
           ),
           _MenuTile(
@@ -161,6 +167,7 @@ void _showDeleteAccountDialog(
             final messenger = ScaffoldMessenger.of(context);
             final navigator = Navigator.of(context);
             final purchases = context.read<PurchaseProvider>();
+            final api = context.read<ApiService>();
             Navigator.pop(ctx);
             showDialog(
               context: context,
@@ -168,6 +175,7 @@ void _showDeleteAccountDialog(
               builder: (_) => const Center(child: CircularProgressIndicator()),
             );
             try {
+              await AdminPushService.instance.unregister(api);
               await auth.deleteAccount();
               purchases.onSignedOut();
               if (context.mounted) navigator.pop(); // dismiss loading

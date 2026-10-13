@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/gto_provider.dart';
 import '../providers/purchase_provider.dart';
+import '../services/admin_push_service.dart';
+import '../services/api_service.dart';
 import 'gto/gto_position_select_screen.dart';
 import 'equity/equity_tab_screen.dart';
 import 'pot_calculator/pot_calculator_screen.dart';
@@ -35,6 +37,9 @@ class _HomeScreenState extends State<HomeScreen> {
       if (auth.user != null) {
         final gto = context.read<GtoProvider>();
         context.read<PurchaseProvider>().refresh();
+        if (auth.isAdmin) {
+          AdminPushService.instance.register(context.read<ApiService>());
+        }
         await gto.loadSavedStackSettings();
         gto.loadPositionTree();
       }
