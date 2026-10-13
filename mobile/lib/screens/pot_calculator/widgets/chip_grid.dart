@@ -19,18 +19,18 @@ class _ChipGrid extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.touch_app_outlined, size: 16, color: Colors.white54),
+                Icon(Icons.touch_app_outlined, size: 16, color: context.ink54),
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context)!.quickChipAdd,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                  style: TextStyle(fontSize: 13, color: context.ink70),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               AppLocalizations.of(context)!.longPressToRemoveChip,
-              style: const TextStyle(fontSize: 12, color: Colors.white38),
+              style: TextStyle(fontSize: 12, color: context.ink38),
             ),
             const SizedBox(height: 12),
             LayoutBuilder(
@@ -144,10 +144,10 @@ class _AddChipButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white24, width: 2),
+          border: Border.all(color: context.ink24, width: 2),
         ),
         child: Center(
-          child: Icon(Icons.add, color: Colors.white54, size: size * 0.38),
+          child: Icon(Icons.add, color: context.ink54, size: size * 0.38),
         ),
       ),
     );

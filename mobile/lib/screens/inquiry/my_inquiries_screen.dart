@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/inquiry.dart';
 import '../../providers/inquiry_provider.dart';
+import '../../theme/app_theme.dart';
 
 class MyInquiriesScreen extends StatefulWidget {
   const MyInquiriesScreen({super.key});
@@ -43,43 +44,43 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: context.ink24,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
             Text(
               inquiry.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: context.ink,
               ),
             ),
             const SizedBox(height: 8),
             _StatusBadge(status: inquiry.status, label: inquiry.statusLabel(l)),
             const SizedBox(height: 16),
             Text(l.inquiryDetail,
-                style: const TextStyle(
-                    color: Colors.white70, fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    color: context.ink70, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(inquiry.content,
-                style: const TextStyle(color: Colors.white)),
+                style: TextStyle(color: context.ink)),
             if (inquiry.adminReply != null) ...[
               const SizedBox(height: 24),
               Text(l.adminReply,
-                  style: const TextStyle(
-                      color: Color(0xFF4CAF50),
+                  style: TextStyle(
+                      color: context.accent,
                       fontWeight: FontWeight.w600)),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A2E1A),
+                  color: context.card,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(inquiry.adminReply!,
-                    style: const TextStyle(color: Colors.white)),
+                    style: TextStyle(color: context.ink)),
               ),
             ],
           ],
@@ -121,7 +122,7 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
           : provider.myInquiries.isEmpty
               ? Center(
                   child: Text(l.noInquiriesYet,
-                      style: const TextStyle(color: Colors.white54)))
+                      style: TextStyle(color: context.ink54)))
               : RefreshIndicator(
                   onRefresh: () => provider.loadMyInquiries(),
                   child: ListView.builder(
@@ -136,12 +137,12 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
                         ),
                         child: ListTile(
                           title: Text(inq.title,
-                              style: const TextStyle(color: Colors.white)),
+                              style: TextStyle(color: context.ink)),
                           subtitle: Text(
                             DateFormat.yMMMd(
                               Localizations.localeOf(context).toString(),
                             ).format(inq.createdAt.toLocal()),
-                            style: const TextStyle(color: Colors.white54),
+                            style: TextStyle(color: context.ink54),
                           ),
                           trailing: _StatusBadge(
                               status: inq.status, label: inq.statusLabel(l)),
@@ -163,7 +164,7 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        status == 'replied' ? const Color(0xFF4CAF50) : Colors.orange;
+        status == 'replied' ? context.accent : Colors.orange;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(

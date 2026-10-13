@@ -79,6 +79,26 @@ const CREATE_TABLES = `
 
   -- Users: last active tracking
   ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;
+
+  -- Ad-free purchase (one-time, non-consumable)
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS ads_removed BOOLEAN NOT NULL DEFAULT FALSE;
+
+  CREATE TABLE IF NOT EXISTS purchases (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    transaction_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (platform, transaction_id)
+  );
+
+  -- Refund reconciliation: how to re-check the purchase with the store, and when it was voided.
+  ALTER TABLE purchases ADD COLUMN IF NOT EXISTS receipt_ref TEXT;
+  ALTER TABLE purchases ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMPTZ;
+  ALTER TABLE purchases ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMPTZ DEFAULT NOW();
+
+  CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON purchases(user_id);
 `;
 
 export async function initDatabase(): Promise<void> {

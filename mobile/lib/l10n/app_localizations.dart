@@ -140,6 +140,180 @@ abstract class AppLocalizations {
   /// **'My Page'**
   String get myPage;
 
+  /// No description provided for @themeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get themeLabel;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get themeLight;
+
+  /// No description provided for @themeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get themeDark;
+
+  /// No description provided for @removeAds.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Ads'**
+  String get removeAds;
+
+  /// No description provided for @removeAdsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time purchase. Removes all ads for good.'**
+  String get removeAdsDesc;
+
+  /// No description provided for @adsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Ads removed'**
+  String get adsRemoved;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get restorePurchases;
+
+  /// No description provided for @purchaseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you! Ads have been removed.'**
+  String get purchaseSuccess;
+
+  /// No description provided for @purchaseRestoreEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No purchases to restore.'**
+  String get purchaseRestoreEmpty;
+
+  /// No description provided for @purchasePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your purchase is pending approval.'**
+  String get purchasePending;
+
+  /// No description provided for @purchaseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The purchase could not be completed. Please try again.'**
+  String get purchaseFailed;
+
+  /// No description provided for @purchaseNoticeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a digital item that takes effect as soon as you buy it. Withdrawal may be limited once it has been applied.'**
+  String get purchaseNoticeShort;
+
+  /// No description provided for @purchaseInfoLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase & refund info'**
+  String get purchaseInfoLink;
+
+  /// No description provided for @purchasePolicyEffective.
+  ///
+  /// In en, this message translates to:
+  /// **'Effective: October 13, 2026'**
+  String get purchasePolicyEffective;
+
+  /// No description provided for @purchasePolicyProductTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Item for sale'**
+  String get purchasePolicyProductTitle;
+
+  /// No description provided for @purchasePolicyProductBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Ads: removes all banner and interstitial ads in the app. One-time payment, permanent. It is not a subscription.\n\nCharts, the equity calculator, the pot calculator and every other feature work the same whether or not you buy it.\n\nThe price is shown on the purchase screen and in the store listing (App Store, Google Play).'**
+  String get purchasePolicyProductBody;
+
+  /// No description provided for @purchasePolicyPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get purchasePolicyPaymentTitle;
+
+  /// No description provided for @purchasePolicyPaymentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment is processed by the Apple App Store or Google Play. We do not store card numbers or other payment details.\n\nYour purchase is confirmed on our server by checking the store receipt, and is saved against the account you are signed in with.'**
+  String get purchasePolicyPaymentBody;
+
+  /// No description provided for @purchasePolicyUsageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use and restore'**
+  String get purchasePolicyUsageTitle;
+
+  /// No description provided for @purchasePolicyUsageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A purchase is linked to the account you were signed in with when you bought it.\n\nAfter switching devices or reinstalling the app, sign in with the same account and tap \"Restore purchases\" on My Page.\n\nOne purchase can be linked to one account only. A purchase already linked to another account cannot be used on a different one.\n\nIf you delete your account, the purchase link stored on our server is deleted. Your store purchase history remains, so you can sign up again with the same store account and use \"Restore purchases\".'**
+  String get purchasePolicyUsageBody;
+
+  /// No description provided for @purchasePolicyRefundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal and refunds'**
+  String get purchasePolicyRefundTitle;
+
+  /// No description provided for @purchasePolicyRefundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Ads is a digital item that takes effect as soon as you buy it. Once it has been applied, withdrawal may be limited to the extent the applicable law (the Act on the Consumer Protection in Electronic Commerce) allows. We tell you this before you buy.\n\nPlease request refunds from the store you bought from (Apple or Google), following its process and policy. Payments and refunds are handled by the store, so we cannot refund you directly.\n• Apple: use \"Report a Problem\" in your purchase history\n• Google Play: request a refund from your order history in the Play Store\n\nWhen a refund is completed, the app notices it the next time it loads your purchase status and switches ad removal off. This can take some time.\n\nIf something is wrong, for example ads do not go away after you bought it, please contact us below.'**
+  String get purchasePolicyRefundBody;
+
+  /// No description provided for @purchasePolicyContactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Business information & contact'**
+  String get purchasePolicyContactTitle;
+
+  /// No description provided for @purchasePolicyContactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Business name: Jinsoft\nRepresentative: Kim Mijin\nAddress: 138 Chunggyeong-ro, Building 303, Unit 508, Deogyang-gu, Gyeonggi-do\nPhone: 010-4676-2773\nBusiness registration no.: 827-53-01093\nMail-order business report no.: 2026-고양덕양구-0658\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us'**
+  String get purchasePolicyContactBody;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @viewOnWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'View on the web'**
+  String get viewOnWeb;
+
+  /// No description provided for @linkOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the link. Please try again later.'**
+  String get linkOpenFailed;
+
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:
@@ -341,7 +515,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryOpenPot.
   ///
   /// In en, this message translates to:
-  /// **'Open Pot'**
+  /// **'Open Raise'**
   String get categoryOpenPot;
 
   /// No description provided for @categoryIsoRaise.

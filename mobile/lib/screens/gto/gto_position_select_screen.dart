@@ -9,6 +9,7 @@ import '../../services/ad_helper.dart';
 import '../../services/interstitial_ad_manager.dart';
 import '../../widgets/banner_ad_widget.dart';
 import 'gto_situation_select_screen.dart';
+import '../../theme/app_theme.dart';
 
 class GtoPositionSelectScreen extends StatefulWidget {
   const GtoPositionSelectScreen({super.key});
@@ -165,7 +166,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               Text(
                 l.stepChooseSeat,
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: context.ink70,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -189,7 +190,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               const Spacer(),
               Text(
                 '${_tableLabel(gto.selectedPlayerCount)} · ${l.nCharts(gto.positionTree.fold<int>(0, (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length)))}',
-                style: TextStyle(color: Colors.white38, fontSize: 12),
+                style: TextStyle(color: context.ink38, fontSize: 12),
               ),
             ],
           ),
@@ -236,9 +237,9 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF161616),
+        color: context.panelDim,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: context.ink.withValues(alpha: 0.06)),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -250,8 +251,8 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
             children: [
               Text(
                 l.tableSize,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.ink,
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                 ),
@@ -259,8 +260,8 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               const SizedBox(height: 4),
               Text(
                 l.tableSizeDesc,
-                style: const TextStyle(
-                  color: Colors.white54,
+                style: TextStyle(
+                  color: context.ink54,
                   fontSize: 12,
                   height: 1.35,
                 ),
@@ -287,12 +288,12 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? const Color(0xFF42A5F5).withValues(alpha: 0.16)
-                                : Colors.white.withValues(alpha: 0.04),
+                                : context.ink.withValues(alpha: 0.04),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
                                   ? const Color(0xFF42A5F5)
-                                  : Colors.white.withValues(alpha: 0.08),
+                                  : context.ink.withValues(alpha: 0.08),
                               width: isSelected ? 1.4 : 1,
                             ),
                           ),
@@ -302,7 +303,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                               Text(
                                 primaryLabel,
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white : Colors.white70,
+                                  color: isSelected ? context.ink : context.ink70,
                                   fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -313,7 +314,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
-                                  color: isSelected ? Colors.white70 : Colors.white38,
+                                  color: isSelected ? context.ink70 : context.ink38,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -337,10 +338,10 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: context.panel,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.06),
+          color: context.ink.withValues(alpha: 0.06),
         ),
       ),
       child: Column(
@@ -390,7 +391,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               else
                 Text(
                   l.enterValuesToCalculate,
-                  style: TextStyle(color: Colors.white30, fontSize: 12),
+                  style: TextStyle(color: context.ink30, fontSize: 12),
                 ),
               const Spacer(),
             ],
@@ -426,7 +427,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                     shape: BoxShape.circle,
                     color: isSelected
                         ? _tierColor(tier)
-                        : Colors.white.withValues(alpha: 0.15),
+                        : context.ink.withValues(alpha: 0.15),
                     boxShadow: isSelected
                         ? [BoxShadow(color: _tierColor(tier).withValues(alpha: 0.4), blurRadius: 6)]
                         : null,
@@ -436,7 +437,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
                 Text(
                   '${tier}bb',
                   style: TextStyle(
-                    color: isSelected ? _tierColor(tier) : Colors.white30,
+                    color: isSelected ? _tierColor(tier) : context.ink30,
                     fontSize: 10,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   ),
@@ -489,9 +490,9 @@ class _QuickStartCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF161616),
+        color: context.panelDim,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: context.ink.withValues(alpha: 0.06)),
       ),
       child: Row(
         children: [
@@ -499,8 +500,8 @@ class _QuickStartCard extends StatelessWidget {
             flex: 0,
             child: Text(
               l.buildYourSpot,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.ink,
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
@@ -540,13 +541,13 @@ class _QuickInfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: context.ink.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white70,
+        style: TextStyle(
+          color: context.ink70,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -572,20 +573,20 @@ class _BbInputField extends StatelessWidget {
       onChanged: onChanged,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: const TextStyle(color: Colors.white, fontSize: 14),
+      style: TextStyle(color: context.ink, fontSize: 14),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white38, fontSize: 12),
+        labelStyle: TextStyle(color: context.ink38, fontSize: 12),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: context.ink.withValues(alpha: 0.05),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: context.ink.withValues(alpha: 0.1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: context.ink.withValues(alpha: 0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
@@ -625,7 +626,7 @@ class _PositionCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           child: Ink(
             decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
+              color: context.panel,
               borderRadius: BorderRadius.circular(12),
             ),
             child: IntrinsicHeight(
@@ -663,8 +664,8 @@ class _PositionCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   description,
-                                  style: const TextStyle(
-                                    color: Colors.white60,
+                                  style: TextStyle(
+                                    color: context.ink60,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -706,7 +707,7 @@ class _PositionCard extends StatelessWidget {
                         Text(
                           '$chartCount',
                           style: TextStyle(
-                            color: Colors.white38,
+                            color: context.ink38,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -714,7 +715,7 @@ class _PositionCard extends StatelessWidget {
                         const SizedBox(width: 4),
                         Icon(
                           Icons.chevron_right,
-                          color: Colors.white24,
+                          color: context.ink24,
                           size: 20,
                         ),
                       ],

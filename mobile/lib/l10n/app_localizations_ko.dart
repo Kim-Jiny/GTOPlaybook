@@ -30,6 +30,99 @@ class AppLocalizationsKo extends AppLocalizations {
   String get myPage => '마이 페이지';
 
   @override
+  String get themeLabel => '테마';
+
+  @override
+  String get themeSystem => '시스템';
+
+  @override
+  String get themeLight => '라이트';
+
+  @override
+  String get themeDark => '다크';
+
+  @override
+  String get removeAds => '광고 제거';
+
+  @override
+  String get removeAdsDesc => '한 번 결제로 모든 광고를 영구히 제거해요.';
+
+  @override
+  String get adsRemoved => '광고 제거됨';
+
+  @override
+  String get restorePurchases => '구매 복원';
+
+  @override
+  String get purchaseSuccess => '구매해 주셔서 감사합니다! 광고가 제거되었어요.';
+
+  @override
+  String get purchaseRestoreEmpty => '복원할 구매 내역이 없어요.';
+
+  @override
+  String get purchasePending => '결제 승인을 기다리고 있어요.';
+
+  @override
+  String get purchaseFailed => '결제를 완료하지 못했어요. 다시 시도해 주세요.';
+
+  @override
+  String get purchaseNoticeShort =>
+      '구매 즉시 광고가 제거되는 디지털 상품이에요. 적용된 이후에는 청약철회가 제한될 수 있어요.';
+
+  @override
+  String get purchaseInfoLink => '구매 및 환불 안내';
+
+  @override
+  String get purchasePolicyEffective => '시행일: 2026년 10월 13일';
+
+  @override
+  String get purchasePolicyProductTitle => '판매 상품';
+
+  @override
+  String get purchasePolicyProductBody =>
+      '광고 제거: 앱 안의 모든 배너·전면 광고를 제거해요. 1회 결제로 영구 적용되며 구독이 아니에요.\n\n차트, 에퀴티 계산기, 팟 계산기 등 다른 기능은 구매 여부와 관계없이 똑같이 제공돼요.\n\n가격은 구매 화면과 앱 마켓(App Store, Google Play)의 상품 정보에 표시돼요.';
+
+  @override
+  String get purchasePolicyPaymentTitle => '결제';
+
+  @override
+  String get purchasePolicyPaymentBody =>
+      '결제는 Apple App Store 또는 Google Play를 통해 처리돼요. 신용카드 번호 등 결제수단 정보는 저장하지 않아요.\n\n구매 내역은 영수증 확인을 위해 서버에서 확인하고, 로그인한 계정에 연결해 저장해요.';
+
+  @override
+  String get purchasePolicyUsageTitle => '이용 및 복원';
+
+  @override
+  String get purchasePolicyUsageBody =>
+      '구매는 구매 당시 로그인한 계정에 연결돼요.\n\n기기를 바꾸거나 앱을 다시 설치했다면 같은 계정으로 로그인한 뒤 마이 페이지의 \'구매 복원\'을 눌러 주세요.\n\n하나의 구매는 하나의 계정에만 연결할 수 있어요. 이미 다른 계정에 연결된 구매는 다른 계정에서 쓸 수 없어요.\n\n계정을 삭제하면 서버에 저장된 구매 연결 정보가 삭제돼요. 앱 마켓의 구매 내역은 남아 있어서, 같은 앱 마켓 계정으로 다시 가입한 뒤 \'구매 복원\'으로 이용할 수 있어요.';
+
+  @override
+  String get purchasePolicyRefundTitle => '청약철회 및 환불';
+
+  @override
+  String get purchasePolicyRefundBody =>
+      '광고 제거는 구매 즉시 적용되는 디지털 상품이에요. 이미 적용된 이후에는 관련 법령(전자상거래 등에서의 소비자보호에 관한 법률)이 허용하는 범위에서 청약철회가 제한될 수 있어요. 이 내용은 구매 전에 안내해 드려요.\n\n환불은 구매하신 앱 마켓(Apple 또는 Google)의 절차와 정책에 따라 해당 앱 마켓에 신청해 주세요. 결제와 환불은 앱 마켓이 처리해서 회사가 직접 환불해 드릴 수 없어요.\n• Apple: 구입 내역에서 \'문제 신고\'로 요청\n• Google Play: Play 스토어의 주문 내역에서 환불 요청\n\n환불이 완료되면 앱이 구매 상태를 불러올 때 확인해서 광고 제거를 해제해요. 반영까지 시간이 걸릴 수 있어요.\n\n구매했는데도 광고가 사라지지 않는 등 문제가 있다면 아래 문의처로 알려 주세요.';
+
+  @override
+  String get purchasePolicyContactTitle => '사업자 정보 및 문의처';
+
+  @override
+  String get purchasePolicyContactBody =>
+      '상호: 진소프트\n대표자: 김미진\n사업장 주소: 경기도 덕양구 충경로 138, 303동 508호\n전화번호: 010-4676-2773\n사업자등록번호: 827-53-01093\n통신판매업 신고번호: 2026-고양덕양구-0658\n이메일: kjinyz@naver.com\n앱 안: 마이 페이지 > 문의하기';
+
+  @override
+  String get privacyPolicy => '개인정보처리방침';
+
+  @override
+  String get termsOfService => '서비스 이용약관';
+
+  @override
+  String get viewOnWeb => '웹에서 보기';
+
+  @override
+  String get linkOpenFailed => '링크를 열 수 없어요. 잠시 후 다시 시도해 주세요.';
+
+  @override
   String get retry => '다시 시도';
 
   @override
@@ -147,7 +240,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get categoryOpenPot => '오픈팟';
+  String get categoryOpenPot => '오픈 레이즈';
 
   @override
   String get categoryIsoRaise => '아이소 레이즈 vs 림프';

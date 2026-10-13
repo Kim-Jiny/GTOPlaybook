@@ -14,9 +14,11 @@ import { initDatabase } from './config/initDb';
 import pool from './config/db';
 import gtoRoutes from './routes/gto';
 import userRoutes from './routes/user';
+import purchaseRoutes from './routes/purchase';
 import inquiryRoutes from './routes/inquiry';
 import adminRoutes from './routes/admin';
 import adminWebRoutes from './routes/adminWeb';
+import legalRoutes from './routes/legal';
 
 const app = express();
 const PgStore = connectPgSimple(session);
@@ -64,7 +66,8 @@ app.use(
     },
   }),
 );
-app.use(express.json());
+// Store receipts can be large; the default 100kb would reject them.
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
@@ -93,12 +96,16 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Public terms and policies (no auth)
+app.use('/legal', legalRoutes);
+
 // Admin web dashboard
 app.use('/admin', adminWebRoutes);
 
 // API routes
 app.use('/api/gto', gtoRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/purchases', purchaseRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/admin', adminRoutes);
 

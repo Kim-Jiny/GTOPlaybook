@@ -5,6 +5,7 @@ import '../../services/ad_helper.dart';
 import '../../services/interstitial_ad_manager.dart';
 import '../../widgets/banner_ad_widget.dart';
 import 'gto_chart_detail_screen.dart';
+import '../../theme/app_theme.dart';
 
 class GtoSituationSelectScreen extends StatelessWidget {
   final PositionSituations positionSituations;
@@ -46,10 +47,7 @@ class GtoSituationSelectScreen extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.positionPlaybook(pos)),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(l.positionPlaybook(pos)), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -60,7 +58,9 @@ class GtoSituationSelectScreen extends StatelessWidget {
             chartCount: totalCharts,
           ),
           const SizedBox(height: 12),
-          const Center(child: BannerAdWidget(placement: AdPlacement.situationList)),
+          const Center(
+            child: BannerAdWidget(placement: AdPlacement.situationList),
+          ),
           const SizedBox(height: 12),
           ...positionSituations.categories.map((cat) {
             return _CategorySection(
@@ -76,7 +76,7 @@ class GtoSituationSelectScreen extends StatelessWidget {
   }
 }
 
-class _CategorySection extends StatelessWidget {
+class _CategorySection extends StatefulWidget {
   final String heroPosition;
   final SituationCategory category;
   final Color posColor;
@@ -90,51 +90,75 @@ class _CategorySection extends StatelessWidget {
   });
 
   @override
+  State<_CategorySection> createState() => _CategorySectionState();
+}
+
+class _CategorySectionState extends State<_CategorySection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
+    final heroPosition = widget.heroPosition;
+    final category = widget.category;
+    final posColor = widget.posColor;
+    final icon = widget.icon;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Category header
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Icon(icon, color: posColor, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                _categoryLabel(category.category, l),
-                style: TextStyle(
-                  color: posColor,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+        // Category header — tap to fold / unfold the chart list
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              children: [
+                Icon(icon, color: posColor, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  _categoryLabel(category.category, l),
+                  style: TextStyle(
+                    color: posColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: posColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: posColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '${category.charts.length}',
+                    style: TextStyle(color: posColor, fontSize: 12),
+                  ),
                 ),
-                child: Text(
-                  '${category.charts.length}',
-                  style: TextStyle(color: posColor, fontSize: 12),
+                const Spacer(),
+                Icon(
+                  _expanded ? Icons.expand_less : Icons.expand_more,
+                  color: context.ink54,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         // Chart list
-        ...category.charts.map(
-          (chart) => _ChartTile(
-            heroPosition: heroPosition,
-            chart: chart,
-            category: category.category,
-            posColor: posColor,
+        if (_expanded)
+          ...category.charts.map(
+            (chart) => _ChartTile(
+              heroPosition: heroPosition,
+              chart: chart,
+              category: category.category,
+              posColor: posColor,
+            ),
           ),
-        ),
         const SizedBox(height: 16),
       ],
     );
@@ -200,7 +224,8 @@ class _ChartTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final title = _chartTitle();
-    final actions = chart.actionTypes?.where((a) => a.key != 'fold').toList() ?? const [];
+    final actions =
+        chart.actionTypes?.where((a) => a.key != 'fold').toList() ?? const [];
     final villainColor = chart.vsPosition != null
         ? _villainColors[chart.vsPosition] ?? Colors.grey
         : posColor;
@@ -231,7 +256,9 @@ class _ChartTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: villainColor.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: villainColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: villainColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
@@ -250,8 +277,8 @@ class _ChartTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.ink,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -265,9 +292,11 @@ class _ChartTile extends StatelessWidget {
                           height: 6,
                           child: Row(
                             children: [
-                              ...actions.map((a) => Expanded(
-                                    child: Container(color: a.toColor()),
-                                  )),
+                              ...actions.map(
+                                (a) => Expanded(
+                                  child: Container(color: a.toColor()),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -277,24 +306,26 @@ class _ChartTile extends StatelessWidget {
                       Row(
                         children: actions
                             .take(3)
-                            .map((a) => Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: Text(
-                                    a.label,
-                                    style: TextStyle(
-                                      color: a.toColor().withValues(alpha: 0.85),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                            .map(
+                              (a) => Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: Text(
+                                  a.label,
+                                  style: TextStyle(
+                                    color: a.toColor().withValues(alpha: 0.85),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
-                                ))
+                                ),
+                              ),
+                            )
                             .toList(),
                       ),
                     ],
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.white30, size: 20),
+              Icon(Icons.chevron_right, color: context.ink30, size: 20),
             ],
           ),
         ),
@@ -344,20 +375,8 @@ class _SituationIntroCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l.positionStrategyLibrary(position),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
               l.chooseSpotDesc,
-              style: const TextStyle(
-                color: Colors.white70,
-                height: 1.4,
-              ),
+              style: TextStyle(color: context.ink70, height: 1.4),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -391,10 +410,7 @@ class _InfoChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-        ),
+        style: TextStyle(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }

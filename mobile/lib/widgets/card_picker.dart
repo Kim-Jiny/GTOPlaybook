@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import '../models/card.dart';
+import '../theme/app_theme.dart';
 
 class CardPicker extends StatefulWidget {
   final int maxCards;
@@ -23,7 +24,7 @@ class CardPicker extends StatefulWidget {
     return showModalBottomSheet<List<PlayingCard>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A2E1A),
+      backgroundColor: context.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -121,10 +122,10 @@ class _CardPickerState extends State<CardPicker> {
                 margin: const EdgeInsets.all(1),
                 decoration: BoxDecoration(
                   color: isDisabled
-                      ? Colors.grey.shade800.withValues(alpha: 0.5)
+                      ? context.ink10
                       : isSelected
                           ? const Color(0xFF2E7D32)
-                          : const Color(0xFF263238),
+                          : context.ink12,
                   borderRadius: BorderRadius.circular(4),
                   border: isSelected ? Border.all(color: Colors.greenAccent, width: 1.5) : null,
                 ),
@@ -134,7 +135,7 @@ class _CardPickerState extends State<CardPicker> {
                     Text(
                       rank,
                       style: TextStyle(
-                        color: isDisabled ? Colors.grey.shade600 : Colors.white,
+                        color: isDisabled ? Colors.grey.shade600 : (isSelected ? Colors.white : context.ink),
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         height: 1,
@@ -143,7 +144,9 @@ class _CardPickerState extends State<CardPicker> {
                     Text(
                       suitSymbols[suit]!,
                       style: TextStyle(
-                        color: isDisabled ? Colors.grey.shade600 : suitColors[suit],
+                        color: isDisabled
+                            ? Colors.grey.shade600
+                            : (suit == 's' ? (isSelected ? Colors.white : context.ink) : suitColors[suit]),
                         fontSize: 12,
                         height: 1.2,
                       ),

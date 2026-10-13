@@ -11,9 +11,14 @@ enum AdPlacement {
 }
 
 class AdHelper {
-  static bool get isBannerAdsSupported => PlatformSupport.isAdsSupported;
+  /// Set by PurchaseProvider once the ad-free upgrade is owned.
+  static bool adsRemoved = false;
 
-  static bool get isInterstitialAdsSupported => PlatformSupport.isAdsSupported;
+  static bool get isBannerAdsSupported =>
+      PlatformSupport.isAdsSupported && !adsRemoved;
+
+  static bool get isInterstitialAdsSupported =>
+      PlatformSupport.isAdsSupported && !adsRemoved;
 
   static String? getBannerAdUnitId(AdPlacement placement) {
     if (!isBannerAdsSupported) {

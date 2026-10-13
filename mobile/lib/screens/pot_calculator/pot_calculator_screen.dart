@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/pot_calculator_provider.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
+import '../../theme/app_theme.dart';
 
 part 'widgets/pot_display.dart';
 part 'widgets/blind_structure.dart';

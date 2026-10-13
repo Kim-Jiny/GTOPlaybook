@@ -30,6 +30,101 @@ class AppLocalizationsEn extends AppLocalizations {
   String get myPage => 'My Page';
 
   @override
+  String get themeLabel => 'Theme';
+
+  @override
+  String get themeSystem => 'System';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get themeDark => 'Dark';
+
+  @override
+  String get removeAds => 'Remove Ads';
+
+  @override
+  String get removeAdsDesc => 'One-time purchase. Removes all ads for good.';
+
+  @override
+  String get adsRemoved => 'Ads removed';
+
+  @override
+  String get restorePurchases => 'Restore purchases';
+
+  @override
+  String get purchaseSuccess => 'Thank you! Ads have been removed.';
+
+  @override
+  String get purchaseRestoreEmpty => 'No purchases to restore.';
+
+  @override
+  String get purchasePending => 'Your purchase is pending approval.';
+
+  @override
+  String get purchaseFailed =>
+      'The purchase could not be completed. Please try again.';
+
+  @override
+  String get purchaseNoticeShort =>
+      'This is a digital item that takes effect as soon as you buy it. Withdrawal may be limited once it has been applied.';
+
+  @override
+  String get purchaseInfoLink => 'Purchase & refund info';
+
+  @override
+  String get purchasePolicyEffective => 'Effective: October 13, 2026';
+
+  @override
+  String get purchasePolicyProductTitle => 'Item for sale';
+
+  @override
+  String get purchasePolicyProductBody =>
+      'Remove Ads: removes all banner and interstitial ads in the app. One-time payment, permanent. It is not a subscription.\n\nCharts, the equity calculator, the pot calculator and every other feature work the same whether or not you buy it.\n\nThe price is shown on the purchase screen and in the store listing (App Store, Google Play).';
+
+  @override
+  String get purchasePolicyPaymentTitle => 'Payment';
+
+  @override
+  String get purchasePolicyPaymentBody =>
+      'Payment is processed by the Apple App Store or Google Play. We do not store card numbers or other payment details.\n\nYour purchase is confirmed on our server by checking the store receipt, and is saved against the account you are signed in with.';
+
+  @override
+  String get purchasePolicyUsageTitle => 'Use and restore';
+
+  @override
+  String get purchasePolicyUsageBody =>
+      'A purchase is linked to the account you were signed in with when you bought it.\n\nAfter switching devices or reinstalling the app, sign in with the same account and tap \"Restore purchases\" on My Page.\n\nOne purchase can be linked to one account only. A purchase already linked to another account cannot be used on a different one.\n\nIf you delete your account, the purchase link stored on our server is deleted. Your store purchase history remains, so you can sign up again with the same store account and use \"Restore purchases\".';
+
+  @override
+  String get purchasePolicyRefundTitle => 'Withdrawal and refunds';
+
+  @override
+  String get purchasePolicyRefundBody =>
+      'Remove Ads is a digital item that takes effect as soon as you buy it. Once it has been applied, withdrawal may be limited to the extent the applicable law (the Act on the Consumer Protection in Electronic Commerce) allows. We tell you this before you buy.\n\nPlease request refunds from the store you bought from (Apple or Google), following its process and policy. Payments and refunds are handled by the store, so we cannot refund you directly.\n• Apple: use \"Report a Problem\" in your purchase history\n• Google Play: request a refund from your order history in the Play Store\n\nWhen a refund is completed, the app notices it the next time it loads your purchase status and switches ad removal off. This can take some time.\n\nIf something is wrong, for example ads do not go away after you bought it, please contact us below.';
+
+  @override
+  String get purchasePolicyContactTitle => 'Business information & contact';
+
+  @override
+  String get purchasePolicyContactBody =>
+      'Business name: Jinsoft\nRepresentative: Kim Mijin\nAddress: 138 Chunggyeong-ro, Building 303, Unit 508, Deogyang-gu, Gyeonggi-do\nPhone: 010-4676-2773\nBusiness registration no.: 827-53-01093\nMail-order business report no.: 2026-고양덕양구-0658\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get viewOnWeb => 'View on the web';
+
+  @override
+  String get linkOpenFailed =>
+      'Couldn\'t open the link. Please try again later.';
+
+  @override
   String get retry => 'Retry';
 
   @override
@@ -148,7 +243,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get categoryOpenPot => 'Open Pot';
+  String get categoryOpenPot => 'Open Raise';
 
   @override
   String get categoryIsoRaise => 'Iso Raise vs Limp';
