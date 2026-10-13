@@ -3,6 +3,7 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/inquiry.dart';
 import '../../providers/admin_inquiry_provider.dart';
+import '../../theme/app_theme.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -38,7 +39,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(inquiry.content,
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: context.ink70)),
               const SizedBox(height: 16),
               TextField(
                 controller: controller,
@@ -207,15 +208,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 flex: 1,
                 valueColor: pendingCount > 0
                     ? Colors.orange
-                    : const Color(0xFF4CAF50),
+                    : context.accent,
               ),
             ],
           ),
           const SizedBox(height: 24),
 
           Text(l.signupsLast30Days,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: context.ink,
                   fontSize: 16,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
@@ -223,7 +224,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(l.noDataAvailable,
-                  style: const TextStyle(color: Colors.white38)),
+                  style: TextStyle(color: context.ink38)),
             )
           else
             ...dailySignups.map((d) => Padding(
@@ -233,11 +234,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         MainAxisAlignment.spaceBetween,
                     children: [
                       Text('${d['date']}'.substring(0, 10),
-                          style: const TextStyle(
-                              color: Colors.white70)),
+                          style: TextStyle(
+                              color: context.ink70)),
                       Text('${d['count']}',
-                          style: const TextStyle(
-                              color: Color(0xFF4CAF50),
+                          style: TextStyle(
+                              color: context.accent,
                               fontWeight: FontWeight.w600)),
                     ],
                   ),
@@ -252,8 +253,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: Text(l.inquiryManagement,
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: context.ink,
                         fontSize: 16,
                         fontWeight: FontWeight.bold)),
               ),
@@ -290,7 +291,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               padding: const EdgeInsets.symmetric(vertical: 16),
               child: Center(
                   child: Text(l.noInquiries,
-                      style: const TextStyle(color: Colors.white38))),
+                      style: TextStyle(color: context.ink38))),
             )
           else
             ...provider.allInquiries.map((inq) => Card(
@@ -301,18 +302,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: ListTile(
                     title: Text(inq.title,
                         style:
-                            const TextStyle(color: Colors.white)),
+                            TextStyle(color: context.ink)),
                     subtitle: Text(
                       '${inq.displayName ?? inq.email ?? ''} · ${inq.createdAt.toLocal().toString().substring(0, 10)}',
                       style:
-                          const TextStyle(color: Colors.white38),
+                          TextStyle(color: context.ink38),
                     ),
                     trailing: Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: inq.status == 'replied'
-                            ? const Color(0xFF4CAF50)
+                            ? context.accent
                                 .withValues(alpha: 0.15)
                             : Colors.orange
                                 .withValues(alpha: 0.15),
@@ -322,7 +323,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         inq.statusLabel(l),
                         style: TextStyle(
                           color: inq.status == 'replied'
-                              ? const Color(0xFF4CAF50)
+                              ? context.accent
                               : Colors.orange,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -377,7 +378,7 @@ class _InlineErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(color: Colors.white),
+              style: TextStyle(color: context.ink),
             ),
           ),
           const SizedBox(width: 8),
@@ -418,10 +419,10 @@ class _StatCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: valueColor ?? Colors.white,
+                    color: valueColor ?? context.ink,
                   )),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(color: Colors.white54)),
+              Text(label, style: TextStyle(color: context.ink54)),
             ],
           ),
         ),

@@ -5,6 +5,7 @@ import '../../services/ad_helper.dart';
 import '../../services/interstitial_ad_manager.dart';
 import '../../widgets/banner_ad_widget.dart';
 import 'gto_chart_detail_screen.dart';
+import '../../theme/app_theme.dart';
 
 class GtoSituationSelectScreen extends StatelessWidget {
   final PositionSituations positionSituations;
@@ -142,7 +143,7 @@ class _CategorySectionState extends State<_CategorySection> {
                 const Spacer(),
                 Icon(
                   _expanded ? Icons.expand_less : Icons.expand_more,
-                  color: Colors.white54,
+                  color: context.ink54,
                 ),
               ],
             ),
@@ -276,8 +277,8 @@ class _ChartTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.ink,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -324,7 +325,7 @@ class _ChartTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.white30, size: 20),
+              Icon(Icons.chevron_right, color: context.ink30, size: 20),
             ],
           ),
         ),
@@ -375,7 +376,7 @@ class _SituationIntroCard extends StatelessWidget {
           children: [
             Text(
               l.chooseSpotDesc,
-              style: const TextStyle(color: Colors.white70, height: 1.4),
+              style: TextStyle(color: context.ink70, height: 1.4),
             ),
             const SizedBox(height: 12),
             Wrap(

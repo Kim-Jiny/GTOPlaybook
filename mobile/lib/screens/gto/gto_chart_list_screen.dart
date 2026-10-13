@@ -5,6 +5,7 @@ import '../../providers/gto_provider.dart';
 import '../../models/gto_chart.dart';
 import '../../services/interstitial_ad_manager.dart';
 import 'gto_chart_detail_screen.dart';
+import '../../theme/app_theme.dart';
 
 class GtoChartListScreen extends StatefulWidget {
   const GtoChartListScreen({super.key});
@@ -54,7 +55,7 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                     },
                     selectedColor: const Color(0xFF4CAF50),
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : Colors.white70,
+                      color: isSelected ? context.ink : context.ink70,
                     ),
                   ),
                 );
@@ -85,7 +86,7 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(l.noChartsAvailable, style: const TextStyle(color: Colors.white54)),
+                                Text(l.noChartsAvailable, style: TextStyle(color: context.ink54)),
                                 const SizedBox(height: 12),
                                 ElevatedButton(
                                   onPressed: () => gto.loadCharts(position: _selectedPosition),
@@ -138,8 +139,8 @@ class _ChartCard extends StatelessWidget {
           backgroundColor: _positionColor(chart.position),
           child: Text(
             chart.position,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: context.ink,
               fontWeight: FontWeight.bold,
               fontSize: 12,
             ),
@@ -147,13 +148,13 @@ class _ChartCard extends StatelessWidget {
         ),
         title: Text(
           chart.description ?? '${chart.position} ${chart.situation}',
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: context.ink),
         ),
         subtitle: Text(
           '${chart.situation} | ${chart.stackDepth}bb',
-          style: const TextStyle(color: Colors.white54),
+          style: TextStyle(color: context.ink54),
         ),
-        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
+        trailing: Icon(Icons.chevron_right, color: context.ink54),
         onTap: () {
           InterstitialAdManager.instance.maybeShowOnTransition();
           Navigator.push(

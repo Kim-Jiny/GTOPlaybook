@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../inquiry/inquiry_screen.dart';
 import '../inquiry/my_inquiries_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -18,10 +20,7 @@ class ProfileScreen extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.myPage),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(l.myPage), centerTitle: true),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -50,19 +49,16 @@ class ProfileScreen extends StatelessWidget {
                       children: [
                         Text(
                           user?.displayName ?? l.player,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: context.ink,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           user?.email ?? '',
-                          style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 14,
-                          ),
+                          style: TextStyle(color: context.ink54, fontSize: 14),
                         ),
                       ],
                     ),
@@ -74,6 +70,10 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 16),
           const Center(child: BannerAdWidget(placement: AdPlacement.profile)),
           const SizedBox(height: 16),
+
+          // Appearance
+          const _ThemeModeTile(),
+          const SizedBox(height: 8),
 
           // Menu items
           _MenuTile(
@@ -98,8 +98,7 @@ class ProfileScreen extends StatelessWidget {
               title: l.admin,
               onTap: () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const AdminDashboardScreen()),
+                MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
               ),
             ),
           const Divider(height: 32),
@@ -122,17 +121,17 @@ class ProfileScreen extends StatelessWidget {
 }
 
 void _showDeleteAccountDialog(
-    BuildContext context, AuthProvider auth, AppLocalizations l) {
+  BuildContext context,
+  AuthProvider auth,
+  AppLocalizations l,
+) {
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(l.deleteAccountTitle),
       content: Text(l.deleteAccountMessage),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx),
-          child: Text(l.cancel),
-        ),
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.cancel)),
         TextButton(
           onPressed: () async {
             final messenger = ScaffoldMessenger.of(context);
@@ -148,9 +147,7 @@ void _showDeleteAccountDialog(
               if (context.mounted) navigator.pop(); // dismiss loading
             } catch (e) {
               if (context.mounted) navigator.pop(); // dismiss loading
-              messenger.showSnackBar(
-                SnackBar(content: Text(e.toString())),
-              );
+              messenger.showSnackBar(SnackBar(content: Text(e.toString())));
             }
           },
           style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
@@ -177,12 +174,46 @@ class _MenuTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? const Color(0xFF4CAF50)),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      trailing:
-          const Icon(Icons.chevron_right, color: Colors.white38, size: 20),
+      leading: Icon(icon, color: iconColor ?? context.accent),
+      title: Text(title, style: TextStyle(color: context.ink)),
+      trailing: Icon(Icons.chevron_right, color: context.ink38, size: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onTap: onTap,
+    );
+  }
+}
+
+class _ThemeModeTile extends StatelessWidget {
+  const _ThemeModeTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final theme = context.watch<ThemeProvider>();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          Icon(Icons.brightness_6, color: context.accent),
+          const SizedBox(width: 16),
+          Expanded(child: Text(l.themeLabel)),
+          SegmentedButton<ThemeMode>(
+            showSelectedIcon: false,
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            segments: [
+              ButtonSegment(
+                value: ThemeMode.system,
+                label: Text(l.themeSystem),
+              ),
+              ButtonSegment(value: ThemeMode.light, label: Text(l.themeLight)),
+              ButtonSegment(value: ThemeMode.dark, label: Text(l.themeDark)),
+            ],
+            selected: {theme.mode},
+            onSelectionChanged: (s) => theme.setMode(s.first),
+          ),
+        ],
+      ),
     );
   }
 }

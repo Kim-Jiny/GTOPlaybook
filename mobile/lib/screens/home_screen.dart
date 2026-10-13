@@ -7,6 +7,7 @@ import 'gto/gto_position_select_screen.dart';
 import 'equity/equity_tab_screen.dart';
 import 'pot_calculator/pot_calculator_screen.dart';
 import 'profile/profile_screen.dart';
+import '../theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -53,22 +54,22 @@ class _HomeScreenState extends State<HomeScreen> {
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.grid_on),
-            selectedIcon: const Icon(Icons.grid_on, color: Color(0xFF4CAF50)),
+            selectedIcon: Icon(Icons.grid_on, color: context.accent),
             label: l.gtoCharts,
           ),
           NavigationDestination(
             icon: const Icon(Icons.calculate),
-            selectedIcon: const Icon(Icons.calculate, color: Color(0xFF4CAF50)),
+            selectedIcon: Icon(Icons.calculate, color: context.accent),
             label: l.equity,
           ),
           NavigationDestination(
             icon: const Icon(Icons.monetization_on),
-            selectedIcon: const Icon(Icons.monetization_on, color: Color(0xFF4CAF50)),
+            selectedIcon: Icon(Icons.monetization_on, color: context.accent),
             label: l.potCalculator,
           ),
           NavigationDestination(
             icon: const Icon(Icons.person),
-            selectedIcon: const Icon(Icons.person, color: Color(0xFF4CAF50)),
+            selectedIcon: Icon(Icons.person, color: context.accent),
             label: l.myPage,
           ),
         ],

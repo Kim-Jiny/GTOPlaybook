@@ -14,8 +14,8 @@ class _QuickActionBar extends StatelessWidget {
             icon: const Icon(Icons.fiber_new, size: 18),
             label: Text(AppLocalizations.of(context)!.newHand),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: const BorderSide(color: Colors.white24),
+              foregroundColor: context.ink70,
+              side: BorderSide(color: context.ink24),
               padding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
@@ -47,18 +47,18 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
+        color: context.ink.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white10),
+        border: Border.all(color: context.ink10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white54),
+          Icon(icon, size: 14, color: context.ink54),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Colors.white70),
+            style: TextStyle(fontSize: 12, color: context.ink70),
           ),
         ],
       ),
@@ -87,12 +87,12 @@ class _PotDisplay extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+                    color: context.accent.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.monetization_on_outlined,
-                    color: Color(0xFF66BB6A),
+                    color: context.accentSoft,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -104,12 +104,12 @@ class _PotDisplay extends StatelessWidget {
                         l.currentPot,
                         style: Theme.of(
                           context,
-                        ).textTheme.titleSmall?.copyWith(color: Colors.white70),
+                        ).textTheme.titleSmall?.copyWith(color: context.ink70),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         AppLocalizations.of(context)!.potDescription,
-                        style: const TextStyle(fontSize: 12, color: Colors.white38),
+                        style: TextStyle(fontSize: 12, color: context.ink38),
                       ),
                     ],
                   ),
@@ -121,7 +121,7 @@ class _PotDisplay extends StatelessWidget {
               provider.potDisplayText,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                color: const Color(0xFF4CAF50),
+                color: context.accent,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -135,7 +135,7 @@ class _PotDisplay extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.white38),
+                  ).textTheme.bodyMedium?.copyWith(color: context.ink38),
                 ),
               ),
             const SizedBox(height: 14),
@@ -178,9 +178,9 @@ class _CompactPotBar extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF122212).withValues(alpha: 0.96),
+        color: context.panelDim.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: context.ink12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.24),
@@ -194,13 +194,13 @@ class _CompactPotBar extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withValues(alpha: 0.12),
+              color: context.accent.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.visibility_outlined,
               size: 18,
-              color: Color(0xFF81C784),
+              color: context.accentSoft,
             ),
           ),
           const SizedBox(width: 12),
@@ -210,7 +210,7 @@ class _CompactPotBar extends StatelessWidget {
               children: [
                 Text(
                   AppLocalizations.of(context)!.currentPotView,
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: TextStyle(fontSize: 12, color: context.ink54),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -224,7 +224,7 @@ class _CompactPotBar extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '1BB ${provider.formatNumber(provider.bbSize)} · $levelText',
-                  style: const TextStyle(fontSize: 11, color: Colors.white54),
+                  style: TextStyle(fontSize: 11, color: context.ink54),
                 ),
               ],
             ),
@@ -234,7 +234,7 @@ class _CompactPotBar extends StatelessWidget {
               provider.chipMode == ChipMode.bb
                   ? '= ${provider.formatNumber(provider.potTotal)}'
                   : '= ${provider.potBbEquivalent}',
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
+              style: TextStyle(fontSize: 12, color: context.ink54),
             ),
         ],
       ),

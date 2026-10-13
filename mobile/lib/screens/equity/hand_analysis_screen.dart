@@ -7,6 +7,7 @@ import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/card_picker.dart';
 import '../../widgets/playing_card_widget.dart';
+import '../../theme/app_theme.dart';
 
 class HandAnalysisScreen extends StatelessWidget {
   const HandAnalysisScreen({super.key});
@@ -84,7 +85,7 @@ class _HeroHandSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.myHand, style: const TextStyle(fontSize: 14, color: Colors.white60)),
+            Text(l.myHand, style: TextStyle(fontSize: 14, color: context.ink60)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () async {
@@ -132,7 +133,7 @@ class _BoardSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.board, style: const TextStyle(fontSize: 14, color: Colors.white60)),
+            Text(l.board, style: TextStyle(fontSize: 14, color: context.ink60)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () async {
@@ -173,12 +174,12 @@ class _EmptyCardSlot extends StatelessWidget {
       width: 40,
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: context.ink10,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white24, width: 1),
+        border: Border.all(color: context.ink24, width: 1),
       ),
-      child: const Center(
-        child: Icon(Icons.add, color: Colors.white30, size: 20),
+      child: Center(
+        child: Icon(Icons.add, color: context.ink30, size: 20),
       ),
     );
   }
@@ -197,13 +198,13 @@ class _HeroHandStrength extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            const Icon(Icons.back_hand, color: Color(0xFF4CAF50), size: 20),
+            Icon(Icons.back_hand, color: context.accent, size: 20),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(l.currentHand, style: const TextStyle(fontSize: 12, color: Colors.white60)),
+                  Text(l.currentHand, style: TextStyle(fontSize: 12, color: context.ink60)),
                   const SizedBox(height: 2),
                   Text(
                     result.heroHandName,
@@ -249,7 +250,7 @@ class _WinLoseBar extends StatelessWidget {
                           child: result.winPercent > 10
                               ? Text(
                                   '${result.winPercent.toStringAsFixed(1)}%',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                                 )
                               : null,
                         ),
@@ -263,7 +264,7 @@ class _WinLoseBar extends StatelessWidget {
                           child: result.tiePercent > 10
                               ? Text(
                                   '${result.tiePercent.toStringAsFixed(1)}%',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                                 )
                               : null,
                         ),
@@ -277,7 +278,7 @@ class _WinLoseBar extends StatelessWidget {
                           child: result.losePercent > 10
                               ? Text(
                                   '${result.losePercent.toStringAsFixed(1)}%',
-                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                                 )
                               : null,
                         ),
@@ -309,7 +310,7 @@ class _WinLoseBar extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               l.totalNCombos(result.totalCombos),
-              style: const TextStyle(fontSize: 11, color: Colors.white38),
+              style: TextStyle(fontSize: 11, color: context.ink38),
             ),
           ],
         ),
@@ -380,14 +381,14 @@ class _BeatingCategoryTile extends StatelessWidget {
               children: [
                 Text(
                   '${category.combos} combos \u00B7 ${category.percent.toStringAsFixed(1)}%',
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: TextStyle(fontSize: 12, color: context.ink54),
                 ),
                 if (category.examples.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       category.examples.join(', '),
-                      style: const TextStyle(fontSize: 12, color: Colors.white38),
+                      style: TextStyle(fontSize: 12, color: context.ink38),
                     ),
                   ),
               ],
@@ -429,7 +430,7 @@ class _OutsSection extends StatelessWidget {
                         alignment: Alignment.center,
                         child: Text(
                           out.card,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -438,7 +439,7 @@ class _OutsSection extends StatelessWidget {
                       ),
                       Text(
                         l.nCards(out.count),
-                        style: const TextStyle(fontSize: 12, color: Colors.white54),
+                        style: TextStyle(fontSize: 12, color: context.ink54),
                       ),
                     ],
                   ),

@@ -21,13 +21,13 @@ class _BlindStructureBar extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.06),
+                  color: context.ink.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.list_alt,
                   size: 18,
-                  color: Colors.white70,
+                  color: context.ink70,
                 ),
               ),
               const SizedBox(width: 12),
@@ -39,8 +39,8 @@ class _BlindStructureBar extends StatelessWidget {
                       structure?.name ?? AppLocalizations.of(context)!.selectBlindStructure,
                       style: TextStyle(
                         color: structure != null
-                            ? Colors.white
-                            : Colors.white54,
+                            ? context.ink
+                            : context.ink54,
                         fontSize: 14,
                         fontWeight: structure != null
                             ? FontWeight.w700
@@ -52,9 +52,9 @@ class _BlindStructureBar extends StatelessWidget {
                       structure != null
                           ? AppLocalizations.of(context)!.tapToChangeStructure
                           : AppLocalizations.of(context)!.selectPresetStructureHint,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white38,
+                        color: context.ink38,
                       ),
                     ),
                   ],
@@ -70,18 +70,18 @@ class _BlindStructureBar extends StatelessWidget {
                     color: const Color(0xFF2E7D32).withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: const Text(
+                  child: Text(
                     'ACTIVE',
                     style: TextStyle(
                       fontSize: 10,
-                      color: Color(0xFF81C784),
+                      color: context.accentSoft,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
               ],
-              const Icon(Icons.chevron_right, color: Colors.white38),
+              Icon(Icons.chevron_right, color: context.ink38),
             ],
           ),
         ),
@@ -157,7 +157,7 @@ class _StructureSheet extends StatelessWidget {
               child: Center(
                 child: Text(
                   AppLocalizations.of(context)!.noSavedStructures,
-                  style: const TextStyle(color: Colors.white54),
+                  style: TextStyle(color: context.ink54),
                 ),
               ),
             )
@@ -180,25 +180,25 @@ class _StructureSheet extends StatelessWidget {
                     leading: Icon(
                       isActive ? Icons.check_circle : Icons.circle_outlined,
                       color: isActive
-                          ? const Color(0xFF4CAF50)
-                          : Colors.white24,
+                          ? context.accent
+                          : context.ink24,
                     ),
                     title: Text(s.name),
                     subtitle: Text(
                       preview,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white54,
+                        color: context.ink54,
                       ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.edit_outlined,
                             size: 20,
-                            color: Colors.white38,
+                            color: context.ink38,
                           ),
                           onPressed: () {
                             nav.pop();
@@ -215,10 +215,10 @@ class _StructureSheet extends StatelessWidget {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
                             size: 20,
-                            color: Colors.white38,
+                            color: context.ink38,
                           ),
                           onPressed: () {
                             provider.removeStructure(index);
@@ -415,6 +415,7 @@ class _BlindStructureEditScreenState extends State<BlindStructureEditScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _addLevel,
         backgroundColor: const Color(0xFF2E7D32),
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
       body: Column(
@@ -435,7 +436,7 @@ class _BlindStructureEditScreenState extends State<BlindStructureEditScreen> {
               child: Center(
                 child: Text(
                   AppLocalizations.of(context)!.addLevelsHint,
-                  style: const TextStyle(color: Colors.white54),
+                  style: TextStyle(color: context.ink54),
                 ),
               ),
             )
@@ -468,35 +469,35 @@ class _BlindStructureEditScreenState extends State<BlindStructureEditScreen> {
                     title: Text(level.label),
                     subtitle: Text(
                       'SB ${level.sb} / BB ${level.bb}${level.anteMode != AnteMode.none ? ' / ${level.anteMode == AnteMode.bbAnte ? 'BB Ante' : 'All Ante'} ${level.ante}' : ''}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white54,
+                        color: context.ink54,
                       ),
                     ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.edit_outlined,
                             size: 20,
-                            color: Colors.white38,
+                            color: context.ink38,
                           ),
                           onPressed: () => _editLevel(index),
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
                             size: 20,
-                            color: Colors.white38,
+                            color: context.ink38,
                           ),
                           onPressed: () =>
                               setState(() => _levels.removeAt(index)),
                         ),
-                        const Icon(
+                        Icon(
                           Icons.drag_handle,
                           size: 20,
-                          color: Colors.white24,
+                          color: context.ink24,
                         ),
                       ],
                     ),

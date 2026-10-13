@@ -6,6 +6,7 @@ import '../../models/gto_chart.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/gto_grid.dart';
+import '../../theme/app_theme.dart';
 
 class GtoChartDetailScreen extends StatefulWidget {
   final int chartId;
@@ -126,7 +127,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
           ? Center(
               child: Text(
                 l.noData,
-                style: const TextStyle(color: Colors.white54),
+                style: TextStyle(color: context.ink54),
               ),
             )
           : SingleChildScrollView(
@@ -255,7 +256,7 @@ class _LegendItem extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: TextStyle(color: context.ink70, fontSize: 12),
         ),
       ],
     );
@@ -270,7 +271,7 @@ class _HandDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
-    final summary = _actionSummary(range, actionTypes, l);
+    final summary = _actionSummary(context, range, actionTypes, l);
     final rankedActions = _rankedActions(range, actionTypes);
 
     return Card(
@@ -284,10 +285,10 @@ class _HandDetail extends StatelessWidget {
               children: [
                 Text(
                   range.hand,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: context.ink,
                   ),
                 ),
                 const Spacer(),
@@ -313,7 +314,7 @@ class _HandDetail extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               summary.description,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
+              style: TextStyle(color: context.ink70, fontSize: 14),
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -329,8 +330,8 @@ class _HandDetail extends StatelessWidget {
             if (rankedActions.isNotEmpty) ...[
               Text(
                 l.actionPriority,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.ink,
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                 ),
@@ -346,8 +347,8 @@ class _HandDetail extends StatelessWidget {
             ],
             Text(
               _studyNote(range, rankedActions, l),
-              style: const TextStyle(
-                color: Colors.white60,
+              style: TextStyle(
+                color: context.ink60,
                 fontSize: 13,
                 height: 1.45,
               ),
@@ -392,6 +393,7 @@ class _HandDetail extends StatelessWidget {
   }
 
   _ActionSummary _actionSummary(
+    BuildContext context,
     HandRange range,
     List<ActionType>? actionTypes,
     AppLocalizations l,
@@ -409,7 +411,7 @@ class _HandDetail extends StatelessWidget {
       return _ActionSummary(
         title: l.noData,
         description: l.noActionFrequencies,
-        color: Colors.white54,
+        color: context.ink54,
         mixLabel: l.noMix,
       );
     }
@@ -525,14 +527,14 @@ class _FreqBar extends StatelessWidget {
       children: [
         SizedBox(
           width: 50,
-          child: Text(label, style: const TextStyle(color: Colors.white70)),
+          child: Text(label, style: TextStyle(color: context.ink70)),
         ),
         Expanded(
           child: ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: freq,
-              backgroundColor: Colors.white12,
+              backgroundColor: context.ink12,
               color: color,
               minHeight: 20,
             ),
@@ -543,7 +545,7 @@ class _FreqBar extends StatelessWidget {
           width: 48,
           child: Text(
             '${(freq * 100).round()}%',
-            style: const TextStyle(color: Colors.white70),
+            style: TextStyle(color: context.ink70),
             textAlign: TextAlign.right,
           ),
         ),
@@ -569,8 +571,8 @@ class _ChartSummaryCard extends StatelessWidget {
           children: [
             Text(
               headline,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.ink,
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
               ),
@@ -579,7 +581,7 @@ class _ChartSummaryCard extends StatelessWidget {
               const SizedBox(height: 6),
               Text(
                 chart.description!,
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: context.ink70),
               ),
             ],
             const SizedBox(height: 12),
@@ -633,7 +635,7 @@ class _StackTierSelector extends StatelessWidget {
       children: [
         Text(
           l.stackLabel,
-          style: const TextStyle(fontSize: 13, color: Colors.white70),
+          style: TextStyle(fontSize: 13, color: context.ink70),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -685,7 +687,7 @@ class _ViewModeToggle extends StatelessWidget {
       children: [
         Text(
           l.viewMode,
-          style: const TextStyle(fontSize: 13, color: Colors.white70),
+          style: TextStyle(fontSize: 13, color: context.ink70),
         ),
         const Spacer(),
         SegmentedButton<bool>(
@@ -718,18 +720,18 @@ class _SelectedHandStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: context.ink.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: context.ink.withValues(alpha: 0.08)),
       ),
       child: Row(
         children: [
           Text(
             range.hand,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: Colors.white,
+              color: context.ink,
             ),
           ),
           const SizedBox(width: 14),
@@ -774,8 +776,8 @@ class _SelectedHandStrip extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   '${a.label} ${(a.freq * 100).round()}%',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
+                                  style: TextStyle(
+                                    color: context.ink70,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -803,13 +805,13 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
+        color: context.ink.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white70,
+        style: TextStyle(
+          color: context.ink70,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -841,9 +843,9 @@ class _ActionRankTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: context.ink.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+        border: Border.all(color: context.ink.withValues(alpha: 0.06)),
       ),
       child: Row(
         children: [
@@ -859,16 +861,16 @@ class _ActionRankTile extends StatelessWidget {
           Expanded(
             child: Text(
               action.label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: context.ink,
                 fontWeight: FontWeight.w600,
               ),
             ),
           ),
           Text(
             '${(action.freq * 100).round()}%',
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: context.ink70,
               fontWeight: FontWeight.w700,
             ),
           ),

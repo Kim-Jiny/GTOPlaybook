@@ -5,6 +5,7 @@ import '../../providers/equity_provider.dart';
 import '../../providers/hand_analysis_provider.dart';
 import 'equity_calculator_screen.dart';
 import 'hand_analysis_screen.dart';
+import '../../theme/app_theme.dart';
 
 class EquityTabScreen extends StatefulWidget {
   const EquityTabScreen({super.key});
@@ -57,9 +58,9 @@ class _EquityTabScreenState extends State<EquityTabScreen> with SingleTickerProv
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: const Color(0xFF4CAF50),
-          labelColor: const Color(0xFF4CAF50),
-          unselectedLabelColor: Colors.white60,
+          indicatorColor: context.accent,
+          labelColor: context.accent,
+          unselectedLabelColor: context.ink60,
           tabs: [
             Tab(text: l.equityCalculator),
             Tab(text: l.handAnalyzer),

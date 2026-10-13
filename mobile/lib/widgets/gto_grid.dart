@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/gto_chart.dart';
+import '../theme/app_theme.dart';
 
 class GtoGrid extends StatelessWidget {
   final List<HandRange> ranges;
@@ -64,9 +65,9 @@ class GtoGrid extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: const Color(0xFF121212),
+          color: context.panelDeep,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+          border: Border.all(color: context.ink.withValues(alpha: 0.06)),
         ),
         child: AspectRatio(
           aspectRatio: 1,
@@ -90,7 +91,7 @@ class GtoGrid extends StatelessWidget {
                               child: Text(
                                 _ranks[index],
                                 style: TextStyle(
-                                  color: Colors.white38,
+                                  color: context.ink38,
                                   fontSize: axisSize * 0.42,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -111,7 +112,7 @@ class GtoGrid extends StatelessWidget {
                             child: Text(
                               _ranks[row],
                               style: TextStyle(
-                                color: Colors.white38,
+                                color: context.ink38,
                                 fontSize: axisSize * 0.42,
                                 fontWeight: FontWeight.w700,
                               ),

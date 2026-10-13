@@ -9,6 +9,10 @@
   "gtoCharts": "GTO 차트",
   "equity": "에퀴티",
   "myPage": "마이 페이지",
+  "themeLabel": "테마",
+  "themeSystem": "시스템",
+  "themeLight": "라이트",
+  "themeDark": "다크",
 
   "retry": "다시 시도",
   "reload": "새로고침",

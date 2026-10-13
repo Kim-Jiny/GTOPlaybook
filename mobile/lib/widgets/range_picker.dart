@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 
 class RangePicker extends StatefulWidget {
   final Set<String> initialRange;
@@ -10,7 +11,7 @@ class RangePicker extends StatefulWidget {
     return showModalBottomSheet<Set<String>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF1A2E1A),
+      backgroundColor: context.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -176,17 +177,17 @@ class _RangePickerState extends State<RangePicker> {
                                   color: isSelected
                                       ? const Color(0xFF2E7D32)
                                       : isPair
-                                          ? const Color(0xFF37474F)
+                                          ? context.ink24
                                           : isSuited
-                                              ? const Color(0xFF263238)
-                                              : const Color(0xFF1C1C1C),
-                                  border: Border.all(color: Colors.black38, width: 0.5),
+                                              ? context.ink12
+                                              : context.ink08,
+                                  border: Border.all(color: context.ink12, width: 0.5),
                                 ),
                                 child: Center(
                                   child: Text(
                                     hand,
                                     style: TextStyle(
-                                      color: isSelected ? Colors.white : Colors.white70,
+                                      color: isSelected ? Colors.white : context.ink70,
                                       fontSize: cellSize * 0.28,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                     ),
@@ -214,7 +215,7 @@ class _RangePickerState extends State<RangePicker> {
       child: ActionChip(
         label: Text(label, style: const TextStyle(fontSize: 12)),
         onPressed: () => _applyPreset(preset),
-        backgroundColor: const Color(0xFF263238),
+        backgroundColor: context.ink12,
       ),
     );
   }

@@ -9,6 +9,10 @@
   "gtoCharts": "GTO Charts",
   "equity": "Equity",
   "myPage": "My Page",
+  "themeLabel": "Theme",
+  "themeSystem": "System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
 
   "retry": "Retry",
   "reload": "Reload",

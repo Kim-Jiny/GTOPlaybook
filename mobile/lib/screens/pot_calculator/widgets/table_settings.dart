@@ -25,26 +25,26 @@ class _TableSettingsCard extends StatelessWidget {
           children: [
             Text(
               l.tableSettings,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
+              style: TextStyle(fontSize: 13, color: context.ink70),
             ),
             const SizedBox(height: 8),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.04),
+                color: context.ink.withValues(alpha: 0.04),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white12),
+                border: Border.all(color: context.ink12),
               ),
               child: Text(
                 summary,
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                style: TextStyle(fontSize: 12, color: context.ink70),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               l.players,
-              style: const TextStyle(fontSize: 13, color: Colors.white70),
+              style: TextStyle(fontSize: 13, color: context.ink70),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -63,9 +63,9 @@ class _TableSettingsCard extends StatelessWidget {
               }),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Ante',
-              style: TextStyle(fontSize: 13, color: Colors.white70),
+              style: TextStyle(fontSize: 13, color: context.ink70),
             ),
             const SizedBox(height: 8),
             SegmentedButton<AnteMode>(
@@ -110,7 +110,7 @@ class _TableSettingsCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   AppLocalizations.of(context)!.totalAnteCalc(provider.playerCount, provider.effectiveAnte),
-                  style: const TextStyle(fontSize: 12, color: Colors.white54),
+                  style: TextStyle(fontSize: 12, color: context.ink54),
                 ),
               ],
             ],
@@ -153,9 +153,9 @@ class _LevelDisplay extends StatelessWidget {
                       children: [
                         Text(
                           'Lv.${provider.activeLevelIndex + 1} / Lv.${structure.levels.length}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Colors.white54,
+                            color: context.ink54,
                           ),
                         ),
                         Text(
@@ -263,18 +263,18 @@ class _BetPresetSection extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.flash_on_outlined, size: 16, color: Colors.white54),
+                Icon(Icons.flash_on_outlined, size: 16, color: context.ink54),
                 const SizedBox(width: 6),
                 Text(
                   AppLocalizations.of(context)!.betPresets,
-                  style: const TextStyle(fontSize: 13, color: Colors.white70),
+                  style: TextStyle(fontSize: 13, color: context.ink70),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               AppLocalizations.of(context)!.betPresetsDesc,
-              style: const TextStyle(fontSize: 12, color: Colors.white38),
+              style: TextStyle(fontSize: 12, color: context.ink38),
             ),
             const SizedBox(height: 10),
             Wrap(

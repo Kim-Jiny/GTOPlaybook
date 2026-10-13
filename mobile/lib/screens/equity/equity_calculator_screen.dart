@@ -8,6 +8,7 @@ import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/card_picker.dart';
 import '../../widgets/range_picker.dart';
 import '../../widgets/playing_card_widget.dart';
+import '../../theme/app_theme.dart';
 
 class EquityCalculatorScreen extends StatelessWidget {
   final bool embedded;
@@ -37,8 +38,8 @@ class EquityCalculatorScreen extends StatelessWidget {
                   icon: const Icon(Icons.add),
                   label: Text(l.addPlayer),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: const BorderSide(color: Colors.white24),
+                    foregroundColor: context.ink70,
+                    side: BorderSide(color: context.ink24),
                   ),
                 ),
               const SizedBox(height: 16),
@@ -152,7 +153,7 @@ class _BoardSection extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(l.board, style: const TextStyle(fontSize: 14, color: Colors.white60)),
+            Text(l.board, style: TextStyle(fontSize: 14, color: context.ink60)),
             const SizedBox(height: 8),
             GestureDetector(
               onTap: () async {
@@ -193,12 +194,12 @@ class _EmptyCardSlot extends StatelessWidget {
       width: 40,
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: context.ink10,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.white24, width: 1),
+        border: Border.all(color: context.ink24, width: 1),
       ),
-      child: const Center(
-        child: Icon(Icons.add, color: Colors.white30, size: 20),
+      child: Center(
+        child: Icon(Icons.add, color: context.ink30, size: 20),
       ),
     );
   }
@@ -245,7 +246,7 @@ class _PlayerRow extends StatelessWidget {
                 ),
                 child: Text(
                   player.inputMode == InputMode.cards ? 'Cards' : 'Range',
-                  style: const TextStyle(fontSize: 11),
+                  style: const TextStyle(fontSize: 11, color: Colors.white),
                 ),
               ),
             ),
@@ -269,7 +270,7 @@ class _PlayerRow extends StatelessWidget {
                     color: equity > 50
                         ? Colors.greenAccent
                         : equity > 30
-                            ? Colors.white
+                            ? context.ink
                             : Colors.redAccent,
                   ),
                 ),
@@ -330,16 +331,16 @@ class _PlayerRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.white10,
+          color: context.ink10,
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: Colors.white24),
+          border: Border.all(color: context.ink24),
         ),
         child: Text(
           player.range.isEmpty
               ? l.tapToSelectRange
               : l.nHandsPercent(player.range.length, _estimatePercent(player.range)),
           style: TextStyle(
-            color: player.range.isEmpty ? Colors.white38 : Colors.white,
+            color: player.range.isEmpty ? context.ink38 : context.ink,
             fontSize: 13,
           ),
         ),
@@ -392,7 +393,7 @@ class _ResultsBar extends StatelessWidget {
           children: [
             Text(
               l.nSimulations(result.simulations.toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},')),
-              style: const TextStyle(fontSize: 12, color: Colors.white38),
+              style: TextStyle(fontSize: 12, color: context.ink38),
             ),
             const SizedBox(height: 8),
             // Stacked bar
@@ -412,7 +413,7 @@ class _ResultsBar extends StatelessWidget {
                         child: eq > 8
                             ? Text(
                                 '${eq.toStringAsFixed(1)}%',
-                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
                               )
                             : null,
                       ),
@@ -446,7 +447,7 @@ class _ResultsBar extends StatelessWidget {
                     if (result.tieRates[i] > 0.1)
                       Text(
                         ' (tie ${result.tieRates[i].toStringAsFixed(1)}%)',
-                        style: const TextStyle(fontSize: 11, color: Colors.white38),
+                        style: TextStyle(fontSize: 11, color: context.ink38),
                       ),
                   ],
                 );

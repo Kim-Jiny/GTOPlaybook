@@ -30,6 +30,18 @@ class AppLocalizationsKo extends AppLocalizations {
   String get myPage => '마이 페이지';
 
   @override
+  String get themeLabel => '테마';
+
+  @override
+  String get themeSystem => '시스템';
+
+  @override
+  String get themeLight => '라이트';
+
+  @override
+  String get themeDark => '다크';
+
+  @override
   String get retry => '다시 시도';
 
   @override

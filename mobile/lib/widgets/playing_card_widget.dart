@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/card.dart';
+import '../theme/app_theme.dart';
 
 class PlayingCardWidget extends StatelessWidget {
   final String cardString;
@@ -72,12 +73,12 @@ class CardBackWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFF1565C0),
           borderRadius: BorderRadius.circular(6 * size),
-          border: Border.all(color: Colors.white24),
+          border: Border.all(color: context.ink24),
         ),
         child: Center(
           child: Icon(
             Icons.casino,
-            color: Colors.white30,
+            color: context.ink30,
             size: 20 * size,
           ),
         ),
