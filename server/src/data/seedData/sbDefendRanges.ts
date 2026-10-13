@@ -1,4 +1,6 @@
-import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, smoothFrequencies, StackDepth } from './helpers';
+import { ChartDef, handLabel, inSet, MaxPlayers, positionsForPlayerCount, openerClass, shallowOpenerClass, StackDepth } from './helpers';
+import { enforceMonotone } from './rfiTables';
+import { lazyRange, monotoneRange } from './thresholdRange';
 import { SB_DEFEND_ACTIONS, SB_DEFEND_JAM_ACTIONS } from './actionColors';
 
 // SB Defend (3bet or fold) vs various openers
@@ -226,30 +228,30 @@ const SB_DEFEND_MIXED_40: Record<string, { '3bet': number; fold: number }> = {
 };
 
 function sbDefendRange(threeBetSet: Set<string>, mixedMap: SbMixedMap = false) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
-    if (mixedMap && h in mixedMap && !inSet(h, threeBetSet)) return mixedMap[h];
-    const currentKey = inSet(h, threeBetSet) ? '3bet' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [{ key: '3bet', set: threeBetSet }]);
-    if (smooth) return smooth;
-    if (inSet(h, threeBetSet)) return { '3bet': 1.0, fold: 0 };
-    return { '3bet': 0, fold: 1.0 };
+  const raw = (h: string): number => {
+    if (mixedMap && h in mixedMap && !inSet(h, threeBetSet)) return mixedMap[h]['3bet'];
+    return inSet(h, threeBetSet) ? 1 : 0;
   };
+
+  // Authored set + mixed map, made monotone in hand strength (wheel-ace bluffs exempt).
+  return lazyRange(() => {
+    const hands: string[] = [];
+    for (let row = 0; row < 13; row++) for (let col = 0; col < 13; col++) hands.push(handLabel(row, col));
+    const freq = new Map(hands.map((h) => [h, raw(h)]));
+    enforceMonotone((h) => freq.get(h)!, (h, f) => freq.set(h, f));
+    return new Map(hands.map((h) => {
+      const t = Math.round(freq.get(h)! * 100) / 100;
+      return [h, { '3bet': t, fold: Math.round((1 - t) * 100) / 100 }];
+    }));
+  });
 }
 
 function sbDefendJamRange(threeBetSet: Set<string>, jamSet: Set<string>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
-    const currentKey = inSet(h, jamSet) ? 'allin' : inSet(h, threeBetSet) ? '3bet' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '3bet', set: threeBetSet },
-      { key: 'allin', set: jamSet },
-    ], 0.88, 0.1);
-    if (smooth) return smooth;
+  return monotoneRange((h) => {
     if (inSet(h, jamSet)) return { '3bet': 0, allin: 1.0, fold: 0 };
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, allin: 0, fold: 0 };
     return { '3bet': 0, allin: 0, fold: 1.0 };
-  };
+  }, ['allin', '3bet']);
 }
 
 // ---------------------------------------------------------------------------

@@ -72,6 +72,21 @@ class GtoChart {
   }
 }
 
+extension GtoChartShares on GtoChart {
+  /// Share of all 1326 starting-hand combos taken by each action (0..1).
+  Map<String, double> actionShares() {
+    final totals = <String, double>{};
+    var combos = 0;
+    for (final r in ranges ?? const <HandRange>[]) {
+      final n = r.hand.length == 2 ? 6 : (r.hand.endsWith('s') ? 4 : 12);
+      combos += n;
+      r.frequencies.forEach((k, v) => totals[k] = (totals[k] ?? 0) + v * n);
+    }
+    if (combos == 0) return {};
+    return totals.map((k, v) => MapEntry(k, v / combos));
+  }
+}
+
 class HandRange {
   final int id;
   final int chartId;

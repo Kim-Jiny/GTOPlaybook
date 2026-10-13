@@ -114,4 +114,28 @@ router.get('/charts/:id', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/gto/charts/:id/tiers — stack depths that have a chart for the same spot
+router.get('/charts/:id/tiers', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT b.stack_depth
+       FROM gto_charts a
+       JOIN gto_charts b
+         ON b.position = a.position
+        AND b.situation = a.situation
+        AND b.max_players = a.max_players
+        AND b.vs_position IS NOT DISTINCT FROM a.vs_position
+        AND b.caller_position IS NOT DISTINCT FROM a.caller_position
+        AND b.flop_texture IS NOT DISTINCT FROM a.flop_texture
+       WHERE a.id = $1
+       ORDER BY b.stack_depth`,
+      [req.params.id],
+    );
+    res.json(result.rows.map((r) => r.stack_depth));
+  } catch (err) {
+    console.error('Error fetching chart tiers:', err);
+    res.status(500).json({ error: 'Failed to fetch tiers' });
+  }
+});
+
 export default router;

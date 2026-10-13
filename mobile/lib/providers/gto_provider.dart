@@ -171,6 +171,17 @@ class GtoProvider extends ChangeNotifier {
     return GtoChart.fromJson(data);
   }
 
+  /// Stack depths that have a chart for the same spot as [chartId].
+  /// Returns null when the lookup fails, so callers can leave every tier enabled.
+  Future<Set<int>?> fetchAvailableTiers(int chartId) async {
+    try {
+      final data = await _apiService.get('/api/gto/charts/$chartId/tiers');
+      return (data as List).map((e) => (e as num).toInt()).toSet();
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Finds the sibling chart for the same spot at a different stack depth,
   /// fully loaded with ranges. Returns null if no chart exists for that
   /// spot at the given tier.

@@ -1,12 +1,5 @@
-import {
-  ChartDef,
-  FreqMap,
-  MaxPlayers,
-  RANKS,
-  StackDepth,
-  handLabel,
-  smoothFrequencies,
-} from './helpers';
+import { ChartDef, MaxPlayers, RANKS, StackDepth } from './helpers';
+import { lazyRange, thresholdGrid } from './thresholdRange';
 import { LIMPED_POT_ACTIONS } from './actionColors';
 
 type HandFeatures = {
@@ -99,43 +92,17 @@ function raiseThreshold(depth: StackDepth): number {
   }
 }
 
-function buildRaiseSet(depth: StackDepth) {
-  const raise = new Set<string>();
-  const threshold = raiseThreshold(depth);
-
-  for (let row = 0; row < 13; row++) {
-    for (let col = 0; col < 13; col++) {
-      const hand = handLabel(row, col);
-      if (limpAttackScore(analyzeHand(hand)) >= threshold) {
-        raise.add(hand);
-      }
-    }
-  }
-
-  return raise;
-}
-
-function limpedPotRange(raiseSet: Set<string>) {
-  return (row: number, col: number): FreqMap => {
-    const hand = handLabel(row, col);
-    const currentKey = raiseSet.has(hand) ? 'raise' : 'check';
-    const smooth = smoothFrequencies(row, col, currentKey, [{ key: 'raise', set: raiseSet }]);
-    if (smooth) {
-      return {
-        raise: smooth.raise ?? 0,
-        check: (smooth.check ?? 0) + (smooth.fold ?? 0),
-      };
-    }
-    if (raiseSet.has(hand)) return { raise: 1, check: 0 };
-    return { raise: 0, check: 1 };
-  };
+function limpedPotGrid(depth: StackDepth) {
+  return thresholdGrid(
+    (hand) => limpAttackScore(analyzeHand(hand)),
+    [{ key: 'raise', threshold: raiseThreshold(depth) }],
+    'check',
+  );
 }
 
 export function getLimpedPotCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   if (depth < 25) return [];
   if (maxPlayers < 2) return [];
-
-  const raiseSet = buildRaiseSet(depth);
 
   return [
     {
@@ -147,7 +114,7 @@ export function getLimpedPotCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6
       stackDepth: depth,
       maxPlayers,
       actionTypes: LIMPED_POT_ACTIONS,
-      ranges: limpedPotRange(raiseSet),
+      ranges: lazyRange(() => limpedPotGrid(depth)),
     },
   ];
 }

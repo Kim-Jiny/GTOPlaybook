@@ -3,6 +3,8 @@ import {
   handLabel, inSet,
   positionsForPlayerCount, rfiPositions,
 } from './helpers';
+import { enforceMonotoneStrict } from './rfiTables';
+import { pushSetFor } from './rfiRanges';
 import { PUSH_FOLD_ACTIONS, CALL_SHOVE_ACTIONS } from './actionColors';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -339,18 +341,32 @@ const SB_CALL_VS_BB_7 = new Set([
 
 // ── Range builders ──
 
+// Sets are hand-typed, so close any holes (a stronger hand is never left out while
+// a weaker one is in).
+function closedSet(source: Set<string>): Set<string> {
+  const freq = new Map<string, number>();
+  for (let row = 0; row < 13; row++) for (let col = 0; col < 13; col++) {
+    const h = handLabel(row, col);
+    freq.set(h, inSet(h, source) ? 1 : 0);
+  }
+  enforceMonotoneStrict((h) => freq.get(h)!, (h, f) => freq.set(h, f));
+  return new Set([...freq].filter(([, f]) => f > 0).map(([h]) => h));
+}
+
 function pushFoldRange(pushSet: Set<string>) {
+  const closed = closedSet(pushSet);
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, pushSet)) return { allin: 1.0, fold: 0 };
+    if (inSet(h, closed)) return { allin: 1.0, fold: 0 };
     return { allin: 0, fold: 1.0 };
   };
 }
 
 function callShoveRange(callSet: Set<string>) {
+  const closed = closedSet(callSet);
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    if (inSet(h, callSet)) return { call: 1.0, fold: 0 };
+    if (inSet(h, closed)) return { call: 1.0, fold: 0 };
     return { call: 0, fold: 1.0 };
   };
 }
@@ -358,6 +374,9 @@ function callShoveRange(callSet: Set<string>) {
 // ── Push range lookup by position and depth ──
 
 function getPushRange(position: string, maxPlayers: MaxPlayers, depth: 7 | 15): Set<string> {
+  // Positions that can open share the RFI jam ranges (heads-up SB and BB keep legacy sets).
+  const shared = position === 'BB' ? null : pushSetFor(position, maxPlayers, depth);
+  if (shared) return shared;
   if (depth === 7) return getPushRange7bb(position, maxPlayers);
   return getPushRange15bb(position, maxPlayers);
 }
@@ -446,7 +465,7 @@ export function getShortStackCharts(depth: StackDepth, maxPlayers: MaxPlayers = 
       position: pos,
       situation: 'Push/Fold',
       category: 'Push/Fold',
-      description: `${pos} Push or Fold (${depth}bb)`,
+      description: pos === 'BB' ? `BB Push or Fold vs limp (${depth}bb)` : `${pos} Push or Fold (${depth}bb)`,
       stackDepth: depth,
       maxPlayers,
       actionTypes: PUSH_FOLD_ACTIONS,

@@ -1,86 +1,20 @@
 import {
   ChartDef, StackDepth, MaxPlayers,
   handLabel, inSet,
-  positionsForPlayerCount, openerClass, shallowOpenerClass, smoothFrequencies,
+  positionsForPlayerCount, openerClass, shallowOpenerClass,
 } from './helpers';
+import { monotoneRange } from './thresholdRange';
 import { FACING_3BET_ACTIONS, FACING_3BET_JAM_ACTIONS } from './actionColors';
+import { VS_3BET_100, Vs3betEntry, scaleCalls } from './vs3betTables';
 
 // When facing a 3bet, decisions are: 4bet, call, or fold
 // Ranges vary by opener position and 3bettor position
 
 // ── 100bb ranges (deep stack) ──
 
-// UTG facing 3bet — very tight continue range
-const UTG_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
-const UTG_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AKo', 'AQs']);
-
-// HJ (old MP) facing 3bet
-const HJ_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
-const HJ_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AKo', 'AJs']);
-
-// CO facing 3bet from BTN/SB/BB — wider continue
-const CO_VS_3BET_4BET = new Set(['AA', 'KK', 'AKs', 'AKo']);
-const CO_VS_3BET_CALL = new Set(['QQ', 'JJ', 'TT', '99', 'AQs', 'AQo', 'AJs', 'KQs', 'ATs']);
-
-// CO facing 3bet from tight positions (UTG/HJ style) — tighter
-const CO_VS_TIGHT_3BET_4BET = new Set(['AA', 'KK']);
-const CO_VS_TIGHT_3BET_CALL = new Set(['QQ', 'JJ', 'AKs', 'AKo']);
-
-// BTN facing 3bet from SB/BB — widest continue
-const BTN_VS_3BET_4BET = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo']);
-const BTN_VS_3BET_CALL = new Set([
-  'JJ', 'TT', '99', '88', '77',
-  'AQs', 'AQo', 'AJs', 'ATs', 'A9s', 'A5s', 'A4s',
-  'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s', '87s', '76s',
-]);
-
-// BTN facing tight 3bet (UTG/HJ/CO)
-const BTN_VS_TIGHT_3BET_4BET = new Set(['AA', 'KK', 'AKs']);
-const BTN_VS_TIGHT_3BET_CALL = new Set(['QQ', 'JJ', 'TT', 'AKo', 'AQs', 'AJs']);
-
-// SB facing 3bet from BB
-const SB_VS_BB_3BET_4BET = new Set(['AA', 'KK', 'QQ', 'AKs', 'AKo', 'AQs']);
-const SB_VS_BB_3BET_CALL = new Set([
-  'JJ', 'TT', '99', '88', '77',
-  'AQo', 'AJs', 'ATs', 'A9s', 'A5s', 'A4s',
-  'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
-]);
-
 // ── 60bb ranges — slightly tighter calls (~15% reduction) ──
 
-const UTG_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', 'AKo']);
-const HJ_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AKo']);
-const CO_VS_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', '99', 'AQs', 'AJs', 'KQs']);
-const CO_VS_TIGHT_3BET_CALL_60 = new Set(['QQ', 'AKs', 'AKo']);
-const BTN_VS_3BET_CALL_60 = new Set([
-  'JJ', 'TT', '99', '88', '77',
-  'AQs', 'AQo', 'AJs', 'ATs', 'A9s',
-  'KQs', 'KJs', 'KTs', 'QJs', 'QTs', 'JTs', 'T9s', '98s',
-]);
-const BTN_VS_TIGHT_3BET_CALL_60 = new Set(['QQ', 'JJ', 'TT', 'AKo', 'AQs']);
-const SB_VS_BB_3BET_CALL_60 = new Set([
-  'JJ', 'TT', '99', '88',
-  'AQo', 'AJs', 'ATs', 'A9s',
-  'KQs', 'KJs', 'KTs', 'QJs', 'JTs', 'T9s',
-]);
-
 // ── 40bb ranges — tighter calls (~30% reduction) ──
-
-const UTG_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'AKo']);
-const HJ_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
-const CO_VS_3BET_CALL_40 = new Set(['QQ', 'JJ', 'TT', 'AQs', 'AJs']);
-const CO_VS_TIGHT_3BET_CALL_40 = new Set(['QQ', 'AKs']);
-const BTN_VS_3BET_CALL_40 = new Set([
-  'JJ', 'TT', '99', '88',
-  'AQs', 'AQo', 'AJs', 'ATs',
-  'KQs', 'KJs', 'QJs', 'JTs', 'T9s',
-]);
-const BTN_VS_TIGHT_3BET_CALL_40 = new Set(['QQ', 'JJ', 'AKo', 'AQs']);
-const SB_VS_BB_3BET_CALL_40 = new Set([
-  'JJ', 'TT', '99', '88',
-  'AQo', 'AJs', 'ATs',
-  'KQs', 'KJs', 'QJs', 'JTs',
-]);
 
 // ── 25bb ranges — still shallow, but no longer pure jam-or-fold ──
 
@@ -169,19 +103,12 @@ function facing3betRange(
   callSet: Set<string>,
   mixedMap: false | FacingMixedMap = false,
 ) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (mixedMap && h in mixedMap && !inSet(h, fourBetSet)) return mixedMap[h];
-    const currentKey = inSet(h, fourBetSet) ? '4bet' : inSet(h, callSet) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '4bet', set: fourBetSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
     if (inSet(h, fourBetSet)) return { '4bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '4bet': 0, call: 1.0, fold: 0 };
     return { '4bet': 0, call: 0, fold: 1.0 };
-  };
+  }, ['4bet', 'call']);
 }
 
 // ── Opener data lookup ──
@@ -196,60 +123,12 @@ type RangeSet = {
   call40: Set<string>;
 };
 
-const OPENER_DATA: Record<ReturnType<typeof openerClass>, RangeSet> = {
-  'ep-tight': {
-    fourBet: UTG_VS_3BET_4BET,
-    call100: UTG_VS_3BET_CALL,
-    call60: UTG_VS_3BET_CALL_60,
-    call40: UTG_VS_3BET_CALL_40,
-  },
-  'hj': {
-    fourBet: HJ_VS_3BET_4BET,
-    call100: HJ_VS_3BET_CALL,
-    call60: HJ_VS_3BET_CALL_60,
-    call40: HJ_VS_3BET_CALL_40,
-  },
-  'co': {
-    fourBet: CO_VS_3BET_4BET,
-    call100: CO_VS_3BET_CALL,
-    call60: CO_VS_3BET_CALL_60,
-    call40: CO_VS_3BET_CALL_40,
-  },
-  'btn': {
-    fourBet: BTN_VS_3BET_4BET,
-    call100: BTN_VS_3BET_CALL,
-    call60: BTN_VS_3BET_CALL_60,
-    call40: BTN_VS_3BET_CALL_40,
-  },
-  'sb': {
-    fourBet: SB_VS_BB_3BET_4BET,
-    call100: SB_VS_BB_3BET_CALL,
-    call60: SB_VS_BB_3BET_CALL_60,
-    call40: SB_VS_BB_3BET_CALL_40,
-  },
-};
-
 // Tight-variant data for openers facing 3bets from tight positions
 type TightRangeSet = {
   fourBet: Set<string>;
   call100: Set<string>;
   call60: Set<string>;
   call40: Set<string>;
-};
-
-const OPENER_TIGHT_DATA: Partial<Record<ReturnType<typeof openerClass>, TightRangeSet>> = {
-  'co': {
-    fourBet: CO_VS_TIGHT_3BET_4BET,
-    call100: CO_VS_TIGHT_3BET_CALL,
-    call60: CO_VS_TIGHT_3BET_CALL_60,
-    call40: CO_VS_TIGHT_3BET_CALL_40,
-  },
-  'btn': {
-    fourBet: BTN_VS_TIGHT_3BET_4BET,
-    call100: BTN_VS_TIGHT_3BET_CALL,
-    call60: BTN_VS_TIGHT_3BET_CALL_60,
-    call40: BTN_VS_TIGHT_3BET_CALL_40,
-  },
 };
 
 // ── 3bettor classification ──
@@ -267,20 +146,6 @@ function threeBettorClass(pos: string): ThreeBettorClass {
     case 'CO': return 'co';
     default: return 'tight'; // HJ, MP, UTG+2, UTG+1, UTG
   }
-}
-
-// Whether this 3bettor class should trigger the "tight" variant for the opener
-function isTight3bettor(cls: ThreeBettorClass): boolean {
-  return cls === 'tight';
-}
-
-// Whether to use mixed frequencies (wide 3bettors at deep stacks)
-function useMixedFor(_opClass: ReturnType<typeof openerClass>, _tbClass: ThreeBettorClass, depth: StackDepth): boolean {
-  // Mixed map provides boundary blend values for all matchups at depth >= 40.
-  // Position-specific call/4bet sets already control which hands are in range;
-  // the mixed map just smooths transitions at boundaries where smoothFrequencies
-  // can't produce good values (narrow call sets, sparse grid neighbors).
-  return depth >= 40;
 }
 
 // ── 25bb data lookup ──
@@ -340,55 +205,44 @@ const FACING_15_DATA: Record<Facing15Key, Facing15Data> = {
 };
 
 function facing3betJamRange(jamSet: Set<string>) {
+  return monotoneRange((h) => (inSet(h, jamSet) ? { allin: 1.0, fold: 0 } : { allin: 0, fold: 1.0 }), ['allin']);
+}
+
+// ── 40 / 60 / 100bb: explicit tables ──
+
+function tableEntry(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass, depth: StackDepth): Vs3betEntry | null {
+  const group = tbClass === 'sb' || tbClass === 'bb' ? 'blind'
+    : tbClass === 'tight' ? 'tight'
+    : tbClass === 'co' && opClass === 'btn' ? 'co'
+    : 'late';
+  const base = VS_3BET_100[`${opClass}:${group}`];
+  if (!base) return null;
+  if (depth === 60) return scaleCalls(base, 0.85);
+  if (depth === 40) return scaleCalls(base, 0.7);
+  if (depth === 25) return scaleCalls(base, 0.5);
+  if (depth === 15) return scaleCalls(base, 0.4);
+  return base;
+}
+
+// 15bb is jam-or-fold: the 4bet range jams and part of the calling range turns into a jam.
+function facing3betJamTableRange(entry: Vs3betEntry) {
   return (row: number, col: number) => {
     const h = handLabel(row, col);
-    const currentKey = inSet(h, jamSet) ? 'allin' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: 'allin', set: jamSet },
-    ]);
-    if (smooth) return smooth;
-    if (inSet(h, jamSet)) return { allin: 1.0, fold: 0 };
-    return { allin: 0, fold: 1.0 };
+    const jam = Math.min(1, (entry.fourBet[h] ?? 0) + 1.2 * (entry.call[h] ?? 0));
+    return { allin: Math.round(jam * 100) / 100, fold: Math.round((1 - jam) * 100) / 100 };
+  };
+}
+
+function facing3betTableRange(entry: Vs3betEntry) {
+  return (row: number, col: number) => {
+    const h = handLabel(row, col);
+    const fourBet = entry.fourBet[h] ?? 0;
+    const call = entry.call[h] ?? 0;
+    return { '4bet': fourBet, call, fold: Math.max(0, Math.round((1 - fourBet - call) * 100) / 100) };
   };
 }
 
 // ── Chart generation ──
-
-function getCallSet(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass, depth: StackDepth): Set<string> | null {
-  const isTight = isTight3bettor(tbClass);
-
-  // If tight 3bettor and we have tight-specific data, use it
-  if (isTight && OPENER_TIGHT_DATA[opClass]) {
-    const td = OPENER_TIGHT_DATA[opClass]!;
-    switch (depth) {
-      case 100: return td.call100;
-      case 60: return td.call60;
-      case 40: return td.call40;
-      default: return null;
-    }
-  }
-
-  // Use regular data
-  const d = OPENER_DATA[opClass];
-  if (!d) return null;
-  switch (depth) {
-    case 100: return d.call100;
-    case 60: return d.call60;
-    case 40: return d.call40;
-    default: return null;
-  }
-}
-
-function getFourBetSet(opClass: ReturnType<typeof openerClass>, tbClass: ThreeBettorClass): Set<string> | null {
-  const isTight = isTight3bettor(tbClass);
-
-  if (isTight && OPENER_TIGHT_DATA[opClass]) {
-    return OPENER_TIGHT_DATA[opClass]!.fourBet;
-  }
-
-  const d = OPENER_DATA[opClass];
-  return d ? d.fourBet : null;
-}
 
 export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): ChartDef[] {
   if (depth === 7) return []; // 7bb is pure push/fold
@@ -412,6 +266,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
         const key = `${opClass}_vs_${tbClass}`;
         const data15 = FACING_15_DATA[key];
         if (!data15) continue;
+        const entry15 = tableEntry(opClass, tbClass, 15);
 
         charts.push({
           position: opener,
@@ -422,12 +277,13 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_JAM_ACTIONS,
-          ranges: facing3betJamRange(data15.jam),
+          ranges: entry15 ? facing3betJamTableRange(entry15) : facing3betJamRange(data15.jam),
         });
       } else if (depth === 25) {
         const key = `${opClass}_vs_${tbClass}`;
         const data = FACING_25_DATA[key];
         if (!data) continue;
+        const entry25 = tableEntry(opClass, tbClass, 25);
 
         charts.push({
           position: opener,
@@ -438,15 +294,12 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_ACTIONS,
-          ranges: facing3betRange(data.fourBet, data.call, data.mixed ?? false),
+          ranges: entry25 ? facing3betTableRange(entry25) : facing3betRange(data.fourBet, data.call, data.mixed ?? false),
         });
       } else {
-        // 40bb, 60bb, 100bb: 4bet / call / fold
-        const fourBetSet = getFourBetSet(opClass, tbClass);
-        const callSet = getCallSet(opClass, tbClass, depth);
-        if (!fourBetSet || !callSet) continue;
-
-        const mixed = useMixedFor(opClass, tbClass, depth) ? FACING_3BET_MIXED : false;
+        // 40bb, 60bb, 100bb: 4bet / call / fold from the explicit tables
+        const entry = tableEntry(opClass, tbClass, depth);
+        if (!entry) continue;
 
         charts.push({
           position: opener,
@@ -457,7 +310,7 @@ export function getVs3betCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): 
           stackDepth: depth,
           maxPlayers,
           actionTypes: FACING_3BET_ACTIONS,
-          ranges: facing3betRange(fourBetSet, callSet, mixed),
+          ranges: facing3betTableRange(entry),
         });
       }
     }

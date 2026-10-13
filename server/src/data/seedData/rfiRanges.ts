@@ -1,5 +1,8 @@
-import { ChartDef, handLabel, inSet, smoothFrequencies, StackDepth, MaxPlayers, rfiPositions } from './helpers';
+import { ChartDef, inSet, StackDepth, MaxPlayers, rfiPositions } from './helpers';
+import { monotoneRange } from './thresholdRange';
+import { fillByPriority } from './squeezeRanges';
 import { RFI_ACTIONS, RFI_JAM_ACTIONS } from './actionColors';
+import { ALL_HANDS, FreqTable, trimTail, UTG_FULL_100, UTG1_FULL_100, UTG_100, HJ_100, CO_100, BTN_100, SB_100 } from './rfiTables';
 
 // ═══════════════════════════════════════════════════════════════════════
 //  100bb ranges
@@ -542,32 +545,23 @@ const HU_SB_60_MIXED: Record<string, number> = { 'J4s': 0.43, 'T5s': 0.43, '94s'
 //  Helpers
 // ═══════════════════════════════════════════════════════════════════════
 
+// RFI ranges are authored explicitly (raise set + mixed map). No neighbour smoothing:
+// it diluted interior hands (JJ, TT, ...) with the folds around them.
 function rfiRange(raiseSet: Set<string>, mixedMap: Record<string, number>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, fold: 1 - f }; }
-    const currentKey = inSet(h, raiseSet) ? 'raise' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [{ key: 'raise', set: raiseSet }]);
-    if (smooth) return smooth;
     if (inSet(h, raiseSet)) return { raise: 1.0, fold: 0 };
     return { raise: 0, fold: 1.0 };
-  };
+  }, ['raise']);
 }
 
 function rfiJamRange(raiseSet: Set<string>, jamSet: Set<string>, mixedMap: Record<string, number>) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  return monotoneRange((h) => {
     if (h in mixedMap) { const f = mixedMap[h]; return { raise: f, allin: 0, fold: 1 - f }; }
-    const currentKey = inSet(h, jamSet) ? 'allin' : inSet(h, raiseSet) ? 'raise' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: 'raise', set: raiseSet },
-      { key: 'allin', set: jamSet },
-    ], 0.88, 0.1);
-    if (smooth) return smooth;
     if (inSet(h, raiseSet)) return { raise: 1.0, allin: 0, fold: 0 };
     if (inSet(h, jamSet)) return { raise: 0, allin: 1.0, fold: 0 };
     return { raise: 0, allin: 0, fold: 1.0 };
-  };
+  }, ['allin', 'raise']);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -600,6 +594,10 @@ function rangeDataFor(position: string, depth: StackDepth, maxPlayers: MaxPlayer
   // Determine the "range key" based on position + maxPlayers
   const key = resolveRangeKey(position, maxPlayers);
 
+  // Heads-up keeps its legacy sets; everything else is derived from the explicit
+  // 100bb tables (15bb as a jam-or-fold range filled to a target width).
+  if (key !== 'hu_sb') return depth === 15 ? jamRangeData15(key) : tableRangeData(key, depth);
+
   switch (depth) {
     case 15: return rangeData15(key);
     case 25: return rangeData25(key);
@@ -625,6 +623,66 @@ function resolveRangeKey(position: string, maxPlayers: MaxPlayers): RangeKey {
   if (position === 'UTG+1') return 'utg1';
   if (position === 'UTG+2') return 'utg2';
   return 'utg'; // fallback
+}
+
+// Minimum frequency kept when deriving a shallower stack from the 100bb table.
+const DEPTH_TRIM: Partial<Record<StackDepth, number>> = { 60: 0.2, 40: 0.3, 25: 0.4 };
+
+// Early positions at fuller tables are tighter than 6-max UTG: trim its tail.
+const EARLY_TRIM: Partial<Record<RangeKey, number>> = { utg2: 0.55 };
+
+function baseTable(key: RangeKey): FreqTable {
+  switch (key) {
+    case 'hj':  return HJ_100;
+    case 'co':  return CO_100;
+    case 'btn': return BTN_100;
+    case 'sb':  return SB_100;
+    case 'utg9max': return UTG_FULL_100;
+    case 'utg1':    return UTG1_FULL_100;
+    default:    return trimTail(UTG_100, EARLY_TRIM[key] ?? 0);
+  }
+}
+
+// Share of all hands jammed at 15bb, by position (jam-or-fold).
+const JAM_15_WIDTH: Partial<Record<RangeKey, number>> = {
+  utg9max: 0.08, utg1: 0.095, utg2: 0.115, utg: 0.115, hj: 0.14, co: 0.21, btn: 0.38, sb: 0.48,
+};
+// 7bb is shove-or-fold with a much wider range.
+const JAM_7_WIDTH: Partial<Record<RangeKey, number>> = {
+  utg9max: 0.14, utg1: 0.16, utg2: 0.22, utg: 0.22, hj: 0.27, co: 0.36, btn: 0.52, sb: 0.66,
+};
+
+function jamSet(key: RangeKey, depth: 7 | 15): Set<string> {
+  const widths = depth === 7 ? JAM_7_WIDTH : JAM_15_WIDTH;
+  // Hands outside the authored table follow it at the lowest priority (by strength),
+  // so very wide spots (7bb SB) can still be filled.
+  const shape: FreqTable = { ...Object.fromEntries(ALL_HANDS.map((h) => [h, 0.01])), ...baseTable(key) };
+  const filled = fillByPriority(shape, widths[key] ?? 0.12);
+  return new Set(Object.entries(filled).filter(([, f]) => f >= 0.5).map(([h]) => h));
+}
+
+function jamRangeData15(key: RangeKey): RangeData {
+  return { raise: new Set<string>(), jam: jamSet(key, 15), mixed: {} };
+}
+
+/**
+ * Shove-or-fold range for an unopened pot at 7bb / 15bb, shared by the RFI and
+ * Push/Fold charts so they always agree. Returns null for heads-up SB (legacy sets).
+ */
+export function pushSetFor(position: string, maxPlayers: MaxPlayers, depth: 7 | 15): Set<string> | null {
+  const key = resolveRangeKey(position, maxPlayers);
+  return key === 'hu_sb' ? null : jamSet(key, depth);
+}
+
+function tableRangeData(key: RangeKey, depth: StackDepth): RangeData {
+  const table = trimTail(baseTable(key), DEPTH_TRIM[depth] ?? 0);
+  const raise = new Set<string>();
+  const mixed: Record<string, number> = {};
+  for (const [hand, f] of Object.entries(table)) {
+    if (f >= 1) raise.add(hand);
+    else mixed[hand] = f;
+  }
+  return { raise, mixed };
 }
 
 function rangeData15(key: RangeKey): RangeData {
@@ -722,11 +780,11 @@ export function getRfiCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6): Cha
   if (depth === 7) return []; // 7bb is pure push/fold
 
   const positions = rfiPositions(maxPlayers);
-  const useJam = depth === 15 || depth === 25 || depth === 40;
   const sizeLabel = tableSizeLabel(maxPlayers);
 
   return positions.map((pos) => {
     const data = rangeDataFor(pos, depth, maxPlayers);
+    const useJam = !!data.jam;
 
     return {
       position: pos,

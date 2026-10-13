@@ -1,175 +1,99 @@
-import { ChartDef, MaxPlayers, handLabel, RANKS, StackDepth } from './helpers';
+import { ChartDef, MaxPlayers, StackDepth, handLabel } from './helpers';
 import { POSTFLOP_CBET_ACTIONS } from './actionColors';
+import { BUCKETS, Bucket, Card, cellBuckets, parseBoard } from './postflopEngine';
+import { BTN_100, comboCount } from './rfiTables';
 
-// Postflop Cbet ranges: BTN vs BB (Single Raised Pot)
-// 6 representative flop textures
-// Actions: bet / check (no fold — we are the aggressor with initiative)
-// These ranges are universal regardless of table size (BTN vs BB SRP is the same)
+// Postflop Cbet ranges: BTN vs BB (Single Raised Pot), 6 representative flops.
+// Actions: bet / check (we are the aggressor, so there is no fold).
+//
+// Every cell is expanded into its real combos and classified against the actual flop
+// (postflopEngine), so sets, straights, flush draws and blocked cards are all accounted
+// for. Each texture then maps hand buckets to bet frequencies; the non-value buckets
+// (bluffs / weak made hands) are scaled so the overall cbet frequency over BTN's opening
+// range hits a target for that texture. Same ranges at every table size.
 
-// Helper: classify hands for cbet frequency on different board textures
-// Simplified GTO-approximate Cbet frequencies
+type BucketFreqs = Record<Bucket, number>;
 
-function gap(row: number, col: number) {
-  return Math.abs(row - col);
+interface Texture {
+  board: string;
+  target: number; // overall cbet share of BTN's range at 100bb
+  freqs: BucketFreqs;
 }
 
-function isBroadway(row: number, col: number) {
-  return row <= 4 && col <= 4;
-}
+const f = (a: number[]): BucketFreqs =>
+  Object.fromEntries(BUCKETS.map((b, i) => [b, a[i]])) as BucketFreqs;
+//        monster set  2pair over tpG  tpW  mid  low  combo fd   oesd gut  ovr2 ovr1 air
+const TEXTURES: Record<string, Texture> = {
+  // Dry ace-high: bet nearly everything small
+  A72r: { board: 'As 7d 2c', target: 0.80, freqs: f([0.95, 0.95, 0.92, 0.9, 0.92, 0.85, 0.6, 0.35, 0.8, 0.6, 0.7, 0.55, 0.65, 0.5, 0.35]) },
+  // Dry king-high
+  K83r: { board: 'Ks 8d 3c', target: 0.72, freqs: f([0.95, 0.95, 0.9, 0.85, 0.88, 0.75, 0.5, 0.3, 0.75, 0.55, 0.6, 0.5, 0.6, 0.4, 0.3]) },
+  // Connected broadway: range disadvantage, lots of checks
+  QJT: { board: 'Qs Js Td', target: 0.50, freqs: f([0.85, 0.85, 0.8, 0.65, 0.6, 0.5, 0.4, 0.25, 0.85, 0.7, 0.7, 0.55, 0.4, 0.3, 0.2]) },
+  // Monotone: slowplay some made hands, bet the nut-flush draws
+  '963ss': { board: '9s 6s 3s', target: 0.48, freqs: f([0.7, 0.8, 0.75, 0.55, 0.5, 0.4, 0.3, 0.2, 0.8, 0.6, 0.55, 0.4, 0.35, 0.3, 0.2]) },
+  // Paired high board: small bet with almost everything
+  KK5: { board: 'Ks Kd 5h', target: 0.82, freqs: f([0.8, 0.75, 0.6, 0.85, 0.85, 0.8, 0.55, 0.45, 0.7, 0.6, 0.6, 0.5, 0.6, 0.55, 0.45]) },
+  // Low connected: many draws and straights, bet value and draws
+  '876': { board: '8s 7s 6d', target: 0.50, freqs: f([0.85, 0.85, 0.8, 0.6, 0.45, 0.4, 0.35, 0.25, 0.85, 0.65, 0.7, 0.45, 0.4, 0.3, 0.2]) },
+};
 
-function hasAce(row: number, col: number) {
-  return row === 0 || col === 0;
-}
+// Buckets whose frequency is scaled to hit the target (bluffs and weak made hands).
+const SCALABLE: Bucket[] = ['midPair', 'lowPair', 'gutshot', 'overcards', 'overcard', 'air'];
 
-function hasKing(row: number, col: number) {
-  return row === 1 || col === 1;
-}
+// Higher stacks-to-pot flexibility at 60bb: more aggression.
+const SHORT_STACK_BOOST = 0.05;
 
-// 1. Dry High: A72r (rainbow) — high cbet frequency (~70%)
-function dryHighCbet(row: number, col: number) {
-  const isPair = row === col;
-  const isSuited = row < col;
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
-  // Bet with: any Ace, overpairs, good draws
-  if (hasAce(row, col)) return { bet: 0.86, check: 0.14 };
-  if (isPair && row <= 5) return { bet: 0.9, check: 0.1 }; // overpairs KK-88
-  if (isPair && row >= 6) return { bet: 0.3, check: 0.7 }; // underpairs
-  if (isBroadway(row, col)) return { bet: 0.64, check: 0.36 };
-  // Suited connectors — sometimes bet as bluff
-  if (isSuited && gap(row, col) === 1) return { bet: 0.45, check: 0.55 };
-  if (isSuited && gap(row, col) === 2) return { bet: 0.48, check: 0.52 };
-  if (hasKing(row, col)) return { bet: 0.58, check: 0.42 };
-  return { bet: 0.32, check: 0.68 };
-}
+function buildGrid(texture: Texture, depth: StackDepth): Map<string, { bet: number; check: number }> {
+  const board: Card[] = parseBoard(texture.board);
+  const target = Math.min(0.95, texture.target + (depth === 60 ? SHORT_STACK_BOOST : 0));
 
-// 2. Dry Mid: K83r (rainbow) — moderate cbet (~55%)
-function dryMidCbet(row: number, col: number) {
-  const isPair = row === col;
-  const isSuited = row < col;
-
-  if (hasKing(row, col)) return { bet: 0.8, check: 0.2 };
-  if (hasAce(row, col)) return { bet: 0.68, check: 0.32 };
-  if (isPair && row <= 4) return { bet: 0.75, check: 0.25 };
-  if (isPair && row === 5) return { bet: 0.6, check: 0.4 }; // 88 on K83
-  if (isPair) return { bet: 0.25, check: 0.75 };
-  if (row <= 2 && col <= 2) return { bet: 0.52, check: 0.48 };
-  if (isSuited && gap(row, col) <= 2) return { bet: 0.42, check: 0.58 };
-  return { bet: 0.28, check: 0.72 };
-}
-
-// 3. Wet Broadway: QJT — mostly check (~35% cbet)
-function wetBroadwayCbet(row: number, col: number) {
-  const isPair = row === col;
-
-  // Sets and two pair — bet for value
-  if (isPair && (row === 2 || row === 3 || row === 4)) return { bet: 0.85, check: 0.15 };
-  // Straights (AK, K9, 98)
-  if ((row === 0 && col === 1) || (row === 1 && col === 0)) return { bet: 0.8, check: 0.2 };
-  if ((hasKing(row, col)) && (RANKS[row] === '9' || RANKS[col] === '9')) return { bet: 0.75, check: 0.25 };
-  // Overpairs
-  if (isPair && row <= 1) return { bet: 0.5, check: 0.5 };
-  // Gutshots and draws
-  if (hasAce(row, col)) return { bet: 0.42, check: 0.58 };
-  if (hasKing(row, col)) return { bet: 0.36, check: 0.64 };
-  if (row < col && gap(row, col) <= 2 && row >= 1 && col <= 6) return { bet: 0.34, check: 0.66 };
-  // Most hands check on this connected board
-  return { bet: 0.18, check: 0.82 };
-}
-
-// 4. Monotone: 963ss — mostly check (~30% cbet)
-function monotoneCbet(row: number, col: number) {
-  const isPair = row === col;
-  const isSuited = row < col;
-
-  // Overpairs with suited — bet
-  if (isPair && row <= 3) return { bet: 0.45, check: 0.55 };
-  // Flush draws (suited hands) — mix
-  if (isSuited) {
-    if (hasAce(row, col)) return { bet: 0.58, check: 0.42 };
-    if (hasKing(row, col)) return { bet: 0.42, check: 0.58 };
-    if (gap(row, col) <= 2) return { bet: 0.34, check: 0.66 };
-    return { bet: 0.26, check: 0.74 };
+  const cells: { hand: string; buckets: Map<Bucket, number>; weight: number }[] = [];
+  for (let row = 0; row < 13; row++) {
+    for (let col = 0; col < 13; col++) {
+      const hand = handLabel(row, col);
+      const buckets = cellBuckets(row, col, board);
+      cells.push({ hand, buckets, weight: (BTN_100[hand] ?? 0) * comboCount(hand) });
+    }
   }
-  // Non-suited overpairs
-  if (isPair && row <= 5) return { bet: 0.35, check: 0.65 };
-  // Mostly check on monotone without flush draw
-  if (hasAce(row, col)) return { bet: 0.28, check: 0.72 };
-  return { bet: 0.15, check: 0.85 };
+  const totalWeight = cells.reduce((sum, c) => sum + c.weight, 0);
+
+  // Shift scalable buckets in logit space: frequencies saturate smoothly instead of
+  // clipping at 100% (and never turn a hand into a pure bet/check by themselves).
+  const shifted = (base: number, shift: number) => {
+    const p = Math.min(0.98, Math.max(0.02, base));
+    return 1 / (1 + Math.exp(-(Math.log(p / (1 - p)) + shift)));
+  };
+  const betFor = (buckets: Map<Bucket, number>, shift: number) => {
+    let bet = 0;
+    for (const [bucket, share] of buckets) {
+      const base = texture.freqs[bucket];
+      bet += share * (SCALABLE.includes(bucket) ? shifted(base, shift) : base);
+    }
+    return bet;
+  };
+  const overall = (shift: number) => cells.reduce((sum, c) => sum + c.weight * betFor(c.buckets, shift), 0) / totalWeight;
+
+  let lo = -6;
+  let hi = 6;
+  for (let i = 0; i < 40; i++) {
+    const mid = (lo + hi) / 2;
+    if (overall(mid) < target) lo = mid;
+    else hi = mid;
+  }
+  const k = (lo + hi) / 2;
+
+  return new Map(cells.map((c) => {
+    const bet = round2(betFor(c.buckets, k));
+    return [c.hand, { bet, check: round2(1 - bet) }];
+  }));
 }
 
-// 5. Paired: KK5 — high cbet (~65%)
-function pairedCbet(row: number, col: number) {
-  const isPair = row === col;
-
-  // Trips or full house
-  if (hasKing(row, col)) return { bet: 0.9, check: 0.1 };
-  // Overpair AA
-  if (isPair && row === 0) return { bet: 0.85, check: 0.15 };
-  // Medium+ pairs
-  if (isPair && row <= 4) return { bet: 0.55, check: 0.45 };
-  // Ace high
-  if (hasAce(row, col)) return { bet: 0.65, check: 0.35 };
-  // Small pairs
-  if (isPair) return { bet: 0.35, check: 0.65 };
-  // Broadway
-  if (isBroadway(row, col)) return { bet: 0.5, check: 0.5 };
-  if (row < col && gap(row, col) <= 2) return { bet: 0.36, check: 0.64 };
-  return { bet: 0.28, check: 0.72 };
-}
-
-// 6. Low Connected: 876 — mostly check (~30% cbet)
-function lowConnectedCbet(row: number, col: number) {
-  const isPair = row === col;
-  const isSuited = row < col;
-
-  // Straights (T9, 95, 54)
-  if ((row === 4 && col === 5) || (col === 4 && row === 5)) return { bet: 0.8, check: 0.2 }; // T9
-  if ((row === 5 && col === 8) || (col === 5 && row === 8)) return { bet: 0.75, check: 0.25 }; // 95
-  // Overpairs
-  if (isPair && row <= 3) return { bet: 0.45, check: 0.55 };
-  // Sets
-  if (isPair && (row === 5 || row === 6 || row === 7)) return { bet: 0.85, check: 0.15 };
-  // Two pair
-  if (isPair) return { bet: 0.3, check: 0.7 };
-  // High cards — mostly check on this low board
-  if (hasAce(row, col)) return { bet: 0.35, check: 0.65 };
-  if (hasKing(row, col)) return { bet: 0.28, check: 0.72 };
-  // Draws
-  if (isSuited && gap(row, col) <= 2 && row >= 4) return { bet: 0.42, check: 0.58 };
-  if (isSuited && gap(row, col) <= 4 && row >= 3) return { bet: 0.3, check: 0.7 };
-  return { bet: 0.18, check: 0.82 };
-}
-
-// --- 60bb variants: lower SPR means more aggressive cbet frequencies (+10-15%) ---
-
-function boostBet(freqs: { bet: number; check: number }, boost: number): { bet: number; check: number } {
-  const bet = Math.min(1.0, freqs.bet + boost);
-  const check = Math.max(0, 1.0 - bet);
-  return { bet: parseFloat(bet.toFixed(2)), check: parseFloat(check.toFixed(2)) };
-}
-
-function dryHighCbet60(row: number, col: number) {
-  return boostBet(dryHighCbet(row, col), 0.12);
-}
-
-function dryMidCbet60(row: number, col: number) {
-  return boostBet(dryMidCbet(row, col), 0.12);
-}
-
-function wetBroadwayCbet60(row: number, col: number) {
-  return boostBet(wetBroadwayCbet(row, col), 0.10);
-}
-
-function monotoneCbet60(row: number, col: number) {
-  return boostBet(monotoneCbet(row, col), 0.10);
-}
-
-function pairedCbet60(row: number, col: number) {
-  return boostBet(pairedCbet(row, col), 0.15);
-}
-
-function lowConnectedCbet60(row: number, col: number) {
-  return boostBet(lowConnectedCbet(row, col), 0.10);
+function textureRange(key: string, depth: StackDepth) {
+  let grid: Map<string, { bet: number; check: number }> | undefined;
+  return (row: number, col: number) => (grid ??= buildGrid(TEXTURES[key], depth)).get(handLabel(row, col))!;
 }
 
 // --- Chart builder by stack depth ---
@@ -181,7 +105,6 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
   // Need at least BTN and BB (3+ players)
   if (maxPlayers < 3) return [];
 
-  const is60 = depth === 60;
   const tag = `${depth}bb`;
 
   return [
@@ -192,7 +115,7 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       stackDepth: depth,
       maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
-      ranges: is60 ? dryHighCbet60 : dryHighCbet,
+      ranges: textureRange('A72r', depth),
     },
     {
       position: 'BTN', situation: 'Postflop Cbet', vsPosition: 'BB', category: 'Postflop Cbet',
@@ -201,7 +124,7 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       stackDepth: depth,
       maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
-      ranges: is60 ? dryMidCbet60 : dryMidCbet,
+      ranges: textureRange('K83r', depth),
     },
     {
       position: 'BTN', situation: 'Postflop Cbet', vsPosition: 'BB', category: 'Postflop Cbet',
@@ -210,7 +133,7 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       stackDepth: depth,
       maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
-      ranges: is60 ? wetBroadwayCbet60 : wetBroadwayCbet,
+      ranges: textureRange('QJT', depth),
     },
     {
       position: 'BTN', situation: 'Postflop Cbet', vsPosition: 'BB', category: 'Postflop Cbet',
@@ -219,7 +142,7 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       stackDepth: depth,
       maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
-      ranges: is60 ? monotoneCbet60 : monotoneCbet,
+      ranges: textureRange('963ss', depth),
     },
     {
       position: 'BTN', situation: 'Postflop Cbet', vsPosition: 'BB', category: 'Postflop Cbet',
@@ -228,7 +151,7 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       stackDepth: depth,
       maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
-      ranges: is60 ? pairedCbet60 : pairedCbet,
+      ranges: textureRange('KK5', depth),
     },
     {
       position: 'BTN', situation: 'Postflop Cbet', vsPosition: 'BB', category: 'Postflop Cbet',
@@ -237,7 +160,7 @@ export function getPostflopCharts(depth: StackDepth, maxPlayers: MaxPlayers = 6)
       stackDepth: depth,
       maxPlayers,
       actionTypes: POSTFLOP_CBET_ACTIONS,
-      ranges: is60 ? lowConnectedCbet60 : lowConnectedCbet,
+      ranges: textureRange('876', depth),
     },
   ];
 }

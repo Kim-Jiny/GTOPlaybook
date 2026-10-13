@@ -2,7 +2,6 @@ import {
   ChartDef,
   handLabel,
   inSet,
-  smoothFrequencies,
   StackDepth,
   MaxPlayers,
   positionsForPlayerCount,
@@ -10,6 +9,9 @@ import {
   shallowOpenerClass,
 } from './helpers';
 import { THREE_BET_ACTIONS, THREE_BET_FOLD_ACTIONS } from './actionColors';
+import { enforceMonotone, parseRange, monotoneTable, FreqTable } from './rfiTables';
+import { fillByPriority, round2 as roundTo2, THREE_BET_SHAPE, CALL_SHAPE } from './squeezeRanges';
+import { lazyRange } from './thresholdRange';
 
 // 3bet ranges when facing an open from various positions
 
@@ -217,19 +219,30 @@ function threeBetRange(
   callSet: Set<string>,
   mixedMap: ThreeBetMixedMap = false,
 ) {
-  return (row: number, col: number) => {
-    const h = handLabel(row, col);
+  const rawFreqs = (h: string) => {
     if (mixedMap && h in mixedMap && !inSet(h, threeBetSet)) return mixedMap[h];
-    const currentKey = inSet(h, threeBetSet) ? '3bet' : inSet(h, callSet) ? 'call' : 'fold';
-    const smooth = smoothFrequencies(row, col, currentKey, [
-      { key: '3bet', set: threeBetSet },
-      { key: 'call', set: callSet },
-    ]);
-    if (smooth) return smooth;
     if (inSet(h, threeBetSet)) return { '3bet': 1.0, call: 0, fold: 0 };
     if (inSet(h, callSet)) return { '3bet': 0, call: 1.0, fold: 0 };
     return { '3bet': 0, call: 0, fold: 1.0 };
   };
+
+  // Authored sets + mixed map, made monotone in hand strength: a stronger hand
+  // never 3bets or continues less often than a weaker one (wheel-ace bluffs exempt).
+  return lazyRange(() => {
+    const hands: string[] = [];
+    for (let row = 0; row < 13; row++) for (let col = 0; col < 13; col++) hands.push(handLabel(row, col));
+    const threeBet = new Map(hands.map((h) => [h, rawFreqs(h)['3bet']]));
+    const play = new Map(hands.map((h) => [h, 1 - rawFreqs(h).fold]));
+    enforceMonotone((h) => threeBet.get(h)!, (h, f) => threeBet.set(h, f));
+    enforceMonotone((h) => play.get(h)!, (h, f) => play.set(h, f));
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+    return new Map(hands.map((h) => {
+      const t = round2(threeBet.get(h)!);
+      const p = Math.max(t, round2(play.get(h)!));
+      return [h, { '3bet': t, call: round2(p - t), fold: round2(1 - p) }];
+    }));
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -277,14 +290,68 @@ function get3betRangeData(
   // Determine which reference 3bettor's data to use
   const refSeat = threeBettorRefSeat(threeBettor);
 
+  // Shallow stacks reuse the same authored tables (so widths shrink smoothly with depth);
+  // the legacy getters only decide which matchups exist.
   if (depth === 15) {
-    return get15bbRange(refSeat, oClass);
+    return get15bbRange(refSeat, oClass) ? deepTableRange(refSeat, oClass, 15) : null;
   }
   if (depth === 25) {
-    return get25bbRange(refSeat, oClass);
+    return get25bbRange(refSeat, oClass) ? deepTableRange(refSeat, oClass, 25) : null;
   }
 
-  return getDeepRange(refSeat, oClass, depth);
+  // 100/60/40bb: keep the same available matchups, but fit authored shapes to
+  // realistic widths (the legacy sets were too narrow, e.g. BTN vs CO 3bet 4.8%).
+  if (!getDeepRange(refSeat, oClass, depth)) return null;
+  return deepTableRange(refSeat, oClass, depth as 100 | 60 | 40);
+}
+
+// [3bet share, call share] of all hands at 100bb, by 3bettor seat and opener class.
+const DEEP_WIDTHS: Record<string, [number, number]> = {
+  'HJ:ep-tight': [0.030, 0.030],
+  'CO:ep-tight': [0.032, 0.040],
+  'CO:hj': [0.045, 0.045],
+  'BTN:ep-tight': [0.035, 0.050],
+  'BTN:hj': [0.055, 0.065],
+  'BTN:co': [0.080, 0.095],
+  'SB:ep-tight': [0.040, 0.015],
+  'SB:hj': [0.060, 0.020],
+  'SB:co': [0.085, 0.030],
+  'SB:btn': [0.120, 0.045],
+};
+
+function deepTableRange(
+  refSeat: 'HJ' | 'CO' | 'BTN' | 'SB',
+  oClass: ReturnType<typeof openerClass>,
+  depth: 100 | 60 | 40 | 25 | 15,
+) {
+  const [threeBetW, callW] = DEEP_WIDTHS[`${refSeat}:${oClass}`] ?? [0.04, 0.04];
+  const callFactor = { 100: 1, 60: 0.9, 40: 0.8, 25: 0.6, 15: 0.5 }[depth];
+
+  return lazyRange(() => {
+    const threeBet: FreqTable = monotoneTable(fillByPriority(parseRange(THREE_BET_SHAPE), threeBetW));
+    const call: FreqTable = fillByPriority(parseRange(CALL_SHAPE), callW * callFactor, threeBet);
+    // A dominating hand must continue (3bet + call) at least as often.
+    enforceMonotone(
+      (h) => (threeBet[h] ?? 0) + (call[h] ?? 0),
+      (h, f) => { call[h] = roundTo2(Math.min(f, 1) - (threeBet[h] ?? 0)); },
+    );
+    const out = new Map<string, Record<string, number>>();
+    for (let row = 0; row < 13; row++) {
+      for (let col = 0; col < 13; col++) {
+        const h = handLabel(row, col);
+        const t = threeBet[h] ?? 0;
+        const c = Math.min(call[h] ?? 0, 1 - t);
+        if (depth === 15) {
+          // 15bb is reshove-or-fold: part of the calling range becomes a jam.
+          const jam = Math.min(1, t + 0.35 * c);
+          out.set(h, { '3bet': roundTo2(jam), fold: roundTo2(1 - jam) });
+        } else {
+          out.set(h, { '3bet': roundTo2(t), call: roundTo2(c), fold: roundTo2(1 - t - c) });
+        }
+      }
+    }
+    return out;
+  });
 }
 
 /**

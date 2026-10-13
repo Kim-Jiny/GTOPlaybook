@@ -22,6 +22,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
   String? _error;
   bool _isLoading = true;
   bool _switchingTier = false;
+  Set<int>? _availableTiers; // null = unknown, keep every tier enabled
 
   @override
   void initState() {
@@ -46,6 +47,11 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
         _chart = chart;
         _selectedRange = null;
       });
+      final tiers = await context.read<GtoProvider>().fetchAvailableTiers(
+        widget.chartId,
+      );
+      if (!mounted) return;
+      setState(() => _availableTiers = tiers);
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e.toString());
@@ -132,19 +138,26 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                   const SizedBox(height: 12),
                   _StackTierSelector(
                     current: chart.stackDepth,
+                    available: _availableTiers,
                     switching: _switchingTier,
                     onSelected: _onTierSelected,
                   ),
                   const SizedBox(height: 12),
-                  _DisplayModeToggle(
+                  _ViewModeToggle(
                     detailedMode: _detailedMode,
                     onChanged: (value) {
                       setState(() => _detailedMode = value);
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   _chartLegend(chart),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
+                  if (selectedRange != null)
+                    _SelectedHandStrip(
+                      range: selectedRange,
+                      actionTypes: chart.actionTypes,
+                    ),
+                  const SizedBox(height: 10),
                   GtoGrid(
                     ranges: chart.ranges ?? [],
                     actionTypes: chart.actionTypes,
@@ -196,12 +209,16 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
 
 Widget _chartLegend(GtoChart chart) {
   if (chart.actionTypes != null && chart.actionTypes!.isNotEmpty) {
+    final shares = chart.actionShares();
     return Wrap(
       alignment: WrapAlignment.center,
       spacing: 16,
-      children: chart.actionTypes!
-          .map((at) => _LegendItem(color: at.toColor(), label: at.label))
-          .toList(),
+      runSpacing: 6,
+      children: chart.actionTypes!.map((at) {
+        final share = shares[at.key];
+        final pct = share == null ? '' : ' ${(share * 100).toStringAsFixed(1)}%';
+        return _LegendItem(color: at.toColor(), label: '${at.label}$pct');
+      }).toList(),
     );
   }
   // Fallback legacy legend
@@ -450,46 +467,7 @@ class _HandDetail extends StatelessWidget {
   List<_RankedAction> _rankedActions(
     HandRange range,
     List<ActionType>? actionTypes,
-  ) {
-    final labels = {
-      for (final action in actionTypes ?? const <ActionType>[])
-        action.key: action.label,
-      'raise': 'Raise',
-      'call': 'Call',
-      'fold': 'Fold',
-    };
-    final colors = {
-      for (final action in actionTypes ?? const <ActionType>[])
-        action.key: action.toColor(),
-      'raise': Colors.red.shade700,
-      'call': Colors.green.shade700,
-      'fold': Colors.grey.shade700,
-    };
-
-    final frequencies = <String, double>{};
-    if (range.frequencies.isNotEmpty) {
-      frequencies.addAll(range.frequencies);
-    } else {
-      if (range.raiseFreq > 0) frequencies['raise'] = range.raiseFreq;
-      if (range.callFreq > 0) frequencies['call'] = range.callFreq;
-      if (range.foldFreq > 0) frequencies['fold'] = range.foldFreq;
-    }
-
-    final sorted =
-        frequencies.entries.where((entry) => entry.value > 0).toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
-
-    return sorted
-        .map(
-          (entry) => _RankedAction(
-            label: labels[entry.key] ?? entry.key,
-            key: entry.key,
-            freq: entry.value,
-            color: colors[entry.key] ?? Colors.blueGrey,
-          ),
-        )
-        .toList();
-  }
+  ) => _rankActions(range, actionTypes);
 
   String _handCategory(String hand, AppLocalizations l) {
     if (hand.length == 2) return l.pocketPair;
@@ -634,11 +612,13 @@ class _ChartSummaryCard extends StatelessWidget {
 
 class _StackTierSelector extends StatelessWidget {
   final int current;
+  final Set<int>? available;
   final bool switching;
   final ValueChanged<int> onSelected;
 
   const _StackTierSelector({
     required this.current,
+    required this.available,
     required this.switching,
     required this.onSelected,
   });
@@ -665,7 +645,9 @@ class _StackTierSelector extends StatelessWidget {
                   ChoiceChip(
                     label: Text('${t}bb'),
                     selected: t == current,
-                    onSelected: switching ? null : (_) => onSelected(t),
+                    onSelected: switching || !(available?.contains(t) ?? true)
+                        ? null
+                        : (_) => onSelected(t),
                     visualDensity: VisualDensity.compact,
                     labelStyle: const TextStyle(fontSize: 12),
                   ),
@@ -689,112 +671,123 @@ class _StackTierSelector extends StatelessWidget {
   }
 }
 
-class _DisplayModeToggle extends StatelessWidget {
+class _ViewModeToggle extends StatelessWidget {
   final bool detailedMode;
   final ValueChanged<bool> onChanged;
 
-  const _DisplayModeToggle({
-    required this.detailedMode,
-    required this.onChanged,
-  });
+  const _ViewModeToggle({required this.detailedMode, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l.viewMode,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _ModeButton(
-                    label: l.simple,
-                    isSelected: !detailedMode,
-                    description: l.primaryActionFirst,
-                    onTap: () => onChanged(false),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _ModeButton(
-                    label: l.detailed,
-                    isSelected: detailedMode,
-                    description: l.mixedFrequenciesVisible,
-                    onTap: () => onChanged(true),
-                  ),
-                ),
-              ],
-            ),
-          ],
+    return Row(
+      children: [
+        Text(
+          l.viewMode,
+          style: const TextStyle(fontSize: 13, color: Colors.white70),
         ),
-      ),
+        const Spacer(),
+        SegmentedButton<bool>(
+          showSelectedIcon: false,
+          style: const ButtonStyle(visualDensity: VisualDensity.compact),
+          segments: [
+            ButtonSegment(value: false, label: Text(l.simple)),
+            ButtonSegment(value: true, label: Text(l.detailed)),
+          ],
+          selected: {detailedMode},
+          onSelectionChanged: (selection) => onChanged(selection.first),
+        ),
+      ],
     );
   }
 }
 
-class _ModeButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final String description;
-  final VoidCallback onTap;
+/// Compact summary of the tapped hand, shown right above the grid so a tap is
+/// visible without scrolling down to the full detail card.
+class _SelectedHandStrip extends StatelessWidget {
+  final HandRange range;
+  final List<ActionType>? actionTypes;
 
-  const _ModeButton({
-    required this.label,
-    required this.isSelected,
-    required this.description,
-    required this.onTap,
-  });
+  const _SelectedHandStrip({required this.range, this.actionTypes});
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF4CAF50).withValues(alpha: 0.16)
-              : Colors.white.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF4CAF50)
-                : Colors.white.withValues(alpha: 0.08),
+    final actions = _rankActions(range, actionTypes);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            range.hand,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? const Color(0xFF7CFF83) : Colors.white,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              description,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
-            ),
-          ],
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: actions.isEmpty
+                ? const SizedBox.shrink()
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: SizedBox(
+                          height: 10,
+                          child: Row(
+                            children: [
+                              for (final a in actions)
+                                Expanded(
+                                  flex: (a.freq * 1000).round().clamp(1, 1000),
+                                  child: ColoredBox(color: a.color),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 2,
+                        children: [
+                          for (final a in actions)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    color: a.color,
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${a.label} ${(a.freq * 100).round()}%',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -897,4 +890,48 @@ class _RankedAction {
     required this.freq,
     required this.color,
   });
+}
+
+List<_RankedAction> _rankActions(
+  HandRange range,
+  List<ActionType>? actionTypes,
+) {
+  final labels = {
+    for (final action in actionTypes ?? const <ActionType>[])
+      action.key: action.label,
+    'raise': 'Raise',
+    'call': 'Call',
+    'fold': 'Fold',
+  };
+  final colors = {
+    for (final action in actionTypes ?? const <ActionType>[])
+      action.key: action.toColor(),
+    'raise': Colors.red.shade700,
+    'call': Colors.green.shade700,
+    'fold': Colors.grey.shade700,
+  };
+
+  final frequencies = <String, double>{};
+  if (range.frequencies.isNotEmpty) {
+    frequencies.addAll(range.frequencies);
+  } else {
+    if (range.raiseFreq > 0) frequencies['raise'] = range.raiseFreq;
+    if (range.callFreq > 0) frequencies['call'] = range.callFreq;
+    if (range.foldFreq > 0) frequencies['fold'] = range.foldFreq;
+  }
+
+  final sorted =
+      frequencies.entries.where((entry) => entry.value > 0).toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+  return sorted
+      .map(
+        (entry) => _RankedAction(
+          label: labels[entry.key] ?? entry.key,
+          key: entry.key,
+          freq: entry.value,
+          color: colors[entry.key] ?? Colors.blueGrey,
+        ),
+      )
+      .toList();
 }
