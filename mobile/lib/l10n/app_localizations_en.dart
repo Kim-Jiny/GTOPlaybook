@@ -67,6 +67,17 @@ class AppLocalizationsEn extends AppLocalizations {
       'The purchase could not be completed. Please try again.';
 
   @override
+  String get purchaseNoticeShort =>
+      'This is a digital item that takes effect as soon as you buy it. Withdrawal may be limited once it has been applied.';
+
+  @override
+  String get purchaseInfoLink => 'Purchase & refund info';
+
+  @override
+  String get purchaseInfoBody =>
+      '• Item: Remove Ads (one-time payment, permanent)\n• Scope: all banner and interstitial ads in the app. Charts and other features are unchanged.\n• Account: the purchase is linked to the account you are signed in with. After switching devices or reinstalling, sign in with the same account and tap \"Restore purchases\".\n• Payment: handled by the Apple App Store / Google Play. We do not store your payment method.\n• Refunds & withdrawal: request refunds through the store you bought from (Apple / Google), following its process and policy and the applicable laws. Because ads are removed immediately, withdrawal may be limited once the item has been applied.\n• When a refund is completed, ad removal is switched off again.\n• Questions: My Page > Contact us';
+
+  @override
   String get retry => 'Retry';
 
   @override

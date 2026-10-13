@@ -12,7 +12,11 @@ export type VerifiedPurchase = {
   productId: string;
   /** Stable id for the purchase: Apple original_transaction_id / Google orderId. */
   transactionId: string;
+  /** What is needed to re-check this purchase later: Apple transaction id / Google purchase token. */
+  ref: string;
 };
+
+export type PurchaseState = 'active' | 'revoked' | 'unknown';
 
 export class PurchaseVerificationError extends Error {
   constructor(message: string, readonly status = 400) {
@@ -118,6 +122,7 @@ async function verifyAppleTransaction(jws: string, productId: string): Promise<V
     platform: 'ios',
     productId,
     transactionId: tx.originalTransactionId || tx.transactionId || id,
+    ref: tx.originalTransactionId || tx.transactionId || id,
   };
 }
 
@@ -145,6 +150,7 @@ async function verifyAppleReceipt(receiptData: string, productId: string): Promi
     platform: 'ios',
     productId,
     transactionId: item.original_transaction_id || item.transaction_id,
+    ref: item.original_transaction_id || item.transaction_id,
   };
 }
 
@@ -203,5 +209,44 @@ export async function verifyGoogle(purchaseToken: string, productId: string): Pr
   const data = (await res.json()) as { purchaseState?: number; orderId?: string };
   // purchaseState: 0 purchased, 1 canceled, 2 pending
   if (data.purchaseState !== 0) throw new PurchaseVerificationError('Purchase is not completed');
-  return { platform: 'android', productId, transactionId: data.orderId || purchaseToken };
+  return { platform: 'android', productId, transactionId: data.orderId || purchaseToken, ref: purchaseToken };
+}
+
+// ---------------------------------------------------------------------------
+// Refund reconciliation. Re-asks the store about an already-verified purchase.
+// Anything uncertain (not configured, network error, pending) is 'unknown', which
+// callers must treat as "leave the entitlement alone".
+// ---------------------------------------------------------------------------
+export async function checkPurchaseState(
+  platform: string,
+  ref: string,
+  productId: string,
+): Promise<PurchaseState> {
+  try {
+    if (platform === 'ios') {
+      let res = await appleTransactionLookup(ref, false);
+      if (res.status === 404) res = await appleTransactionLookup(ref, true);
+      if (!res.ok) return 'unknown';
+      const body = (await res.json()) as { signedTransactionInfo?: string };
+      if (!body.signedTransactionInfo) return 'unknown';
+      const tx = decodeJwsPayload(body.signedTransactionInfo);
+      if (tx.productId !== productId) return 'unknown';
+      return tx.revocationDate ? 'revoked' : 'active';
+    }
+    if (platform === 'android') {
+      const token = await googleAccessToken();
+      const url =
+        `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${ANDROID_PACKAGE}` +
+        `/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(ref)}`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) return 'unknown';
+      const data = (await res.json()) as { purchaseState?: number };
+      if (data.purchaseState === 0) return 'active';
+      if (data.purchaseState === 1) return 'revoked'; // canceled / refunded / charged back
+      return 'unknown';
+    }
+  } catch {
+    // fall through
+  }
+  return 'unknown';
 }

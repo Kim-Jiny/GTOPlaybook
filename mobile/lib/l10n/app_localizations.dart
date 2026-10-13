@@ -212,6 +212,24 @@ abstract class AppLocalizations {
   /// **'The purchase could not be completed. Please try again.'**
   String get purchaseFailed;
 
+  /// No description provided for @purchaseNoticeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a digital item that takes effect as soon as you buy it. Withdrawal may be limited once it has been applied.'**
+  String get purchaseNoticeShort;
+
+  /// No description provided for @purchaseInfoLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase & refund info'**
+  String get purchaseInfoLink;
+
+  /// No description provided for @purchaseInfoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'• Item: Remove Ads (one-time payment, permanent)\n• Scope: all banner and interstitial ads in the app. Charts and other features are unchanged.\n• Account: the purchase is linked to the account you are signed in with. After switching devices or reinstalling, sign in with the same account and tap \"Restore purchases\".\n• Payment: handled by the Apple App Store / Google Play. We do not store your payment method.\n• Refunds & withdrawal: request refunds through the store you bought from (Apple / Google), following its process and policy and the applicable laws. Because ads are removed immediately, withdrawal may be limited once the item has been applied.\n• When a refund is completed, ad removal is switched off again.\n• Questions: My Page > Contact us'**
+  String get purchaseInfoBody;
+
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:

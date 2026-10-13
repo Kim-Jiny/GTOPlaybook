@@ -239,7 +239,10 @@ class _RemoveAdsTile extends StatelessWidget {
       return ListTile(
         leading: Icon(Icons.check_circle, color: context.accent),
         title: Text(l.adsRemoved),
+        subtitle: Text(l.purchaseInfoLink),
+        trailing: Icon(Icons.info_outline, color: context.ink38, size: 20),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        onTap: () => _showPurchaseInfo(context),
       );
     }
     // Hidden until the store can actually sell the product.
@@ -291,11 +294,23 @@ class _RemoveAdsTile extends StatelessWidget {
               l.removeAdsDesc,
               style: TextStyle(color: context.ink54, fontSize: 13),
             ),
+            const SizedBox(height: 6),
+            Text(
+              l.purchaseNoticeShort,
+              style: TextStyle(color: context.ink54, fontSize: 12),
+            ),
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
                 onPressed: purchase.busy ? null : purchase.restore,
                 child: Text(l.restorePurchases),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: () => _showPurchaseInfo(context),
+                child: Text(l.purchaseInfoLink),
               ),
             ),
             if (notice != null)
@@ -308,4 +323,20 @@ class _RemoveAdsTile extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showPurchaseInfo(BuildContext context) {
+  final l = AppLocalizations.of(context)!;
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(l.purchaseInfoLink),
+      content: SingleChildScrollView(
+        child: Text(l.purchaseInfoBody, style: const TextStyle(height: 1.5)),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.confirm)),
+      ],
+    ),
+  );
 }

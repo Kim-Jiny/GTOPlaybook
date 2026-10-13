@@ -93,6 +93,11 @@ const CREATE_TABLES = `
     UNIQUE (platform, transaction_id)
   );
 
+  -- Refund reconciliation: how to re-check the purchase with the store, and when it was voided.
+  ALTER TABLE purchases ADD COLUMN IF NOT EXISTS receipt_ref TEXT;
+  ALTER TABLE purchases ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMPTZ;
+  ALTER TABLE purchases ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMPTZ DEFAULT NOW();
+
   CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON purchases(user_id);
 `;
 
