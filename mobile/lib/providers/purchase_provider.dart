@@ -155,7 +155,14 @@ class PurchaseProvider extends ChangeNotifier {
 
   Future<void> _onPurchases(List<PurchaseDetails> purchases) async {
     for (final purchase in purchases) {
-      if (purchase.productID != productId) continue;
+      // Android reports a cancelled or failed purchase with an empty product id,
+      // so those must still reach _handle or the progress indicator never stops.
+      final isOurs = purchase.productID == productId;
+      final isFailure =
+          purchase.productID.isEmpty &&
+          (purchase.status == PurchaseStatus.canceled ||
+              purchase.status == PurchaseStatus.error);
+      if (!isOurs && !isFailure) continue;
       await _handle(purchase);
     }
   }
