@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../config/db';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { notifyAdmins } from '../services/pushService';
 
 const router = Router();
 
@@ -21,6 +22,18 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
     );
 
     res.status(201).json(result.rows[0]);
+
+    // After responding, so a slow or failing push never delays the user.
+    const who = await pool
+      .query('SELECT COALESCE(display_name, email) AS name FROM users WHERE id = $1', [req.uid])
+      .then((r) => r.rows[0]?.name as string | undefined)
+      .catch(() => undefined);
+    void notifyAdmins({
+      type: 'inquiry',
+      title: '새 문의가 접수됐어요',
+      body: `${who ? who + ' · ' : ''}${String(title).slice(0, 80)}`,
+      id: result.rows[0].id,
+    });
   } catch (err) {
     console.error('Error creating inquiry:', err);
     res.status(500).json({ error: 'Failed to create inquiry' });

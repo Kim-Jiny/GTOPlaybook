@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import pool from '../config/db';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { notifyAdmins } from '../services/pushService';
 import {
   checkPurchaseState,
   PurchaseVerificationError,
@@ -12,6 +13,19 @@ import {
 const router = Router();
 
 const RECHECK_AFTER_HOURS = 6;
+
+async function notifyPurchaseEvent(type: 'purchase' | 'refund', uid: string, platform: string, purchaseId: number) {
+  const who = await pool
+    .query('SELECT COALESCE(display_name, email) AS name FROM users WHERE id = $1', [uid])
+    .then((r) => (r.rows[0]?.name as string | undefined) ?? uid)
+    .catch(() => uid);
+  await notifyAdmins({
+    type,
+    title: type === 'purchase' ? '광고 제거 구매' : '광고 제거 환불',
+    body: `${who} · ${platform === 'ios' ? 'iOS' : 'Android'}`,
+    id: purchaseId,
+  });
+}
 
 /**
  * Re-check purchases that have not been looked at recently, so a refund taken through
@@ -31,6 +45,9 @@ async function reconcileRefunds(uid: string): Promise<void> {
   for (const row of stale.rows) {
     const state = await checkPurchaseState(row.platform, row.receipt_ref, row.product_id);
     if (state === 'unknown') continue;
+    if (state === 'revoked') {
+      void notifyPurchaseEvent('refund', uid, row.platform, row.id);
+    }
     await pool.query(
       `UPDATE purchases
           SET last_checked_at = NOW(), revoked_at = CASE WHEN $2 = 'revoked' THEN NOW() ELSE NULL END
@@ -81,6 +98,7 @@ router.post('/verify', requireAuth, async (req: AuthRequest, res) => {
 
     // A store purchase unlocks one account only; restoring on the same account is fine.
     const client = await pool.connect();
+    let newPurchaseId: number | null = null;
     try {
       await client.query('BEGIN');
       // Normally created by /users/sync at sign-in; make sure the row exists so the FK holds.
@@ -98,11 +116,12 @@ router.post('/verify', requireAuth, async (req: AuthRequest, res) => {
         return;
       }
       if (existing.rows.length === 0) {
-        await client.query(
+        const inserted = await client.query(
           `INSERT INTO purchases (user_id, platform, product_id, transaction_id, receipt_ref)
-           VALUES ($1, $2, $3, $4, $5)`,
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
           [req.uid, verified.platform, verified.productId, verified.transactionId, verified.ref],
         );
+        newPurchaseId = inserted.rows[0].id;
       } else {
         // Verified again (restore): it is valid now, so clear any earlier void and refresh the ref.
         await client.query(
@@ -121,6 +140,11 @@ router.post('/verify', requireAuth, async (req: AuthRequest, res) => {
     }
 
     res.json({ adsRemoved: true });
+
+    // Only a first-time purchase is news; restores re-verify the same transaction.
+    if (newPurchaseId !== null) {
+      void notifyPurchaseEvent('purchase', req.uid!, platform, newPurchaseId);
+    }
   } catch (err) {
     if (err instanceof PurchaseVerificationError) {
       res.status(err.status).json({ error: err.message });
