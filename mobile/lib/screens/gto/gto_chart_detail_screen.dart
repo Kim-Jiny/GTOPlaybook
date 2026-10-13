@@ -552,79 +552,51 @@ class _FreqBar extends StatelessWidget {
   }
 }
 
-class _ChartSummaryCard extends StatefulWidget {
+class _ChartSummaryCard extends StatelessWidget {
   final GtoChart chart;
 
   const _ChartSummaryCard({required this.chart});
 
   @override
-  State<_ChartSummaryCard> createState() => _ChartSummaryCardState();
-}
-
-class _ChartSummaryCardState extends State<_ChartSummaryCard> {
-  bool _expanded = true;
-
-  @override
   Widget build(BuildContext context) {
-    final chart = widget.chart;
     final headline = _headline(chart);
 
     return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => setState(() => _expanded = !_expanded),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: AnimatedSize(
-            duration: const Duration(milliseconds: 180),
-            alignment: Alignment.topCenter,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              headline,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if ((chart.description ?? '').isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                chart.description!,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        headline,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      _expanded ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.white54,
-                    ),
-                  ],
-                ),
-                if (_expanded) ...[
-                  if ((chart.description ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      chart.description!,
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _MetaChip(label: chart.position),
-                      if (chart.vsPosition != null)
-                        _MetaChip(label: 'vs ${chart.vsPosition}'),
-                      _MetaChip(label: '${chart.stackDepth}bb'),
-                      _MetaChip(label: '${chart.maxPlayers}-max'),
-                      if ((chart.category ?? '').isNotEmpty)
-                        _MetaChip(label: chart.category!),
-                    ],
-                  ),
-                ],
+                _MetaChip(label: chart.position),
+                if (chart.vsPosition != null)
+                  _MetaChip(label: 'vs ${chart.vsPosition}'),
+                _MetaChip(label: '${chart.stackDepth}bb'),
+                _MetaChip(label: '${chart.maxPlayers}-max'),
+                if ((chart.category ?? '').isNotEmpty)
+                  _MetaChip(label: chart.category!),
               ],
             ),
-          ),
+          ],
         ),
       ),
     );
