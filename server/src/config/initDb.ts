@@ -79,6 +79,21 @@ const CREATE_TABLES = `
 
   -- Users: last active tracking
   ALTER TABLE users ADD COLUMN IF NOT EXISTS last_active_at TIMESTAMPTZ;
+
+  -- Ad-free purchase (one-time, non-consumable)
+  ALTER TABLE users ADD COLUMN IF NOT EXISTS ads_removed BOOLEAN NOT NULL DEFAULT FALSE;
+
+  CREATE TABLE IF NOT EXISTS purchases (
+    id SERIAL PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    transaction_id TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (platform, transaction_id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON purchases(user_id);
 `;
 
 export async function initDatabase(): Promise<void> {

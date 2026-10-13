@@ -14,6 +14,7 @@ import { initDatabase } from './config/initDb';
 import pool from './config/db';
 import gtoRoutes from './routes/gto';
 import userRoutes from './routes/user';
+import purchaseRoutes from './routes/purchase';
 import inquiryRoutes from './routes/inquiry';
 import adminRoutes from './routes/admin';
 import adminWebRoutes from './routes/adminWeb';
@@ -99,6 +100,7 @@ app.use('/admin', adminWebRoutes);
 // API routes
 app.use('/api/gto', gtoRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/purchases', purchaseRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/admin', adminRoutes);
 
