@@ -10,6 +10,7 @@ import '../inquiry/inquiry_screen.dart';
 import '../inquiry/my_inquiries_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
 import 'purchase_policy_screen.dart';
+import '../../config/legal_links.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -101,6 +102,16 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.receipt_long,
             title: l.purchaseInfoLink,
             onTap: () => _showPurchaseInfo(context),
+          ),
+          _MenuTile(
+            icon: Icons.privacy_tip_outlined,
+            title: l.privacyPolicy,
+            onTap: () => LegalLinks.open(context, LegalLinks.privacy),
+          ),
+          _MenuTile(
+            icon: Icons.description_outlined,
+            title: l.termsOfService,
+            onTap: () => LegalLinks.open(context, LegalLinks.terms),
           ),
           if (auth.isAdmin)
             _MenuTile(

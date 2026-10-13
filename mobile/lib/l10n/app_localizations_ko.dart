@@ -108,7 +108,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get purchasePolicyContactBody =>
-      '상호: 진소프트\n사업자등록번호: 827-53-01093\n통신판매업 신고번호: 2026-고양덕양구-0658\n이메일: kjinyz@naver.com\n앱 안: 마이 페이지 > 문의하기';
+      '상호: 진소프트\n대표자: 김미진\n사업장 주소: 경기도 덕양구 충경로 138, 303동 508호\n전화번호: 010-4676-2773\n사업자등록번호: 827-53-01093\n통신판매업 신고번호: 2026-고양덕양구-0658\n이메일: kjinyz@naver.com\n앱 안: 마이 페이지 > 문의하기';
+
+  @override
+  String get privacyPolicy => '개인정보처리방침';
+
+  @override
+  String get termsOfService => '서비스 이용약관';
+
+  @override
+  String get viewOnWeb => '웹에서 보기';
+
+  @override
+  String get linkOpenFailed => '링크를 열 수 없어요. 잠시 후 다시 시도해 주세요.';
 
   @override
   String get retry => '다시 시도';

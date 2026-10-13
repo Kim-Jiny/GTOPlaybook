@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
+import '../../config/legal_links.dart';
 import '../../theme/app_theme.dart';
 
 /// Purchase, withdrawal and refund terms for the ad-free upgrade.
@@ -51,6 +52,15 @@ class PurchasePolicyScreen extends StatelessWidget {
                 ),
               ),
             ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () =>
+                  LegalLinks.open(context, LegalLinks.purchaseRefund),
+              icon: const Icon(Icons.open_in_new, size: 18),
+              label: Text(l.viewOnWeb),
+            ),
+          ),
         ],
       ),
     );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+import '../config/legal_links.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_theme.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -19,25 +21,21 @@ class LoginScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.casino,
-                  size: 80,
-                  color: Color(0xFF4CAF50),
-                ),
+                Icon(Icons.casino, size: 80, color: context.accent),
                 const SizedBox(height: 24),
                 Text(
                   l.appTitle,
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                    fontWeight: FontWeight.bold,
+                    color: context.ink,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   l.masterYourPokerGame,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Colors.white60,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: context.ink60),
                 ),
                 const SizedBox(height: 48),
                 if (auth.error != null)
@@ -53,7 +51,9 @@ class LoginScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: auth.isLoading ? null : () => auth.signInWithGoogle(),
+                    onPressed: auth.isLoading
+                        ? null
+                        : () => auth.signInWithGoogle(),
                     icon: auth.isLoading
                         ? const SizedBox(
                             width: 20,
@@ -80,7 +80,9 @@ class LoginScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton.icon(
-                      onPressed: auth.isLoading ? null : () => auth.signInWithApple(),
+                      onPressed: auth.isLoading
+                          ? null
+                          : () => auth.signInWithApple(),
                       icon: auth.isLoading
                           ? const SizedBox(
                               width: 20,
@@ -102,6 +104,22 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 32),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () =>
+                          LegalLinks.open(context, LegalLinks.privacy),
+                      child: Text(l.privacyPolicy),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          LegalLinks.open(context, LegalLinks.terms),
+                      child: Text(l.termsOfService),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
