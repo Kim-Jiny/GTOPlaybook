@@ -9,6 +9,7 @@ import '../../widgets/banner_ad_widget.dart';
 import '../inquiry/inquiry_screen.dart';
 import '../inquiry/my_inquiries_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import 'purchase_policy_screen.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -95,6 +96,11 @@ class ProfileScreen extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (_) => const MyInquiriesScreen()),
             ),
+          ),
+          _MenuTile(
+            icon: Icons.receipt_long,
+            title: l.purchaseInfoLink,
+            onTap: () => _showPurchaseInfo(context),
           ),
           if (auth.isAdmin)
             _MenuTile(
@@ -326,17 +332,8 @@ class _RemoveAdsTile extends StatelessWidget {
 }
 
 void _showPurchaseInfo(BuildContext context) {
-  final l = AppLocalizations.of(context)!;
-  showDialog<void>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: Text(l.purchaseInfoLink),
-      content: SingleChildScrollView(
-        child: Text(l.purchaseInfoBody, style: const TextStyle(height: 1.5)),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(l.confirm)),
-      ],
-    ),
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const PurchasePolicyScreen()),
   );
 }

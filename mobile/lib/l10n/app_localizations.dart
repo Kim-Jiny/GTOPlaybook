@@ -224,11 +224,71 @@ abstract class AppLocalizations {
   /// **'Purchase & refund info'**
   String get purchaseInfoLink;
 
-  /// No description provided for @purchaseInfoBody.
+  /// No description provided for @purchasePolicyEffective.
   ///
   /// In en, this message translates to:
-  /// **'• Item: Remove Ads (one-time payment, permanent)\n• Scope: all banner and interstitial ads in the app. Charts and other features are unchanged.\n• Account: the purchase is linked to the account you are signed in with. After switching devices or reinstalling, sign in with the same account and tap \"Restore purchases\".\n• Payment: handled by the Apple App Store / Google Play. We do not store your payment method.\n• Refunds & withdrawal: request refunds through the store you bought from (Apple / Google), following its process and policy and the applicable laws. Because ads are removed immediately, withdrawal may be limited once the item has been applied.\n• When a refund is completed, ad removal is switched off again.\n• Questions: My Page > Contact us'**
-  String get purchaseInfoBody;
+  /// **'Effective: October 13, 2026'**
+  String get purchasePolicyEffective;
+
+  /// No description provided for @purchasePolicyProductTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Item for sale'**
+  String get purchasePolicyProductTitle;
+
+  /// No description provided for @purchasePolicyProductBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Ads: removes all banner and interstitial ads in the app. One-time payment, permanent. It is not a subscription.\n\nCharts, the equity calculator, the pot calculator and every other feature work the same whether or not you buy it.\n\nThe price is shown on the purchase screen and in the store listing (App Store, Google Play).'**
+  String get purchasePolicyProductBody;
+
+  /// No description provided for @purchasePolicyPaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get purchasePolicyPaymentTitle;
+
+  /// No description provided for @purchasePolicyPaymentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment is processed by the Apple App Store or Google Play. We do not store card numbers or other payment details.\n\nYour purchase is confirmed on our server by checking the store receipt, and is saved against the account you are signed in with.'**
+  String get purchasePolicyPaymentBody;
+
+  /// No description provided for @purchasePolicyUsageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Use and restore'**
+  String get purchasePolicyUsageTitle;
+
+  /// No description provided for @purchasePolicyUsageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'A purchase is linked to the account you were signed in with when you bought it.\n\nAfter switching devices or reinstalling the app, sign in with the same account and tap \"Restore purchases\" on My Page.\n\nOne purchase can be linked to one account only. A purchase already linked to another account cannot be used on a different one.\n\nIf you delete your account, the purchase link stored on our server is deleted. Your store purchase history remains, so you can sign up again with the same store account and use \"Restore purchases\".'**
+  String get purchasePolicyUsageBody;
+
+  /// No description provided for @purchasePolicyRefundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Withdrawal and refunds'**
+  String get purchasePolicyRefundTitle;
+
+  /// No description provided for @purchasePolicyRefundBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Ads is a digital item that takes effect as soon as you buy it. Once it has been applied, withdrawal may be limited to the extent the applicable law (the Act on the Consumer Protection in Electronic Commerce) allows. We tell you this before you buy.\n\nPlease request refunds from the store you bought from (Apple or Google), following its process and policy. Payments and refunds are handled by the store, so we cannot refund you directly.\n• Apple: use \"Report a Problem\" in your purchase history\n• Google Play: request a refund from your order history in the Play Store\n\nWhen a refund is completed, the app notices it the next time it loads your purchase status and switches ad removal off. This can take some time.\n\nIf something is wrong, for example ads do not go away after you bought it, please contact us below.'**
+  String get purchasePolicyRefundBody;
+
+  /// No description provided for @purchasePolicyContactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get purchasePolicyContactTitle;
+
+  /// No description provided for @purchasePolicyContactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Operator: Jinsoft\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us'**
+  String get purchasePolicyContactBody;
 
   /// No description provided for @retry.
   ///
