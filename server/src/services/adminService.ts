@@ -87,6 +87,119 @@ export async function getAdminStats() {
   };
 }
 
+export async function getPurchaseStats() {
+  const [summary, daily, byPlatform, users] = await Promise.all([
+    pool.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE revoked_at IS NULL) AS active,
+         COUNT(*) FILTER (WHERE revoked_at IS NOT NULL) AS refunded,
+         COUNT(*) FILTER (WHERE revoked_at IS NULL AND DATE(created_at) = CURRENT_DATE) AS today,
+         COUNT(*) FILTER (WHERE revoked_at IS NULL AND created_at >= NOW() - INTERVAL '7 days') AS week
+       FROM purchases`,
+    ),
+    pool.query(
+      `SELECT DATE(created_at) AS date, COUNT(*) AS count
+       FROM purchases
+       WHERE revoked_at IS NULL AND created_at >= NOW() - INTERVAL '30 days'
+       GROUP BY DATE(created_at)
+       ORDER BY date ASC`,
+    ),
+    pool.query(
+      `SELECT platform, COUNT(*) AS count
+       FROM purchases WHERE revoked_at IS NULL GROUP BY platform`,
+    ),
+    pool.query(
+      `SELECT COUNT(*) FILTER (WHERE ads_removed) AS ads_removed, COUNT(*) AS total FROM users`,
+    ),
+  ]);
+
+  const row = summary.rows[0];
+  const adsRemoved = parseInt(users.rows[0].ads_removed, 10) || 0;
+  const totalUsers = parseInt(users.rows[0].total, 10) || 0;
+  const platforms: Record<string, number> = { ios: 0, android: 0 };
+  for (const r of byPlatform.rows) platforms[r.platform] = parseInt(r.count, 10) || 0;
+
+  return {
+    adsRemovedUsers: adsRemoved,
+    conversionRate: totalUsers > 0 ? Math.round((adsRemoved / totalUsers) * 1000) / 10 : 0,
+    activePurchases: parseInt(row.active, 10) || 0,
+    refundedPurchases: parseInt(row.refunded, 10) || 0,
+    purchasesToday: parseInt(row.today, 10) || 0,
+    purchasesThisWeek: parseInt(row.week, 10) || 0,
+    byPlatform: platforms,
+    dailyPurchases: daily.rows,
+  };
+}
+
+/* ────────────────────────── Purchases ────────────────────────── */
+
+export interface PurchaseListOptions {
+  status?: string; // 'active' | 'refunded' | '' (all)
+  platform?: string; // 'ios' | 'android' | ''
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+function buildPurchaseWhere(options: Pick<PurchaseListOptions, 'status' | 'platform' | 'search'>) {
+  const conditions: string[] = [];
+  const params: string[] = [];
+  if (options.status === 'active') conditions.push('p.revoked_at IS NULL');
+  if (options.status === 'refunded') conditions.push('p.revoked_at IS NOT NULL');
+  if (options.platform === 'ios' || options.platform === 'android') {
+    params.push(options.platform);
+    conditions.push(`p.platform = $${params.length}`);
+  }
+  if (options.search) {
+    params.push(`%${options.search}%`);
+    conditions.push(`(u.email ILIKE $${params.length} OR u.display_name ILIKE $${params.length} OR u.id ILIKE $${params.length})`);
+  }
+  return { clause: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', params };
+}
+
+export async function getPurchases(options: PurchaseListOptions) {
+  const page = Math.max(1, options.page || 1);
+  const limit = Math.min(100, Math.max(1, options.limit || 20));
+  const { clause, params } = buildPurchaseWhere(options);
+
+  const count = await pool.query(
+    `SELECT COUNT(*) FROM purchases p JOIN users u ON u.id = p.user_id ${clause}`,
+    params,
+  );
+  const result = await pool.query(
+    `SELECT p.id, p.platform, p.product_id, p.created_at, p.revoked_at, p.last_checked_at,
+            u.id AS user_id, u.email, u.display_name
+     FROM purchases p JOIN users u ON u.id = p.user_id
+     ${clause}
+     ORDER BY p.created_at DESC
+     LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+    [...params, limit, (page - 1) * limit],
+  );
+  return { purchases: result.rows, total: parseInt(count.rows[0].count, 10), page, limit };
+}
+
+export async function getPurchasesForExport(options: Pick<PurchaseListOptions, 'status' | 'platform' | 'search'>) {
+  const { clause, params } = buildPurchaseWhere(options);
+  const result = await pool.query(
+    `SELECT p.id, u.email, u.display_name, p.platform, p.product_id,
+            p.created_at, p.revoked_at, p.last_checked_at
+     FROM purchases p JOIN users u ON u.id = p.user_id
+     ${clause}
+     ORDER BY p.created_at DESC`,
+    params,
+  );
+  return result.rows;
+}
+
+export async function getUserPurchases(userId: string) {
+  const result = await pool.query(
+    `SELECT id, platform, product_id, created_at, revoked_at
+     FROM purchases WHERE user_id = $1 ORDER BY created_at DESC`,
+    [userId],
+  );
+  return result.rows;
+}
+
 /* ────────────────────────── Users ────────────────────────── */
 
 const USER_SORT_COLUMNS: Record<string, string> = {
@@ -131,7 +244,7 @@ export async function getUsers(options: UserListOptions) {
   const total = parseInt(countResult.rows[0].count, 10);
 
   const result = await pool.query(
-    `SELECT u.id, u.email, u.display_name, u.photo_url, u.is_admin,
+    `SELECT u.id, u.email, u.display_name, u.photo_url, u.is_admin, u.ads_removed,
             u.created_at, u.last_active_at,
             COUNT(i.id) AS inquiry_count
      FROM users u
@@ -148,7 +261,7 @@ export async function getUsers(options: UserListOptions) {
 
 export async function getUserDetail(id: string) {
   const result = await pool.query(
-    `SELECT u.id, u.email, u.display_name, u.photo_url, u.is_admin,
+    `SELECT u.id, u.email, u.display_name, u.photo_url, u.is_admin, u.ads_removed,
             u.created_at, u.last_active_at, u.updated_at,
             COUNT(i.id) AS inquiry_count,
             COUNT(i.id) FILTER (WHERE i.status = 'pending') AS pending_inquiries
@@ -190,7 +303,7 @@ export async function deleteUser(id: string) {
 export async function getUsersForExport(search?: string) {
   const { clause, params } = buildUserWhere(search);
   const result = await pool.query(
-    `SELECT u.id, u.email, u.display_name, u.is_admin, u.created_at, u.last_active_at
+    `SELECT u.id, u.email, u.display_name, u.is_admin, u.ads_removed, u.created_at, u.last_active_at
      FROM users u ${clause}
      ORDER BY u.created_at DESC`,
     params,

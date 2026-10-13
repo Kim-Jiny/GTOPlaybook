@@ -90,6 +90,7 @@
         <td>${ui.fmtDate(u.created_at)}</td>
         <td>${u.last_active_at ? ui.fmtAgo(u.last_active_at) : '<span class="text-dim">-</span>'}</td>
         <td>${count ? count + '건' : '<span class="text-dim">0</span>'}</td>
+        <td>${u.ads_removed ? '<span class="badge ads">구매</span>' : '<span class="text-dim">-</span>'}</td>
         <td><div class="row-actions"><button class="btn btn-secondary btn-sm" data-view="${ui.esc(u.id)}">상세</button></div></td>
       </tr>`;
   }
@@ -111,18 +112,19 @@
   async function openDetail(id) {
     ui.openModal(ui.modalFrame('사용자 상세', '<div class="empty">불러오는 중…</div>'));
     try {
-      const [u, inquiries] = await Promise.all([
+      const [u, inquiries, purchases] = await Promise.all([
         api.get('/admin/api/users/' + encodeURIComponent(id)),
         api.get('/admin/api/users/' + encodeURIComponent(id) + '/inquiries'),
+        api.get('/admin/api/users/' + encodeURIComponent(id) + '/purchases'),
       ]);
-      renderDetail(u, inquiries);
+      renderDetail(u, inquiries, purchases);
     } catch (err) {
       ui.toast(err.message, 'error');
       ui.closeModal();
     }
   }
 
-  function renderDetail(u, inquiries) {
+  function renderDetail(u, inquiries, purchases) {
     const avatar = u.photo_url
       ? `<img class="avatar-sm" style="width:48px;height:48px" src="${ui.esc(u.photo_url)}" referrerpolicy="no-referrer" />`
       : `<div class="avatar-sm" style="width:48px;height:48px;display:grid;place-items:center;font-weight:700;font-size:18px">${ui.esc(ui.initials(u.display_name, u.email))}</div>`;
@@ -137,6 +139,17 @@
             ${ui.statusBadge(i.status)}
           </div>`).join('')
       : '<div class="text-dim" style="font-size:13px">문의 내역이 없습니다.</div>';
+
+    const purchaseList = (purchases || []).length
+      ? purchases.map((p) => `
+          <div class="bubble" style="margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;align-items:center">
+            <div style="min-width:0">
+              <div class="cell-strong mono">${ui.esc(p.product_id)}</div>
+              <div class="cell-sub">${ui.fmtDateTime(p.created_at)} · ${ui.esc(p.platform === 'ios' ? 'iOS' : 'Android')}</div>
+            </div>
+            ${p.revoked_at ? '<span class="badge refunded">환불</span>' : '<span class="badge active">유효</span>'}
+          </div>`).join('')
+      : '<div class="text-dim" style="font-size:13px;margin-bottom:12px">구매 내역이 없습니다.</div>';
 
     const body = `
       <div style="display:flex;gap:14px;align-items:center;margin-bottom:18px">
@@ -153,7 +166,9 @@
         <div class="field" style="margin:0"><div class="field-label">가입일</div><div class="field-value">${ui.fmtDateTime(u.created_at)}</div></div>
         <div class="field" style="margin:0"><div class="field-label">최근 활동</div><div class="field-value">${u.last_active_at ? ui.fmtDateTime(u.last_active_at) : '-'}</div></div>
       </div>
-      <div class="field-label" style="margin-bottom:8px">문의 내역</div>
+      <div class="field-label" style="margin-bottom:8px">구매 내역 (광고 제거 ${u.ads_removed ? '적용 중' : '미적용'})</div>
+      ${purchaseList}
+      <div class="field-label" style="margin:14px 0 8px">문의 내역</div>
       ${inqList}`;
 
     const footer = `
@@ -181,7 +196,7 @@
     ui.modalEl().querySelector('[data-action="delete"]').addEventListener('click', async () => {
       const ok = await ui.confirmDialog({
         title: '사용자 삭제',
-        message: `${u.display_name || u.email} 사용자를 삭제할까요? 관련 문의도 함께 삭제되며 되돌릴 수 없습니다.`,
+        message: `${u.display_name || u.email} 사용자를 삭제할까요? 관련 문의${(purchases || []).length ? '와 구매 연결 정보' : ''}도 함께 삭제되며 되돌릴 수 없습니다.`,
         confirmLabel: '삭제',
         danger: true,
       });
