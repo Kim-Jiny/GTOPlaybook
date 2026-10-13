@@ -148,7 +148,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get categoryOpenPot => 'Open Pot';
+  String get categoryOpenPot => 'Open Raise';
 
   @override
   String get categoryIsoRaise => 'Iso Raise vs Limp';

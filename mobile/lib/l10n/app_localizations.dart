@@ -341,7 +341,7 @@ abstract class AppLocalizations {
   /// No description provided for @categoryOpenPot.
   ///
   /// In en, this message translates to:
-  /// **'Open Pot'**
+  /// **'Open Raise'**
   String get categoryOpenPot;
 
   /// No description provided for @categoryIsoRaise.

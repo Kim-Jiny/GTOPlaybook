@@ -147,7 +147,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get categoryOpenPot => '오픈팟';
+  String get categoryOpenPot => '오픈 레이즈';
 
   @override
   String get categoryIsoRaise => '아이소 레이즈 vs 림프';
