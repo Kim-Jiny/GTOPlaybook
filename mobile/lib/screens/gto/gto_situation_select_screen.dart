@@ -93,7 +93,7 @@ class _CategorySection extends StatefulWidget {
 }
 
 class _CategorySectionState extends State<_CategorySection> {
-  bool _expanded = true;
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -373,15 +373,6 @@ class _SituationIntroCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              l.positionStrategyLibrary(position),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
             Text(
               l.chooseSpotDesc,
               style: const TextStyle(color: Colors.white70, height: 1.4),
