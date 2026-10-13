@@ -125,10 +125,7 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
             )
           : chart == null
           ? Center(
-              child: Text(
-                l.noData,
-                style: TextStyle(color: context.ink54),
-              ),
+              child: Text(l.noData, style: TextStyle(color: context.ink54)),
             )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(12),
@@ -144,13 +141,16 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                     onSelected: _onTierSelected,
                   ),
                   const SizedBox(height: 12),
-                  _ViewModeToggle(
-                    detailedMode: _detailedMode,
-                    onChanged: (value) {
-                      setState(() => _detailedMode = value);
-                    },
-                  ),
-                  const SizedBox(height: 10),
+                  // Simple and Detailed look identical when no hand is mixed.
+                  if (_hasMixedHands(chart)) ...[
+                    _ViewModeToggle(
+                      detailedMode: _detailedMode,
+                      onChanged: (value) {
+                        setState(() => _detailedMode = value);
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                   _chartLegend(chart),
                   const SizedBox(height: 10),
                   if (selectedRange != null)
@@ -181,6 +181,12 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                 ],
               ),
             ),
+    );
+  }
+
+  bool _hasMixedHands(GtoChart chart) {
+    return (chart.ranges ?? const []).any(
+      (r) => r.frequencies.values.where((v) => v > 0.001).length > 1,
     );
   }
 
@@ -217,7 +223,9 @@ Widget _chartLegend(GtoChart chart) {
       runSpacing: 6,
       children: chart.actionTypes!.map((at) {
         final share = shares[at.key];
-        final pct = share == null ? '' : ' ${(share * 100).toStringAsFixed(1)}%';
+        final pct = share == null
+            ? ''
+            : ' ${(share * 100).toStringAsFixed(1)}%';
         return _LegendItem(color: at.toColor(), label: '${at.label}$pct');
       }).toList(),
     );
@@ -254,10 +262,7 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(color: context.ink70, fontSize: 12),
-        ),
+        Text(label, style: TextStyle(color: context.ink70, fontSize: 12)),
       ],
     );
   }
@@ -579,10 +584,7 @@ class _ChartSummaryCard extends StatelessWidget {
             ),
             if ((chart.description ?? '').isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(
-                chart.description!,
-                style: TextStyle(color: context.ink70),
-              ),
+              Text(chart.description!, style: TextStyle(color: context.ink70)),
             ],
             const SizedBox(height: 12),
             Wrap(
@@ -685,10 +687,7 @@ class _ViewModeToggle extends StatelessWidget {
 
     return Row(
       children: [
-        Text(
-          l.viewMode,
-          style: TextStyle(fontSize: 13, color: context.ink70),
-        ),
+        Text(l.viewMode, style: TextStyle(fontSize: 13, color: context.ink70)),
         const Spacer(),
         SegmentedButton<bool>(
           showSelectedIcon: false,
@@ -810,10 +809,7 @@ class _MetaChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: context.ink70,
-          fontWeight: FontWeight.w600,
-        ),
+        style: TextStyle(color: context.ink70, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -861,18 +857,12 @@ class _ActionRankTile extends StatelessWidget {
           Expanded(
             child: Text(
               action.label,
-              style: TextStyle(
-                color: context.ink,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: context.ink, fontWeight: FontWeight.w600),
             ),
           ),
           Text(
             '${(action.freq * 100).round()}%',
-            style: TextStyle(
-              color: context.ink70,
-              fontWeight: FontWeight.w700,
-            ),
+            style: TextStyle(color: context.ink70, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -922,9 +912,8 @@ List<_RankedAction> _rankActions(
     if (range.foldFreq > 0) frequencies['fold'] = range.foldFreq;
   }
 
-  final sorted =
-      frequencies.entries.where((entry) => entry.value > 0).toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
+  final sorted = frequencies.entries.where((entry) => entry.value > 0).toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
 
   return sorted
       .map(
