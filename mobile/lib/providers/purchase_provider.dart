@@ -13,7 +13,7 @@ enum PurchaseNotice { none, success, restoreEmpty, pending, failed }
 /// which records the entitlement on the account; the local flag is only a cache
 /// so ads stay off while offline.
 class PurchaseProvider extends ChangeNotifier {
-  static const productId = 'remove_ads';
+  static const productId = 'gto.remove_ads';
   static const _cacheKey = 'ads_removed';
 
   final ApiService _api;

@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 
-export const REMOVE_ADS_PRODUCT_ID = process.env.REMOVE_ADS_PRODUCT_ID || 'remove_ads';
+export const REMOVE_ADS_PRODUCT_ID = process.env.REMOVE_ADS_PRODUCT_ID || 'gto.remove_ads';
 const ANDROID_PACKAGE = process.env.ANDROID_PACKAGE_NAME || 'com.jiny.gtoplaybook';
 const IOS_BUNDLE_ID = process.env.IOS_BUNDLE_ID || 'com.jiny.gtoplaybook';
 
