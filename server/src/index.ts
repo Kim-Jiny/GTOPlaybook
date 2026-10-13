@@ -18,6 +18,7 @@ import purchaseRoutes from './routes/purchase';
 import inquiryRoutes from './routes/inquiry';
 import adminRoutes from './routes/admin';
 import adminWebRoutes from './routes/adminWeb';
+import legalRoutes from './routes/legal';
 
 const app = express();
 const PgStore = connectPgSimple(session);
@@ -94,6 +95,9 @@ app.use(
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+// Public terms and policies (no auth)
+app.use('/legal', legalRoutes);
 
 // Admin web dashboard
 app.use('/admin', adminWebRoutes);
