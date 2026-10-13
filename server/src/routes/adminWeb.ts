@@ -6,6 +6,10 @@ import pool from '../config/db';
 import {
   getAdminInquiries,
   getAdminStats,
+  getPurchaseStats,
+  getPurchases,
+  getPurchasesForExport,
+  getUserPurchases,
   getUsers,
   getUserDetail,
   getUserInquiries,
@@ -122,6 +126,7 @@ router.get('/api/stats', requireAdminSession, async (_req: Request, res: Respons
       returningUsers: stats.returningUsers,
       responseRate: stats.responseRate,
       avgResponseHours: stats.avgResponseHours,
+      purchases: await getPurchaseStats(),
     });
   } catch (err) {
     console.error('Admin stats error:', err);
@@ -152,7 +157,7 @@ router.get('/api/users', requireAdminSession, async (req: Request, res: Response
 router.get('/api/users/export', requireAdminSession, async (req: Request, res: Response) => {
   try {
     const rows = await getUsersForExport((req.query.search as string) || '');
-    sendCsv(res, 'users', ['id', 'email', 'display_name', 'is_admin', 'created_at', 'last_active_at'], rows);
+    sendCsv(res, 'users', ['id', 'email', 'display_name', 'is_admin', 'ads_removed', 'created_at', 'last_active_at'], rows);
   } catch (err) {
     console.error('Admin users export error:', err);
     res.status(500).json({ error: 'Failed to export users' });
@@ -171,6 +176,16 @@ router.get('/api/users/:id', requireAdminSession, async (req: Request, res: Resp
   } catch (err) {
     console.error('Admin user detail error:', err);
     res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// GET /admin/api/users/:id/purchases
+router.get('/api/users/:id/purchases', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    res.json(await getUserPurchases(paramId(req)));
+  } catch (err) {
+    console.error('Admin user purchases error:', err);
+    res.status(500).json({ error: 'Failed to fetch purchases' });
   }
 });
 
@@ -217,6 +232,45 @@ router.delete('/api/users/:id', requireAdminSession, async (req: Request, res: R
   } catch (err) {
     console.error('Admin delete user error:', err);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+/* ────────────────────────── Purchases ────────────────────────── */
+
+// GET /admin/api/purchases — list with status/platform filter, search, pagination
+router.get('/api/purchases', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const data = await getPurchases({
+      status: (req.query.status as string) || '',
+      platform: (req.query.platform as string) || '',
+      search: (req.query.search as string) || '',
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 20,
+    });
+    res.json(data);
+  } catch (err) {
+    console.error('Admin purchases error:', err);
+    res.status(500).json({ error: 'Failed to fetch purchases' });
+  }
+});
+
+// GET /admin/api/purchases/export — CSV
+router.get('/api/purchases/export', requireAdminSession, async (req: Request, res: Response) => {
+  try {
+    const rows = await getPurchasesForExport({
+      status: (req.query.status as string) || '',
+      platform: (req.query.platform as string) || '',
+      search: (req.query.search as string) || '',
+    });
+    sendCsv(
+      res,
+      'purchases',
+      ['id', 'email', 'display_name', 'platform', 'product_id', 'created_at', 'revoked_at', 'last_checked_at'],
+      rows,
+    );
+  } catch (err) {
+    console.error('Admin purchases export error:', err);
+    res.status(500).json({ error: 'Failed to export purchases' });
   }
 });
 

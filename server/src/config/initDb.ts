@@ -99,6 +99,16 @@ const CREATE_TABLES = `
   ALTER TABLE purchases ADD COLUMN IF NOT EXISTS last_checked_at TIMESTAMPTZ DEFAULT NOW();
 
   CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON purchases(user_id);
+
+  -- Push tokens of devices that receive admin alerts (inquiries, purchases, refunds)
+  CREATE TABLE IF NOT EXISTS device_tokens (
+    token TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    platform TEXT,
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_device_tokens_user_id ON device_tokens(user_id);
 `;
 
 export async function initDatabase(): Promise<void> {

@@ -13,6 +13,7 @@ import 'providers/inquiry_provider.dart';
 import 'providers/admin_inquiry_provider.dart';
 import 'providers/pot_calculator_provider.dart';
 import 'services/api_service.dart';
+import 'services/app_keys.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -53,8 +54,11 @@ class GtoPlaybookApp extends StatelessWidget {
 
     return MultiProvider(
       providers: [
+        Provider<ApiService>.value(value: apiService),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
-        ChangeNotifierProvider(create: (_) => PurchaseProvider(apiService)..init()),
+        ChangeNotifierProvider(
+          create: (_) => PurchaseProvider(apiService)..init(),
+        ),
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
         ChangeNotifierProvider(create: (_) => GtoProvider(apiService)),
         ChangeNotifierProvider(create: (_) => EquityProvider()),
@@ -67,6 +71,8 @@ class GtoPlaybookApp extends StatelessWidget {
         builder: (context) {
           final themeMode = context.watch<ThemeProvider>().mode;
           return MaterialApp(
+            navigatorKey: AppKeys.navigator,
+            scaffoldMessengerKey: AppKeys.messenger,
             title: 'GTO Playbook',
             debugShowCheckedModeBanner: false,
             localizationsDelegates: const [

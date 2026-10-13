@@ -2,12 +2,15 @@
 (function () {
   let signupChart = null;
   let statusChart = null;
+  let purchaseChart = null;
+  let platformChart = null;
 
   const ICONS = {
     users: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2a4 4 0 10-4-4 4 4 0 004 4z"/>',
     spark: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>',
     active: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
     reply: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a4 4 0 014 4v2M3 10l4-4M3 10l4 4"/>',
+    cart: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
     clock: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>',
   };
 
@@ -35,6 +38,7 @@
     renderCards(data);
     renderSignupChart(data);
     renderStatusChart(data);
+    renderPurchaseCharts(data);
 
     const total = data.totalInquiries || 0;
     document.getElementById('inq-total-hint').textContent = `총 ${total}건`;
@@ -53,7 +57,80 @@
       card('월간 활성 (MAU)', d.monthlyActiveUsers, ICONS.spark),
       card('문의 응답률', `${d.responseRate}%`, ICONS.reply),
       card('평균 응답시간', avg, ICONS.clock),
+      ...purchaseCards(d.purchases),
     ].join('');
+  }
+
+  function purchaseCards(p) {
+    if (!p) return [];
+    return [
+      card('광고 제거 구매자', p.adsRemovedUsers, ICONS.cart,
+        { up: p.purchasesToday > 0, text: `오늘 +${p.purchasesToday}` }),
+      card('구매 전환율', `${p.conversionRate}%`, ICONS.spark,
+        { text: `최근 7일 +${p.purchasesThisWeek}` }),
+      card('환불', p.refundedPurchases, ICONS.reply),
+    ];
+  }
+
+  function renderPurchaseCharts(d) {
+    const p = d.purchases;
+    if (!p || typeof Chart === 'undefined') return;
+    const c = chartColors();
+
+    const bar = document.getElementById('purchase-chart');
+    if (bar) {
+      if (purchaseChart) purchaseChart.destroy();
+      purchaseChart = new Chart(bar, {
+        type: 'bar',
+        data: {
+          labels: p.dailyPurchases.map((x) =>
+            new Date(x.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })),
+          datasets: [{
+            data: p.dailyPurchases.map((x) => parseInt(x.count, 10)),
+            backgroundColor: c.brand,
+            borderRadius: 4,
+            maxBarThickness: 22,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { display: false }, ticks: { color: c.text, maxTicksLimit: 8 } },
+            y: { beginAtZero: true, grid: { color: c.grid }, ticks: { color: c.text, precision: 0 } },
+          },
+        },
+      });
+    }
+    document.getElementById('purchase-hint').textContent =
+      `최근 30일 · 유효 ${p.activePurchases}건`;
+
+    const doughnut = document.getElementById('platform-chart');
+    if (doughnut) {
+      if (platformChart) platformChart.destroy();
+      platformChart = new Chart(doughnut, {
+        type: 'doughnut',
+        data: {
+          labels: ['iOS', 'Android'],
+          datasets: [{
+            data: [p.byPlatform.ios, p.byPlatform.android],
+            backgroundColor: ['#94a3b8', '#22c55e'],
+            borderWidth: 0,
+          }],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '66%',
+          plugins: {
+            legend: { position: 'bottom', labels: { color: c.text, boxWidth: 10, padding: 14 } },
+          },
+        },
+      });
+    }
+    document.getElementById('platform-hint').textContent =
+      `총 ${p.byPlatform.ios + p.byPlatform.android}건`;
   }
 
   function renderSignupChart(d) {
@@ -130,6 +207,7 @@
     if (window.__lastStats) {
       renderSignupChart(window.__lastStats);
       renderStatusChart(window.__lastStats);
+      renderPurchaseCharts(window.__lastStats);
     }
   }
 

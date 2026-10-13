@@ -2,6 +2,7 @@ import { Router } from 'express';
 import pool from '../config/db';
 import firebaseApp from '../config/firebase';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { registerDeviceToken, removeDeviceToken } from '../services/pushService';
 
 const router = Router();
 
@@ -27,6 +28,42 @@ router.post('/sync', requireAuth, async (req: AuthRequest, res) => {
   } catch (err) {
     console.error('Error syncing user:', err);
     res.status(500).json({ error: 'Failed to sync user' });
+  }
+});
+
+// POST /api/users/device-token — register this device for admin alerts (admins only)
+router.post('/device-token', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { token, platform } = req.body ?? {};
+    if (typeof token !== 'string' || token.length < 20 || token.length > 4096) {
+      res.status(400).json({ error: 'A valid token is required' });
+      return;
+    }
+    const admin = await pool.query('SELECT is_admin FROM users WHERE id = $1', [req.uid]);
+    if (admin.rows[0]?.is_admin !== true) {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+    await registerDeviceToken(req.uid!, token, typeof platform === 'string' ? platform : null);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error registering device token:', err);
+    res.status(500).json({ error: 'Failed to register device' });
+  }
+});
+
+// DELETE /api/users/device-token — stop alerts on this device (sign-out)
+router.delete('/device-token', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const token = req.body?.token ?? req.query.token;
+    if (typeof token === 'string' && token) {
+      // Only remove the caller's own token.
+      await pool.query('DELETE FROM device_tokens WHERE token = $1 AND user_id = $2', [token, req.uid]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error removing device token:', err);
+    res.status(500).json({ error: 'Failed to remove device' });
   }
 });
 

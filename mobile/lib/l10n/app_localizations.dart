@@ -308,6 +308,24 @@ abstract class AppLocalizations {
   /// **'View on the web'**
   String get viewOnWeb;
 
+  /// No description provided for @purchaseConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you buy'**
+  String get purchaseConfirmTitle;
+
+  /// No description provided for @purchaseConfirmCheck.
+  ///
+  /// In en, this message translates to:
+  /// **'I understand this is a digital item provided immediately, and that withdrawal may be limited once it has been applied.'**
+  String get purchaseConfirmCheck;
+
+  /// No description provided for @purchaseConfirmBuy.
+  ///
+  /// In en, this message translates to:
+  /// **'Agree and buy'**
+  String get purchaseConfirmBuy;
+
   /// No description provided for @linkOpenFailed.
   ///
   /// In en, this message translates to:

@@ -3,6 +3,7 @@
   const META = {
     dashboard: { title: 'Dashboard', sub: '서비스 현황 한눈에 보기' },
     users: { title: 'Users', sub: '사용자 조회 및 관리' },
+    purchases: { title: 'Purchases', sub: '광고 제거 구매 내역과 환불 현황' },
     inquiries: { title: 'Inquiries', sub: '문의 응대 및 처리' },
   };
 

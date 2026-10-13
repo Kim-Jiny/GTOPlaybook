@@ -121,6 +121,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewOnWeb => 'View on the web';
 
   @override
+  String get purchaseConfirmTitle => 'Before you buy';
+
+  @override
+  String get purchaseConfirmCheck =>
+      'I understand this is a digital item provided immediately, and that withdrawal may be limited once it has been applied.';
+
+  @override
+  String get purchaseConfirmBuy => 'Agree and buy';
+
+  @override
   String get linkOpenFailed =>
       'Couldn\'t open the link. Please try again later.';
 
