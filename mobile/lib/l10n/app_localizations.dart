@@ -281,13 +281,13 @@ abstract class AppLocalizations {
   /// No description provided for @purchasePolicyContactTitle.
   ///
   /// In en, this message translates to:
-  /// **'Contact'**
+  /// **'Business information & contact'**
   String get purchasePolicyContactTitle;
 
   /// No description provided for @purchasePolicyContactBody.
   ///
   /// In en, this message translates to:
-  /// **'Operator: Jinsoft\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us'**
+  /// **'Business name: Jinsoft\nBusiness registration no.: 827-53-01093\nMail-order business report no.: 2026-고양덕양구-0658\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us'**
   String get purchasePolicyContactBody;
 
   /// No description provided for @retry.

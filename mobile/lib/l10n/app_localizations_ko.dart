@@ -104,11 +104,11 @@ class AppLocalizationsKo extends AppLocalizations {
       '광고 제거는 구매 즉시 적용되는 디지털 상품이에요. 이미 적용된 이후에는 관련 법령(전자상거래 등에서의 소비자보호에 관한 법률)이 허용하는 범위에서 청약철회가 제한될 수 있어요. 이 내용은 구매 전에 안내해 드려요.\n\n환불은 구매하신 앱 마켓(Apple 또는 Google)의 절차와 정책에 따라 해당 앱 마켓에 신청해 주세요. 결제와 환불은 앱 마켓이 처리해서 회사가 직접 환불해 드릴 수 없어요.\n• Apple: 구입 내역에서 \'문제 신고\'로 요청\n• Google Play: Play 스토어의 주문 내역에서 환불 요청\n\n환불이 완료되면 앱이 구매 상태를 불러올 때 확인해서 광고 제거를 해제해요. 반영까지 시간이 걸릴 수 있어요.\n\n구매했는데도 광고가 사라지지 않는 등 문제가 있다면 아래 문의처로 알려 주세요.';
 
   @override
-  String get purchasePolicyContactTitle => '문의처';
+  String get purchasePolicyContactTitle => '사업자 정보 및 문의처';
 
   @override
   String get purchasePolicyContactBody =>
-      '운영사: 진소프트\n이메일: kjinyz@naver.com\n앱 안: 마이 페이지 > 문의하기';
+      '상호: 진소프트\n사업자등록번호: 827-53-01093\n통신판매업 신고번호: 2026-고양덕양구-0658\n이메일: kjinyz@naver.com\n앱 안: 마이 페이지 > 문의하기';
 
   @override
   String get retry => '다시 시도';

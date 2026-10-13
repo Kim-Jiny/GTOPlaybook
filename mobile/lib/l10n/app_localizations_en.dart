@@ -105,11 +105,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Remove Ads is a digital item that takes effect as soon as you buy it. Once it has been applied, withdrawal may be limited to the extent the applicable law (the Act on the Consumer Protection in Electronic Commerce) allows. We tell you this before you buy.\n\nPlease request refunds from the store you bought from (Apple or Google), following its process and policy. Payments and refunds are handled by the store, so we cannot refund you directly.\n• Apple: use \"Report a Problem\" in your purchase history\n• Google Play: request a refund from your order history in the Play Store\n\nWhen a refund is completed, the app notices it the next time it loads your purchase status and switches ad removal off. This can take some time.\n\nIf something is wrong, for example ads do not go away after you bought it, please contact us below.';
 
   @override
-  String get purchasePolicyContactTitle => 'Contact';
+  String get purchasePolicyContactTitle => 'Business information & contact';
 
   @override
   String get purchasePolicyContactBody =>
-      'Operator: Jinsoft\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us';
+      'Business name: Jinsoft\nBusiness registration no.: 827-53-01093\nMail-order business report no.: 2026-고양덕양구-0658\nEmail: kjinyz@naver.com\nIn the app: My Page > Contact us';
 
   @override
   String get retry => 'Retry';
