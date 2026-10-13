@@ -44,6 +44,11 @@ router.post('/verify', requireAuth, async (req: AuthRequest, res) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      // Normally created by /users/sync at sign-in; make sure the row exists so the FK holds.
+      await client.query(
+        `INSERT INTO users (id, email) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
+        [req.uid, req.email ?? ''],
+      );
       const existing = await client.query(
         'SELECT user_id FROM purchases WHERE platform = $1 AND transaction_id = $2',
         [verified.platform, verified.transactionId],

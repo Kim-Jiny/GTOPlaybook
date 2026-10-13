@@ -143,6 +143,7 @@ void _showDeleteAccountDialog(
           onPressed: () async {
             final messenger = ScaffoldMessenger.of(context);
             final navigator = Navigator.of(context);
+            final purchases = context.read<PurchaseProvider>();
             Navigator.pop(ctx);
             showDialog(
               context: context,
@@ -151,6 +152,7 @@ void _showDeleteAccountDialog(
             );
             try {
               await auth.deleteAccount();
+              purchases.onSignedOut();
               if (context.mounted) navigator.pop(); // dismiss loading
             } catch (e) {
               if (context.mounted) navigator.pop(); // dismiss loading
@@ -240,7 +242,10 @@ class _RemoveAdsTile extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       );
     }
-    if (!purchase.storeAvailable) return const SizedBox.shrink();
+    // Hidden until the store can actually sell the product.
+    if (!purchase.storeAvailable || purchase.product == null) {
+      return const SizedBox.shrink();
+    }
 
     final notice = switch (purchase.notice) {
       PurchaseNotice.success => l.purchaseSuccess,

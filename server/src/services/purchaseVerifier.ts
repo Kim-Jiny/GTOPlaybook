@@ -5,6 +5,8 @@ export const REMOVE_ADS_PRODUCT_ID = process.env.REMOVE_ADS_PRODUCT_ID || 'remov
 const ANDROID_PACKAGE = process.env.ANDROID_PACKAGE_NAME || 'com.jiny.gtoplaybook';
 const IOS_BUNDLE_ID = process.env.IOS_BUNDLE_ID || 'com.jiny.gtoplaybook';
 
+const b64url = (input: Buffer | string) => Buffer.from(input).toString('base64url');
+
 export type VerifiedPurchase = {
   platform: 'ios' | 'android';
   productId: string;
@@ -46,7 +48,86 @@ async function appleVerify(receiptData: string, sandbox: boolean): Promise<Apple
   return (await res.json()) as AppleReceipt;
 }
 
+// StoreKit 2 (the in_app_purchase default) sends a signed transaction (JWS) instead of an
+// app receipt. We only read the transaction id from it, then ask Apple's App Store Server
+// API for the authoritative record, so nothing in the client payload is trusted.
+// Needs APPLE_IAP_KEY_ID, APPLE_IAP_ISSUER_ID and APPLE_IAP_PRIVATE_KEY (the .p8 contents).
+type AppleTransaction = {
+  transactionId?: string;
+  originalTransactionId?: string;
+  productId?: string;
+  bundleId?: string;
+  revocationDate?: number;
+};
+
+function decodeJwsPayload(jws: string): AppleTransaction {
+  const parts = jws.split('.');
+  if (parts.length !== 3) throw new PurchaseVerificationError('Malformed transaction');
+  try {
+    return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')) as AppleTransaction;
+  } catch {
+    throw new PurchaseVerificationError('Malformed transaction');
+  }
+}
+
+function appleApiToken(): string {
+  const keyId = process.env.APPLE_IAP_KEY_ID;
+  const issuer = process.env.APPLE_IAP_ISSUER_ID;
+  const privateKey = process.env.APPLE_IAP_PRIVATE_KEY?.replace(/\\n/g, '\n');
+  if (!keyId || !issuer || !privateKey) {
+    throw new PurchaseVerificationError('App Store verification is not configured', 503);
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(JSON.stringify({ alg: 'ES256', kid: keyId, typ: 'JWT' }));
+  const claims = b64url(
+    JSON.stringify({ iss: issuer, iat: now, exp: now + 1800, aud: 'appstoreconnect-v1', bid: IOS_BUNDLE_ID }),
+  );
+  const signature = crypto.sign('sha256', Buffer.from(`${header}.${claims}`), {
+    key: privateKey,
+    dsaEncoding: 'ieee-p1363',
+  });
+  return `${header}.${claims}.${b64url(signature)}`;
+}
+
+async function appleTransactionLookup(transactionId: string, sandbox: boolean): Promise<Response> {
+  const host = sandbox ? 'api.storekit-sandbox.itunes.apple.com' : 'api.storekit.itunes.apple.com';
+  return fetch(`https://${host}/inApps/v1/transactions/${encodeURIComponent(transactionId)}`, {
+    headers: { Authorization: `Bearer ${appleApiToken()}` },
+  });
+}
+
+async function verifyAppleTransaction(jws: string, productId: string): Promise<VerifiedPurchase> {
+  const claimed = decodeJwsPayload(jws);
+  const id = claimed.transactionId;
+  if (!id) throw new PurchaseVerificationError('Malformed transaction');
+
+  let res = await appleTransactionLookup(id, false);
+  // Not found in production: TestFlight / App Review purchases live in the sandbox.
+  if (res.status === 404) res = await appleTransactionLookup(id, true);
+  if (res.status === 404) throw new PurchaseVerificationError('Transaction not found');
+  if (res.status === 401) throw new PurchaseVerificationError('App Store authorization failed', 502);
+  if (!res.ok) throw new PurchaseVerificationError('App Store is unavailable', 502);
+
+  const body = (await res.json()) as { signedTransactionInfo?: string };
+  if (!body.signedTransactionInfo) throw new PurchaseVerificationError('Transaction not found');
+  const tx = decodeJwsPayload(body.signedTransactionInfo);
+  if (tx.bundleId !== IOS_BUNDLE_ID) throw new PurchaseVerificationError('Transaction belongs to a different app');
+  if (tx.productId !== productId) throw new PurchaseVerificationError('Product mismatch');
+  if (tx.revocationDate) throw new PurchaseVerificationError('Purchase was refunded');
+  return {
+    platform: 'ios',
+    productId,
+    transactionId: tx.originalTransactionId || tx.transactionId || id,
+  };
+}
+
 export async function verifyApple(receiptData: string, productId: string): Promise<VerifiedPurchase> {
+  // A JWS has three dot-separated parts; a StoreKit 1 app receipt is plain base64.
+  if (receiptData.split('.').length === 3) return verifyAppleTransaction(receiptData, productId);
+  return verifyAppleReceipt(receiptData, productId);
+}
+
+async function verifyAppleReceipt(receiptData: string, productId: string): Promise<VerifiedPurchase> {
   let result = await appleVerify(receiptData, false);
   // 21007: a sandbox receipt was sent to production (TestFlight / review builds).
   if (result.status === 21007) result = await appleVerify(receiptData, true);
@@ -79,8 +160,6 @@ function loadServiceAccount(): { client_email: string; private_key: string } {
   if (!raw) throw new PurchaseVerificationError('Google Play verification is not configured', 503);
   return JSON.parse(raw);
 }
-
-const b64url = (input: Buffer | string) => Buffer.from(input).toString('base64url');
 
 let cachedToken: { value: string; expiresAt: number } | null = null;
 

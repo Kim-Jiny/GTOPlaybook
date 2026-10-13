@@ -190,6 +190,12 @@ class PurchaseProvider extends ChangeNotifier {
   }
 
   Future<void> _verify(PurchaseDetails purchase) async {
+    final receipt = purchase.verificationData.serverVerificationData;
+    if (receipt.isEmpty) {
+      // Nothing to verify yet: leave the transaction open so it is delivered again.
+      _finish(PurchaseNotice.failed);
+      return;
+    }
     try {
       await _api.post(
         '/api/purchases/verify',
@@ -198,7 +204,7 @@ class PurchaseProvider extends ChangeNotifier {
               ? 'ios'
               : 'android',
           'productId': productId,
-          'receipt': purchase.verificationData.serverVerificationData,
+          'receipt': receipt,
         },
       );
       _setAdsRemoved(true);
@@ -207,12 +213,11 @@ class PurchaseProvider extends ChangeNotifier {
         await _iap.completePurchase(purchase);
       }
     } on ApiException catch (e) {
-      // 4xx: the server rejected it for good (invalid, or linked to another
-      // account) — close the transaction. 5xx: keep it so it is retried.
-      final permanent =
-          e.statusCode >= 400 && e.statusCode < 500 && e.statusCode != 401;
       _finish(PurchaseNotice.failed);
-      if (permanent && purchase.pendingCompletePurchase) {
+      // Only close the transaction when the purchase belongs to another account
+      // (409). Anything else may be transient, so the store redelivers it on the
+      // next launch instead of the user losing a paid purchase.
+      if (e.statusCode == 409 && purchase.pendingCompletePurchase) {
         await _iap.completePurchase(purchase);
       }
     } catch (_) {

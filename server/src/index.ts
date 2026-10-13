@@ -65,7 +65,8 @@ app.use(
     },
   }),
 );
-app.use(express.json());
+// Store receipts can be large; the default 100kb would reject them.
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(
