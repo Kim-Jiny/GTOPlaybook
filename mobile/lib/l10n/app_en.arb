@@ -37,6 +37,9 @@
   "privacyPolicy": "Privacy Policy",
   "termsOfService": "Terms of Service",
   "viewOnWeb": "View on the web",
+  "purchaseConfirmTitle": "Before you buy",
+  "purchaseConfirmCheck": "I understand this is a digital item provided immediately, and that withdrawal may be limited once it has been applied.",
+  "purchaseConfirmBuy": "Agree and buy",
   "linkOpenFailed": "Couldn't open the link. Please try again later.",
 
   "retry": "Retry",

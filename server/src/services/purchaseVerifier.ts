@@ -198,18 +198,64 @@ async function googleAccessToken(): Promise<string> {
   return json.access_token;
 }
 
+const PLAY_API = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${ANDROID_PACKAGE}`;
+
+function playProductUrl(productId: string, purchaseToken: string): string {
+  return `${PLAY_API}/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+}
+
 export async function verifyGoogle(purchaseToken: string, productId: string): Promise<VerifiedPurchase> {
   const token = await googleAccessToken();
-  const url =
-    `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${ANDROID_PACKAGE}` +
-    `/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(purchaseToken)}`;
+  const url = playProductUrl(productId, purchaseToken);
   const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
   if (res.status === 404 || res.status === 400) throw new PurchaseVerificationError('Purchase not found');
   if (!res.ok) throw new PurchaseVerificationError('Google Play is unavailable', 502);
-  const data = (await res.json()) as { purchaseState?: number; orderId?: string };
+  const data = (await res.json()) as { purchaseState?: number; acknowledgementState?: number };
   // purchaseState: 0 purchased, 1 canceled, 2 pending
   if (data.purchaseState !== 0) throw new PurchaseVerificationError('Purchase is not completed');
-  return { platform: 'android', productId, transactionId: data.orderId || purchaseToken, ref: purchaseToken };
+
+  // Acknowledge from the backend as well: Google refunds purchases that are not acknowledged
+  // within 3 days, and the app-side acknowledgement can fail. Acknowledging twice is harmless.
+  if (data.acknowledgementState === 0) {
+    try {
+      const ack = await fetch(`${url}:acknowledge`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      if (!ack.ok) console.error(`Play acknowledge failed (${ack.status})`);
+    } catch (err) {
+      console.error('Play acknowledge failed:', err);
+    }
+  }
+
+  // The purchase token is the only identifier Google guarantees; orderId can be missing.
+  return { platform: 'android', productId, transactionId: purchaseToken, ref: purchaseToken };
+}
+
+/** Purchase tokens Google reports as voided (refunded / canceled / charged back), cached briefly. */
+let voidedCache: { tokens: Set<string>; fetchedAt: number } | null = null;
+
+async function googleVoidedTokens(): Promise<Set<string> | null> {
+  if (voidedCache && Date.now() - voidedCache.fetchedAt < 10 * 60_000) return voidedCache.tokens;
+  const token = await googleAccessToken();
+  const tokens = new Set<string>();
+  let pageToken = '';
+  for (let page = 0; page < 5; page++) {
+    // type=0: in-app products only. Google only returns voids from the last 30 days.
+    const url = `${PLAY_API}/purchases/voidedpurchases?type=0&maxResults=1000${pageToken ? `&token=${encodeURIComponent(pageToken)}` : ''}`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return null;
+    const body = (await res.json()) as {
+      voidedPurchases?: Array<{ purchaseToken?: string }>;
+      tokenPagination?: { nextPageToken?: string };
+    };
+    for (const v of body.voidedPurchases ?? []) if (v.purchaseToken) tokens.add(v.purchaseToken);
+    pageToken = body.tokenPagination?.nextPageToken ?? '';
+    if (!pageToken) break;
+  }
+  voidedCache = { tokens, fetchedAt: Date.now() };
+  return tokens;
 }
 
 // ---------------------------------------------------------------------------
@@ -234,15 +280,16 @@ export async function checkPurchaseState(
       return tx.revocationDate ? 'revoked' : 'active';
     }
     if (platform === 'android') {
+      // The voided-purchases list is Google's source for refunds and chargebacks.
+      const voided = await googleVoidedTokens().catch(() => null);
+      if (voided?.has(ref)) return 'revoked';
+
       const token = await googleAccessToken();
-      const url =
-        `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${ANDROID_PACKAGE}` +
-        `/purchases/products/${encodeURIComponent(productId)}/tokens/${encodeURIComponent(ref)}`;
-      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(playProductUrl(productId, ref), { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) return 'unknown';
       const data = (await res.json()) as { purchaseState?: number };
       if (data.purchaseState === 0) return 'active';
-      if (data.purchaseState === 1) return 'revoked'; // canceled / refunded / charged back
+      if (data.purchaseState === 1) return 'revoked'; // canceled
       return 'unknown';
     }
   } catch {

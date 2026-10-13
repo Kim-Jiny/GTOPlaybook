@@ -295,7 +295,9 @@ class _RemoveAdsTile extends StatelessWidget {
                   ),
                 ),
                 FilledButton(
-                  onPressed: purchase.canBuy ? purchase.buy : null,
+                  onPressed: purchase.canBuy
+                      ? () => _confirmAndBuy(context, purchase)
+                      : null,
                   child: purchase.busy
                       ? const SizedBox(
                           width: 18,
@@ -347,4 +349,66 @@ void _showPurchaseInfo(BuildContext context) {
     context,
     MaterialPageRoute(builder: (_) => const PurchasePolicyScreen()),
   );
+}
+
+/// Asks for explicit consent to immediate delivery and limited withdrawal before the store sheet.
+Future<void> _confirmAndBuy(
+  BuildContext context,
+  PurchaseProvider purchase,
+) async {
+  final l = AppLocalizations.of(context)!;
+  final price = purchase.product?.price ?? '';
+  final agreed = await showDialog<bool>(
+    context: context,
+    builder: (ctx) {
+      var checked = false;
+      return StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: Text(l.purchaseConfirmTitle),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${l.removeAds} · $price',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 8),
+                Text(l.removeAdsDesc),
+                const SizedBox(height: 12),
+                CheckboxListTile(
+                  value: checked,
+                  onChanged: (v) => setState(() => checked = v ?? false),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    l.purchaseConfirmCheck,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => _showPurchaseInfo(context),
+                  child: Text(l.purchaseInfoLink),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l.cancel),
+            ),
+            FilledButton(
+              onPressed: checked ? () => Navigator.pop(ctx, true) : null,
+              child: Text(l.purchaseConfirmBuy),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+  if (agreed == true) {
+    await purchase.buy();
+  }
 }

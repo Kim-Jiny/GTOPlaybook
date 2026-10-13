@@ -120,6 +120,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get viewOnWeb => '웹에서 보기';
 
   @override
+  String get purchaseConfirmTitle => '구매 전 확인';
+
+  @override
+  String get purchaseConfirmCheck =>
+      '즉시 제공되는 디지털 상품이며, 적용된 이후에는 청약철회가 제한될 수 있음을 확인했고 이에 동의해요.';
+
+  @override
+  String get purchaseConfirmBuy => '동의하고 구매';
+
+  @override
   String get linkOpenFailed => '링크를 열 수 없어요. 잠시 후 다시 시도해 주세요.';
 
   @override
