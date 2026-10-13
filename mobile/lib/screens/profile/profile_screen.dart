@@ -3,6 +3,7 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
+import '../../providers/purchase_provider.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../inquiry/inquiry_screen.dart';
@@ -71,6 +72,9 @@ class ProfileScreen extends StatelessWidget {
           const Center(child: BannerAdWidget(placement: AdPlacement.profile)),
           const SizedBox(height: 16),
 
+          const _RemoveAdsTile(),
+          const SizedBox(height: 8),
+
           // Appearance
           const _ThemeModeTile(),
           const SizedBox(height: 8),
@@ -106,7 +110,10 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.logout,
             title: l.signOut,
             iconColor: Colors.redAccent,
-            onTap: () => auth.signOut(),
+            onTap: () {
+              context.read<PurchaseProvider>().onSignedOut();
+              auth.signOut();
+            },
           ),
           _MenuTile(
             icon: Icons.delete_forever,
@@ -213,6 +220,86 @@ class _ThemeModeTile extends StatelessWidget {
             onSelectionChanged: (s) => theme.setMode(s.first),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _RemoveAdsTile extends StatelessWidget {
+  const _RemoveAdsTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context)!;
+    final purchase = context.watch<PurchaseProvider>();
+
+    if (purchase.adsRemoved) {
+      return ListTile(
+        leading: Icon(Icons.check_circle, color: context.accent),
+        title: Text(l.adsRemoved),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      );
+    }
+    if (!purchase.storeAvailable) return const SizedBox.shrink();
+
+    final notice = switch (purchase.notice) {
+      PurchaseNotice.success => l.purchaseSuccess,
+      PurchaseNotice.restoreEmpty => l.purchaseRestoreEmpty,
+      PurchaseNotice.pending => l.purchasePending,
+      PurchaseNotice.failed => l.purchaseFailed,
+      PurchaseNotice.none => null,
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.block, color: context.accent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    l.removeAds,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: purchase.canBuy ? purchase.buy : null,
+                  child: purchase.busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(purchase.product?.price ?? '—'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l.removeAdsDesc,
+              style: TextStyle(color: context.ink54, fontSize: 13),
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: purchase.busy ? null : purchase.restore,
+                child: Text(l.restorePurchases),
+              ),
+            ),
+            if (notice != null)
+              Text(
+                notice,
+                style: TextStyle(color: context.ink70, fontSize: 13),
+              ),
+          ],
+        ),
       ),
     );
   }

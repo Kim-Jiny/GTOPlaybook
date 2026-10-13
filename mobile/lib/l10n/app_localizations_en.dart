@@ -42,6 +42,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeDark => 'Dark';
 
   @override
+  String get removeAds => 'Remove Ads';
+
+  @override
+  String get removeAdsDesc => 'One-time purchase. Removes all ads for good.';
+
+  @override
+  String get adsRemoved => 'Ads removed';
+
+  @override
+  String get restorePurchases => 'Restore purchases';
+
+  @override
+  String get purchaseSuccess => 'Thank you! Ads have been removed.';
+
+  @override
+  String get purchaseRestoreEmpty => 'No purchases to restore.';
+
+  @override
+  String get purchasePending => 'Your purchase is pending approval.';
+
+  @override
+  String get purchaseFailed =>
+      'The purchase could not be completed. Please try again.';
+
+  @override
   String get retry => 'Retry';
 
   @override

@@ -4,6 +4,7 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'providers/purchase_provider.dart';
 import 'theme/app_theme.dart';
 import 'providers/gto_provider.dart';
 import 'providers/equity_provider.dart';
@@ -53,6 +54,7 @@ class GtoPlaybookApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => PurchaseProvider(apiService)..init()),
         ChangeNotifierProvider(create: (_) => AuthProvider(apiService)),
         ChangeNotifierProvider(create: (_) => GtoProvider(apiService)),
         ChangeNotifierProvider(create: (_) => EquityProvider()),

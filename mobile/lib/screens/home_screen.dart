@@ -3,6 +3,7 @@ import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/gto_provider.dart';
+import '../providers/purchase_provider.dart';
 import 'gto/gto_position_select_screen.dart';
 import 'equity/equity_tab_screen.dart';
 import 'pot_calculator/pot_calculator_screen.dart';
@@ -33,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final auth = context.read<AuthProvider>();
       if (auth.user != null) {
         final gto = context.read<GtoProvider>();
+        context.read<PurchaseProvider>().refresh();
         await gto.loadSavedStackSettings();
         gto.loadPositionTree();
       }
@@ -44,10 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
         onDestinationSelected: (i) => setState(() => _currentIndex = i),

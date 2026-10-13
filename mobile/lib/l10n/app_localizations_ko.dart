@@ -42,6 +42,30 @@ class AppLocalizationsKo extends AppLocalizations {
   String get themeDark => '다크';
 
   @override
+  String get removeAds => '광고 제거';
+
+  @override
+  String get removeAdsDesc => '한 번 결제로 모든 광고를 영구히 제거해요.';
+
+  @override
+  String get adsRemoved => '광고 제거됨';
+
+  @override
+  String get restorePurchases => '구매 복원';
+
+  @override
+  String get purchaseSuccess => '구매해 주셔서 감사합니다! 광고가 제거되었어요.';
+
+  @override
+  String get purchaseRestoreEmpty => '복원할 구매 내역이 없어요.';
+
+  @override
+  String get purchasePending => '결제 승인을 기다리고 있어요.';
+
+  @override
+  String get purchaseFailed => '결제를 완료하지 못했어요. 다시 시도해 주세요.';
+
+  @override
   String get retry => '다시 시도';
 
   @override

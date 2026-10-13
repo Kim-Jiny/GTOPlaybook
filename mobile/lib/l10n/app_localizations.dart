@@ -164,6 +164,54 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get themeDark;
 
+  /// No description provided for @removeAds.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove Ads'**
+  String get removeAds;
+
+  /// No description provided for @removeAdsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'One-time purchase. Removes all ads for good.'**
+  String get removeAdsDesc;
+
+  /// No description provided for @adsRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Ads removed'**
+  String get adsRemoved;
+
+  /// No description provided for @restorePurchases.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore purchases'**
+  String get restorePurchases;
+
+  /// No description provided for @purchaseSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you! Ads have been removed.'**
+  String get purchaseSuccess;
+
+  /// No description provided for @purchaseRestoreEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No purchases to restore.'**
+  String get purchaseRestoreEmpty;
+
+  /// No description provided for @purchasePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your purchase is pending approval.'**
+  String get purchasePending;
+
+  /// No description provided for @purchaseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'The purchase could not be completed. Please try again.'**
+  String get purchaseFailed;
+
   /// No description provided for @retry.
   ///
   /// In en, this message translates to:

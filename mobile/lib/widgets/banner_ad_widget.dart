@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/purchase_provider.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import '../services/ad_helper.dart';
@@ -43,7 +45,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     // Anchored adaptive banner: full screen width, height optimized per device.
     // Falls back to the fixed 320x50 banner if a size can't be resolved.
     final width = MediaQuery.of(context).size.width.truncate();
-    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
+    final size =
+        await AdSize.getAnchoredAdaptiveBannerAdSize(
           Orientation.portrait,
           width,
         ) ??
@@ -79,6 +82,8 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuild when the ad-free purchase flips (AdHelper.adsRemoved is set from it).
+    context.watch<PurchaseProvider>();
     if (!AdHelper.isBannerAdsSupported || !_isLoaded || _bannerAd == null) {
       return const SizedBox.shrink();
     }
