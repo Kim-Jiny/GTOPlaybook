@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/ui_kit.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -100,24 +101,11 @@ class _MyInquiriesScreenState extends State<MyInquiriesScreen> {
         centerTitle: true,
       ),
       body: provider.isLoadingMyInquiries
-          ? const Center(child: CircularProgressIndicator())
+          ? const AppLoader()
           : provider.myInquiriesError != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        provider.myInquiriesError ?? l.failedToLoadInquiries,
-                        style: const TextStyle(color: Colors.redAccent),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton(
-                        onPressed: () => provider.loadMyInquiries(),
-                        child: Text(l.retry),
-                      ),
-                    ],
-                  ),
+              ? ErrorState(
+                  error: provider.myInquiriesError,
+                  onRetry: () => provider.loadMyInquiries(),
                 )
           : provider.myInquiries.isEmpty
               ? Center(

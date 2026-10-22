@@ -259,6 +259,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoryIsoRaise => 'Iso Raise vs Limp';
 
   @override
+  String get categoryFacingOpen => 'Facing an Open';
+
+  @override
+  String get categoryFacingOpenCaller => 'Facing Open + Call';
+
+  @override
   String get categoryColdCall => 'Cold Call';
 
   @override
@@ -338,6 +344,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get noChartsAvailable => 'No charts available';
+
+  @override
+  String get recentCharts => 'Recently viewed';
+
+  @override
+  String get tapSeatHint => 'Tap a seat to open its charts';
+
+  @override
+  String get mySettings => 'My setup';
+
+  @override
+  String get errorNetworkTitle => 'Can\'t reach the server';
+
+  @override
+  String get errorNetworkMessage =>
+      'Check your internet connection and try again.';
+
+  @override
+  String get errorServerTitle => 'Something broke on our side';
+
+  @override
+  String get errorServerMessage => 'Please try again in a moment.';
+
+  @override
+  String get errorNotFoundTitle => 'This chart is gone';
+
+  @override
+  String get errorNotFoundMessage =>
+      'It may have been updated. Go back and pick it again.';
+
+  @override
+  String get errorGenericTitle => 'Something went wrong';
+
+  @override
+  String get errorGenericMessage =>
+      'Please try again. If it keeps happening, contact us from My Page.';
 
   @override
   String get stackLabel => 'Stack';

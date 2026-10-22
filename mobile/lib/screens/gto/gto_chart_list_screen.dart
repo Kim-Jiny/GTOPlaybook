@@ -6,6 +6,7 @@ import '../../models/gto_chart.dart';
 import '../../services/interstitial_ad_manager.dart';
 import 'gto_chart_detail_screen.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui_kit.dart';
 
 class GtoChartListScreen extends StatefulWidget {
   const GtoChartListScreen({super.key});
@@ -53,7 +54,9 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                       });
                       gto.loadCharts(position: _selectedPosition);
                     },
-                    selectedColor: const Color(0xFF4CAF50),
+                    selectedColor: context.accent.withValues(alpha: 0.85),
+                    showCheckmark: false,
+                    side: BorderSide(color: context.hairline),
                     labelStyle: TextStyle(
                       color: isSelected ? context.ink : context.ink70,
                     ),
@@ -66,20 +69,11 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
           // Chart list
           Expanded(
             child: gto.isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const SkeletonList()
                 : gto.error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(gto.error!, style: const TextStyle(color: Colors.redAccent)),
-                            const SizedBox(height: 12),
-                            ElevatedButton(
-                              onPressed: () => gto.loadCharts(position: _selectedPosition),
-                              child: Text(l.retry),
-                            ),
-                          ],
-                        ),
+                    ? ErrorState(
+                        error: gto.error,
+                        onRetry: () => gto.loadCharts(position: _selectedPosition),
                       )
                     : gto.charts.isEmpty
                         ? Center(
@@ -98,7 +92,7 @@ class _GtoChartListScreenState extends State<GtoChartListScreen> {
                     : ListView.builder(
                         padding: const EdgeInsets.all(12),
                         itemCount: gto.charts.length,
-                        itemBuilder: (context, i) => _ChartCard(chart: gto.charts[i]),
+                        itemBuilder: (context, i) => _ChartCard(chart: gto.charts[i]).staggerIn(i, maxSteps: 8),
                       ),
           ),
         ],

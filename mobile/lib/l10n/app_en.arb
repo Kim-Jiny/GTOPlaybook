@@ -121,6 +121,8 @@
 
   "categoryOpenPot": "Open Raise",
   "categoryIsoRaise": "Iso Raise vs Limp",
+  "categoryFacingOpen": "Facing an Open",
+  "categoryFacingOpenCaller": "Facing Open + Call",
   "categoryColdCall": "Cold Call",
   "categorySqueeze": "Squeeze",
   "categoryFacingSqueeze": "Facing Squeeze",
@@ -154,6 +156,17 @@
   "spot": "Spot",
 
   "noChartsAvailable": "No charts available",
+  "recentCharts": "Recently viewed",
+  "tapSeatHint": "Tap a seat to open its charts",
+  "mySettings": "My setup",
+  "errorNetworkTitle": "Can't reach the server",
+  "errorNetworkMessage": "Check your internet connection and try again.",
+  "errorServerTitle": "Something broke on our side",
+  "errorServerMessage": "Please try again in a moment.",
+  "errorNotFoundTitle": "This chart is gone",
+  "errorNotFoundMessage": "It may have been updated. Go back and pick it again.",
+  "errorGenericTitle": "Something went wrong",
+  "errorGenericMessage": "Please try again. If it keeps happening, contact us from My Page.",
   "stackLabel": "Stack",
   "noChartForStack": "No chart for {stack}bb at this spot",
   "@noChartForStack": {

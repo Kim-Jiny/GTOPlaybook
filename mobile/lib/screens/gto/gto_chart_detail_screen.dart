@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/gto_provider.dart';
@@ -7,6 +9,8 @@ import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../../widgets/gto_grid.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui_kit.dart';
+import '../../services/recent_charts.dart';
 
 class GtoChartDetailScreen extends StatefulWidget {
   final int chartId;
@@ -48,6 +52,11 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
         _chart = chart;
         _selectedRange = null;
       });
+      RecentCharts.add(
+        chart.id,
+        _ChartSummaryCard._shortTitle(chart.description) ??
+            '${chart.position} ${chart.situation}',
+      );
       final tiers = await context.read<GtoProvider>().fetchAvailableTiers(
         widget.chartId,
       );
@@ -104,25 +113,13 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(chart?.description ?? l.loading),
+        title: Text(_ChartSummaryCard._shortTitle(chart?.description) ?? l.loading),
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const _ChartSkeleton()
           : _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _error!,
-                    style: const TextStyle(color: Colors.redAccent),
-                  ),
-                  const SizedBox(height: 12),
-                  ElevatedButton(onPressed: _loadChart, child: Text(l.retry)),
-                ],
-              ),
-            )
+          ? ErrorState(error: _error, onRetry: _loadChart)
           : chart == null
           ? Center(
               child: Text(l.noData, style: TextStyle(color: context.ink54)),
@@ -132,14 +129,17 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ChartSummaryCard(chart: chart),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _ChartSummaryCard(chart: chart),
+                  ).staggerIn(0),
                   const SizedBox(height: 12),
                   _StackTierSelector(
                     current: chart.stackDepth,
                     available: _availableTiers,
                     switching: _switchingTier,
                     onSelected: _onTierSelected,
-                  ),
+                  ).staggerIn(1),
                   const SizedBox(height: 12),
                   // Simple and Detailed look identical when no hand is mixed.
                   if (_hasMixedHands(chart)) ...[
@@ -157,7 +157,9 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                     _SelectedHandStrip(
                       range: selectedRange,
                       actionTypes: chart.actionTypes,
-                    ),
+                    ).animate(key: ValueKey('strip-${selectedRange.hand}')).fadeIn(
+                          duration: AppTheme.fast,
+                        ).slideY(begin: 0.12, end: 0, curve: AppTheme.curve),
                   const SizedBox(height: 10),
                   GtoGrid(
                     ranges: chart.ranges ?? [],
@@ -165,6 +167,9 @@ class _GtoChartDetailScreenState extends State<GtoChartDetailScreen> {
                     selectedHand: selectedRange?.hand,
                     detailedMode: _detailedMode,
                     onCellTap: (range) {
+                      if (range.hand != _selectedRange?.hand) {
+                        HapticFeedback.selectionClick();
+                      }
                       setState(() => _selectedRange = range);
                     },
                   ),
@@ -258,11 +263,12 @@ class _LegendItem extends StatelessWidget {
           height: 16,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(color: context.outline, width: 1.6),
           ),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(color: context.ink70, fontSize: 12)),
+        const SizedBox(width: 6),
+        Text(label, style: TextStyle(color: context.ink, fontSize: 12, fontWeight: FontWeight.w800)),
       ],
     );
   }
@@ -279,7 +285,7 @@ class _HandDetail extends StatelessWidget {
     final summary = _actionSummary(context, range, actionTypes, l);
     final rankedActions = _rankedActions(range, actionTypes);
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -291,8 +297,8 @@ class _HandDetail extends StatelessWidget {
                 Text(
                   range.hand,
                   style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+                    fontFamily: AppTheme.display,
+                    fontSize: 32,
                     color: context.ink,
                   ),
                 ),
@@ -303,14 +309,15 @@ class _HandDetail extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: summary.color.withValues(alpha: 0.18),
+                    color: summary.color,
                     borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: context.outline, width: 1.8),
                   ),
                   child: Text(
                     summary.title,
                     style: TextStyle(
-                      color: summary.color,
-                      fontWeight: FontWeight.w700,
+                      color: context.ink,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                 ),
@@ -535,14 +542,25 @@ class _FreqBar extends StatelessWidget {
           child: Text(label, style: TextStyle(color: context.ink70)),
         ),
         Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: freq,
-              backgroundColor: context.ink12,
-              color: color,
-              minHeight: 20,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: context.outline, width: 1.8),
             ),
+            child: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(end: freq),
+              duration: AppTheme.slow,
+              curve: AppTheme.curve,
+              builder: (_, v, _) => LinearProgressIndicator(
+                value: v,
+                backgroundColor: context.ink12,
+                color: color,
+                minHeight: 20,
+              ),
+            ),
+          ),
           ),
         ),
         const SizedBox(width: 8),
@@ -568,7 +586,7 @@ class _ChartSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final headline = _headline(chart);
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -606,9 +624,18 @@ class _ChartSummaryCard extends StatelessWidget {
     );
   }
 
+  /// Descriptions end with "(100bb, 6-max)", which the meta chips already show.
+  static String? _shortTitle(String? description) =>
+      description?.replaceFirst(RegExp(r'\s*\([^)]*\)\s*$'), '');
+
   String _headline(GtoChart chart) {
-    if (chart.vsPosition != null) {
-      return '${chart.position} ${chart.situation} vs ${chart.vsPosition}';
+    final vs = chart.vsPosition;
+    if (vs != null && chart.situation.contains('Opener')) {
+      // "3bet vs Opener" + vs CO -> "BTN 3bet vs CO"
+      return '${chart.position} ${chart.situation.replaceAll('Opener', vs)}';
+    }
+    if (vs != null) {
+      return '${chart.position} ${chart.situation} vs $vs';
     }
     return '${chart.position} ${chart.situation}';
   }
@@ -631,46 +658,68 @@ class _StackTierSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-
     return Row(
       children: [
-        Text(
-          l.stackLabel,
-          style: TextStyle(fontSize: 13, color: context.ink70),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final t in _tiers) ...[
-                  ChoiceChip(
-                    label: Text('${t}bb'),
-                    selected: t == current,
-                    onSelected: switching || !(available?.contains(t) ?? true)
-                        ? null
-                        : (_) => onSelected(t),
-                    visualDensity: VisualDensity.compact,
-                    labelStyle: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(width: 6),
-                ],
-              ],
+        for (var i = 0; i < _tiers.length; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Expanded(
+            child: _TierPill(
+              label: '${_tiers[i]}bb',
+              selected: _tiers[i] == current,
+              enabled: !switching && (available?.contains(_tiers[i]) ?? true),
+              onTap: () => onSelected(_tiers[i]),
             ),
           ),
-        ),
-        if (switching)
-          const Padding(
-            padding: EdgeInsets.only(left: 8),
-            child: SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-          ),
+        ],
       ],
+    );
+  }
+}
+
+class _TierPill extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _TierPill({
+    required this.label,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled || selected ? 1 : 0.4,
+      child: Pressable(
+        onTap: enabled && !selected ? onTap : null,
+        child: AnimatedContainer(
+          duration: AppTheme.normal,
+          curve: AppTheme.bounce,
+          transform: Matrix4.translationValues(0, selected ? -2 : 0, 0),
+          height: 40,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.mint : context.panel,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: context.outline, width: 2),
+            boxShadow: [BoxShadow(color: context.outline, offset: Offset(0, selected ? 3 : 2))],
+          ),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTheme.display,
+                fontSize: 14,
+                color: selected ? AppTheme.lightOutline : context.ink70,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -719,17 +768,18 @@ class _SelectedHandStrip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: context.ink.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.ink.withValues(alpha: 0.08)),
+        color: context.panel,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.outline, width: 2),
+        boxShadow: context.popShadow,
       ),
       child: Row(
         children: [
           Text(
             range.hand,
             style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w800,
+              fontFamily: AppTheme.display,
+              fontSize: 28,
               color: context.ink,
             ),
           ),
@@ -741,9 +791,9 @@ class _SelectedHandStrip extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(6),
                         child: SizedBox(
-                          height: 10,
+                          height: 12,
                           child: Row(
                             children: [
                               for (final a in actions)
@@ -754,7 +804,13 @@ class _SelectedHandStrip extends StatelessWidget {
                             ],
                           ),
                         ),
-                      ),
+                      ).animate().scaleX(
+                            begin: 0,
+                            end: 1,
+                            alignment: Alignment.centerLeft,
+                            duration: AppTheme.slow,
+                            curve: AppTheme.curve,
+                          ),
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 12,
@@ -804,12 +860,13 @@ class _MetaChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: context.ink.withValues(alpha: 0.08),
+        color: context.panelDim,
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: context.outline, width: 1.6),
       ),
       child: Text(
         label,
-        style: TextStyle(color: context.ink70, fontWeight: FontWeight.w600),
+        style: TextStyle(color: context.ink, fontWeight: FontWeight.w800, fontSize: 13),
       ),
     );
   }
@@ -839,18 +896,19 @@ class _ActionRankTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: context.ink.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.ink.withValues(alpha: 0.06)),
+        color: context.panelDim,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: context.outline, width: 1.8),
       ),
       child: Row(
         children: [
           Container(
-            width: 12,
-            height: 12,
+            width: 14,
+            height: 14,
             decoration: BoxDecoration(
               color: action.color,
-              borderRadius: BorderRadius.circular(3),
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(color: context.outline, width: 1.6),
             ),
           ),
           const SizedBox(width: 10),
@@ -925,4 +983,25 @@ List<_RankedAction> _rankActions(
         ),
       )
       .toList();
+}
+
+/// Placeholder shown while a chart loads: summary row + square grid block.
+class _ChartSkeleton extends StatelessWidget {
+  const _ChartSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(12),
+      child: Column(
+        children: [
+          SkeletonBox(height: 84, radius: 16),
+          SizedBox(height: 12),
+          SkeletonBox(height: 36, radius: 18),
+          SizedBox(height: 12),
+          AspectRatio(aspectRatio: 1, child: SkeletonBox(height: double.infinity, radius: 16)),
+        ],
+      ),
+    );
+  }
 }

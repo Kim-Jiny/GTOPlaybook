@@ -81,6 +81,8 @@
 
   "categoryOpenPot": "오픈 레이즈",
   "categoryIsoRaise": "아이소 레이즈 vs 림프",
+  "categoryFacingOpen": "오픈 대응",
+  "categoryFacingOpenCaller": "오픈 + 콜 대응",
   "categoryColdCall": "콜드콜",
   "categorySqueeze": "스퀴즈",
   "categoryFacingSqueeze": "스퀴즈 대응",
@@ -109,6 +111,17 @@
   "spot": "스팟",
 
   "noChartsAvailable": "차트가 없습니다",
+  "recentCharts": "최근 본 차트",
+  "tapSeatHint": "좌석을 눌러 차트를 열어보세요",
+  "mySettings": "내 세팅",
+  "errorNetworkTitle": "서버에 연결할 수 없어요",
+  "errorNetworkMessage": "인터넷 연결을 확인하고 다시 시도해 주세요.",
+  "errorServerTitle": "서버에 문제가 생겼어요",
+  "errorServerMessage": "잠시 후 다시 시도해 주세요.",
+  "errorNotFoundTitle": "차트를 찾을 수 없어요",
+  "errorNotFoundMessage": "차트가 업데이트됐을 수 있어요. 뒤로 가서 다시 선택해 주세요.",
+  "errorGenericTitle": "문제가 생겼어요",
+  "errorGenericMessage": "다시 시도해 주세요. 계속되면 마이페이지의 문의하기로 알려 주세요.",
   "stackLabel": "스택",
   "noChartForStack": "이 상황의 {stack}bb 차트가 없습니다",
 

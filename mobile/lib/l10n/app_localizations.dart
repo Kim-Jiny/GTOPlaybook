@@ -542,6 +542,18 @@ abstract class AppLocalizations {
   /// **'Iso Raise vs Limp'**
   String get categoryIsoRaise;
 
+  /// No description provided for @categoryFacingOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Facing an Open'**
+  String get categoryFacingOpen;
+
+  /// No description provided for @categoryFacingOpenCaller.
+  ///
+  /// In en, this message translates to:
+  /// **'Facing Open + Call'**
+  String get categoryFacingOpenCaller;
+
   /// No description provided for @categoryColdCall.
   ///
   /// In en, this message translates to:
@@ -691,6 +703,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No charts available'**
   String get noChartsAvailable;
+
+  /// No description provided for @recentCharts.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently viewed'**
+  String get recentCharts;
+
+  /// No description provided for @tapSeatHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a seat to open its charts'**
+  String get tapSeatHint;
+
+  /// No description provided for @mySettings.
+  ///
+  /// In en, this message translates to:
+  /// **'My setup'**
+  String get mySettings;
+
+  /// No description provided for @errorNetworkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t reach the server'**
+  String get errorNetworkTitle;
+
+  /// No description provided for @errorNetworkMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Check your internet connection and try again.'**
+  String get errorNetworkMessage;
+
+  /// No description provided for @errorServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something broke on our side'**
+  String get errorServerTitle;
+
+  /// No description provided for @errorServerMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again in a moment.'**
+  String get errorServerMessage;
+
+  /// No description provided for @errorNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This chart is gone'**
+  String get errorNotFoundTitle;
+
+  /// No description provided for @errorNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'It may have been updated. Go back and pick it again.'**
+  String get errorNotFoundMessage;
+
+  /// No description provided for @errorGenericTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong'**
+  String get errorGenericTitle;
+
+  /// No description provided for @errorGenericMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please try again. If it keeps happening, contact us from My Page.'**
+  String get errorGenericMessage;
 
   /// No description provided for @stackLabel.
   ///

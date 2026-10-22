@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import '../../models/position_situations.dart';
 import '../../services/ad_helper.dart';
@@ -6,6 +7,8 @@ import '../../services/interstitial_ad_manager.dart';
 import '../../widgets/banner_ad_widget.dart';
 import 'gto_chart_detail_screen.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui_kit.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class GtoSituationSelectScreen extends StatelessWidget {
   final PositionSituations positionSituations;
@@ -13,18 +16,23 @@ class GtoSituationSelectScreen extends StatelessWidget {
   const GtoSituationSelectScreen({super.key, required this.positionSituations});
 
   static const _positionColors = {
-    'UTG': Color(0xFFE53935),
-    'MP': Color(0xFFFB8C00),
-    'CO': Color(0xFFFDD835),
-    'BTN': Color(0xFF43A047),
-    'SB': Color(0xFF1E88E5),
-    'BB': Color(0xFF8E24AA),
+    'UTG': AppTheme.coral,
+    'UTG+1': Color(0xFFFF8A80),
+    'UTG+2': Color(0xFFFF9E80),
+    'MP': Color(0xFFFFA94D),
+    'HJ': Color(0xFFFFB84D),
+    'CO': AppTheme.yellow,
+    'BTN': AppTheme.mint,
+    'SB': AppTheme.sky,
+    'BB': AppTheme.grape,
   };
 
   static const _categoryIcons = {
     'RFI': Icons.arrow_upward,
     'Iso Raise vs Limp': Icons.north_east,
     'Cold Call': Icons.call_received,
+    'Facing Open': Icons.call_received,
+    'Facing Open + Caller': Icons.groups_rounded,
     'Squeeze': Icons.bolt,
     'Facing Squeeze': Icons.sync_problem,
     'Limped Pot': Icons.waterfall_chart,
@@ -56,19 +64,20 @@ class GtoSituationSelectScreen extends StatelessWidget {
             color: color,
             categoryCount: positionSituations.categories.length,
             chartCount: totalCharts,
-          ),
+          ).staggerIn(0),
           const SizedBox(height: 12),
           const Center(
             child: BannerAdWidget(placement: AdPlacement.situationList),
           ),
           const SizedBox(height: 12),
-          ...positionSituations.categories.map((cat) {
+          ...positionSituations.categories.indexed.map((e) {
+            final cat = e.$2;
             return _CategorySection(
               heroPosition: pos,
               category: cat,
               posColor: color,
               icon: _categoryIcons[cat.category] ?? Icons.casino,
-            );
+            ).staggerIn(e.$1 + 2);
           }),
         ],
       ),
@@ -110,55 +119,69 @@ class _CategorySectionState extends State<_CategorySection> {
         // Category header — tap to fold / unfold the chart list
         InkWell(
           borderRadius: BorderRadius.circular(8),
-          onTap: () => setState(() => _expanded = !_expanded),
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _expanded = !_expanded);
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Row(
               children: [
-                Icon(icon, color: posColor, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  _categoryLabel(category.category, l),
-                  style: TextStyle(
-                    color: posColor,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
-                    color: posColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    color: posColor,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: context.outline, width: 2),
                   ),
+                  child: Icon(icon, color: AppTheme.lightOutline, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Flexible(
                   child: Text(
-                    '${category.charts.length}',
-                    style: TextStyle(color: posColor, fontSize: 12),
+                    _categoryLabel(category.category, l),
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTheme.display,
+                      color: context.ink,
+                      fontSize: 19,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                PopTag(label: '${category.charts.length}', color: posColor),
                 const Spacer(),
-                Icon(
-                  _expanded ? Icons.expand_less : Icons.expand_more,
-                  color: context.ink54,
+                AnimatedRotation(
+                  turns: _expanded ? 0.5 : 0,
+                  duration: AppTheme.normal,
+                  curve: AppTheme.curve,
+                  child: Icon(Icons.expand_more, color: context.ink54),
                 ),
               ],
             ),
           ),
         ),
         // Chart list
-        if (_expanded)
-          ...category.charts.map(
-            (chart) => _ChartTile(
-              heroPosition: heroPosition,
-              chart: chart,
-              category: category.category,
-              posColor: posColor,
-            ),
-          ),
+        AnimatedSize(
+          duration: AppTheme.normal,
+          curve: AppTheme.curve,
+          alignment: Alignment.topCenter,
+          child: _expanded
+              ? Column(
+                  children: [
+                    ...category.charts.indexed.map(
+                      (e) => _ChartTile(
+                        heroPosition: heroPosition,
+                        chart: e.$2,
+                        category: category.category,
+                        posColor: posColor,
+                      ).staggerIn(e.$1, stepMs: 30, maxSteps: 8),
+                    ),
+                  ],
+                )
+              : const SizedBox(width: double.infinity),
+        ),
         const SizedBox(height: 16),
       ],
     );
@@ -170,6 +193,10 @@ class _CategorySectionState extends State<_CategorySection> {
         return l.categoryOpenPot;
       case 'Iso Raise vs Limp':
         return l.categoryIsoRaise;
+      case 'Facing Open':
+        return l.categoryFacingOpen;
+      case 'Facing Open + Caller':
+        return l.categoryFacingOpenCaller;
       case 'Cold Call':
         return l.categoryColdCall;
       case 'Squeeze':
@@ -230,11 +257,9 @@ class _ChartTile extends StatelessWidget {
         ? _villainColors[chart.vsPosition] ?? Colors.grey
         : posColor;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 6),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
+    return Pressable(
+      haptic: false,
+      onTap: () {
           InterstitialAdManager.instance.maybeShowOnTransition();
           Navigator.push(
             context,
@@ -243,6 +268,9 @@ class _ChartTile extends StatelessWidget {
             ),
           );
         },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: cardDecoration(context),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -254,19 +282,17 @@ class _ChartTile extends StatelessWidget {
                   height: 44,
                   margin: const EdgeInsets.only(right: 12),
                   decoration: BoxDecoration(
-                    color: villainColor.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: villainColor.withValues(alpha: 0.3),
-                    ),
+                    color: villainColor,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: context.outline, width: 2),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     chart.vsPosition!,
                     style: TextStyle(
-                      color: villainColor,
-                      fontWeight: FontWeight.w800,
-                      fontSize: chart.vsPosition!.length > 3 ? 10 : 13,
+                      fontFamily: AppTheme.display,
+                      color: AppTheme.lightOutline,
+                      fontSize: chart.vsPosition!.length > 3 ? 12 : 15,
                     ),
                   ),
                 ),
@@ -280,16 +306,16 @@ class _ChartTile extends StatelessWidget {
                       style: TextStyle(
                         color: context.ink,
                         fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                     if (actions.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       // Mini action bar
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(3),
+                        borderRadius: BorderRadius.circular(5),
                         child: SizedBox(
-                          height: 6,
+                          height: 8,
                           child: Row(
                             children: [
                               ...actions.map(
@@ -300,7 +326,13 @@ class _ChartTile extends StatelessWidget {
                             ],
                           ),
                         ),
-                      ),
+                      ).animate().scaleX(
+                            begin: 0,
+                            end: 1,
+                            alignment: Alignment.centerLeft,
+                            duration: AppTheme.slow,
+                            curve: AppTheme.curve,
+                          ),
                       const SizedBox(height: 4),
                       // Action labels
                       Row(
@@ -312,9 +344,9 @@ class _ChartTile extends StatelessWidget {
                                 child: Text(
                                   a.label,
                                   style: TextStyle(
-                                    color: a.toColor().withValues(alpha: 0.85),
+                                    color: context.ink70,
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
@@ -335,7 +367,8 @@ class _ChartTile extends StatelessWidget {
 
   String _chartTitle() {
     if ((chart.description ?? '').isNotEmpty) {
-      return chart.description!;
+      // Drop the trailing "(100bb, 6-max)": stack and table size are already chosen.
+      return chart.description!.replaceFirst(RegExp(r'\s*\([^)]*\)\s*$'), '');
     }
     if (chart.flopTexture != null && chart.flopTexture!.isNotEmpty) {
       return 'vs ${chart.vsPosition} ${chart.flopTexture}';
@@ -368,7 +401,7 @@ class _SituationIntroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -383,34 +416,12 @@ class _SituationIntroCard extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _InfoChip(label: l.nSections(categoryCount), color: color),
-                _InfoChip(label: l.nCharts(chartCount), color: color),
+                PopTag(label: l.nSections(categoryCount), color: color, fontSize: 13),
+                PopTag(label: l.nCharts(chartCount), color: color, fontSize: 13),
               ],
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _InfoChip({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700),
       ),
     );
   }

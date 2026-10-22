@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../widgets/ui_kit.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/hand_analysis_result.dart';
@@ -27,40 +30,42 @@ class HandAnalysisScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _BoardSection(provider: provider),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 52,
-                child: FilledButton(
-                  onPressed: provider.canAnalyze && !provider.isAnalyzing
-                      ? () {
-                          final locale = Localizations.localeOf(context);
-                          provider.analyze(isKorean: locale.languageCode == 'ko');
-                        }
-                      : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                  ),
-                  child: provider.isAnalyzing
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Text(l.analyze, style: const TextStyle(fontSize: 18)),
-                ),
+              PopButton(
+                label: l.analyze,
+                icon: Icons.search_rounded,
+                loading: provider.isAnalyzing,
+                onPressed: provider.canAnalyze
+                    ? () {
+                        final locale = Localizations.localeOf(context);
+                        provider.analyze(isKorean: locale.languageCode == 'ko');
+                      }
+                    : null,
               ),
               const SizedBox(height: 12),
               const Center(child: BannerAdWidget(placement: AdPlacement.handAnalysis)),
               if (provider.result != null) ...[
                 const SizedBox(height: 16),
-                _HeroHandStrength(result: provider.result!),
+                _HeroHandStrength(result: provider.result!)
+                    .animate(key: ValueKey('hs-${identityHashCode(provider.result)}'))
+                    .fadeIn(duration: AppTheme.normal)
+                    .slideY(begin: 0.1, end: 0, curve: AppTheme.curve),
                 const SizedBox(height: 12),
-                _WinLoseBar(result: provider.result!),
+                _WinLoseBar(result: provider.result!)
+                    .animate(key: ValueKey('wl-${identityHashCode(provider.result)}'), delay: 90.ms)
+                    .fadeIn(duration: AppTheme.normal)
+                    .slideY(begin: 0.1, end: 0, curve: AppTheme.curve),
                 const SizedBox(height: 12),
                 if (provider.result!.beatingHands.isNotEmpty)
-                  _BeatingHandsList(result: provider.result!),
+                  _BeatingHandsList(result: provider.result!)
+                      .animate(key: ValueKey('bh-${identityHashCode(provider.result)}'), delay: 180.ms)
+                      .fadeIn(duration: AppTheme.normal)
+                      .slideY(begin: 0.1, end: 0, curve: AppTheme.curve),
                 if (provider.result!.outs.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  _OutsSection(result: provider.result!),
+                  _OutsSection(result: provider.result!)
+                      .animate(key: ValueKey('outs-${identityHashCode(provider.result)}'), delay: 270.ms)
+                      .fadeIn(duration: AppTheme.normal)
+                      .slideY(begin: 0.1, end: 0, curve: AppTheme.curve),
                 ],
               ],
             ],
@@ -79,7 +84,7 @@ class _HeroHandSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -127,7 +132,7 @@ class _BoardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -193,7 +198,7 @@ class _HeroHandStrength extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
@@ -228,7 +233,7 @@ class _WinLoseBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -236,7 +241,7 @@ class _WinLoseBar extends StatelessWidget {
           children: [
             // Bar
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
               child: SizedBox(
                 height: 28,
                 child: Row(
@@ -335,7 +340,7 @@ class _BeatingHandsList extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -408,7 +413,7 @@ class _OutsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

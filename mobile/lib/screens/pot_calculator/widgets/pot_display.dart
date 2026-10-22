@@ -76,7 +76,7 @@ class _PotDisplay extends StatelessWidget {
     final l = AppLocalizations.of(context)!;
     final provider = context.watch<PotCalculatorProvider>();
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         child: Column(
@@ -117,12 +117,13 @@ class _PotDisplay extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            Text(
+            TickText(
               provider.potDisplayText,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.displaySmall?.copyWith(
                 color: context.accent,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -1,
               ),
             ),
             if (provider.bbSize > 0 && provider.potTotal > 0)
@@ -178,16 +179,10 @@ class _CompactPotBar extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: context.panelDim.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.ink12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.24),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: context.panel,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: context.outline, width: 2),
+        boxShadow: context.popShadow,
       ),
       child: Row(
         children: [
@@ -215,10 +210,10 @@ class _CompactPotBar extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   provider.potDisplayText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: context.ink,
                   ),
                 ),
                 const SizedBox(height: 4),

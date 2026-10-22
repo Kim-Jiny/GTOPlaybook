@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../models/card.dart';
 import '../theme/app_theme.dart';
 
@@ -53,7 +54,11 @@ class PlayingCardWidget extends StatelessWidget {
           ),
         ],
       ),
-    ),
+    ).animate(key: ValueKey(cardString)).fadeIn(duration: AppTheme.fast).scale(
+          begin: const Offset(0.7, 0.7),
+          duration: AppTheme.normal,
+          curve: Curves.easeOutBack,
+        ),
     );
   }
 }
