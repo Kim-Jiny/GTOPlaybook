@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -52,29 +53,123 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        onDestinationSelected: (i) => setState(() => _currentIndex = i),
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.grid_on),
-            selectedIcon: Icon(Icons.grid_on, color: context.accent),
-            label: l.gtoCharts,
+      bottomNavigationBar: _PopNavBar(
+        index: _currentIndex,
+        onSelected: (i) {
+          if (i == _currentIndex) return;
+          HapticFeedback.selectionClick();
+          setState(() => _currentIndex = i);
+        },
+        items: [
+          _NavSpec(Icons.grid_view_rounded, l.gtoCharts, AppTheme.mint),
+          _NavSpec(Icons.pie_chart_rounded, l.equity, AppTheme.sky),
+          _NavSpec(Icons.paid_rounded, l.potCalculator, AppTheme.yellow),
+          _NavSpec(Icons.face_rounded, l.myPage, AppTheme.pink),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavSpec {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _NavSpec(this.icon, this.label, this.color);
+}
+
+class _PopNavBar extends StatelessWidget {
+  final int index;
+  final ValueChanged<int> onSelected;
+  final List<_NavSpec> items;
+
+  const _PopNavBar({
+    required this.index,
+    required this.onSelected,
+    required this.items,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: context.panel,
+        border: Border(top: BorderSide(color: context.outline, width: 2)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+          child: Row(
+            children: [
+              for (var i = 0; i < items.length; i++)
+                Expanded(
+                  child: _NavItem(
+                    spec: items[i],
+                    selected: i == index,
+                    onTap: () => onSelected(i),
+                  ),
+                ),
+            ],
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.calculate),
-            selectedIcon: Icon(Icons.calculate, color: context.accent),
-            label: l.equity,
+        ),
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  final _NavSpec spec;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _NavItem({required this.spec, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: AppTheme.normal,
+            curve: AppTheme.bounce,
+            width: selected ? 58 : 40,
+            height: 36,
+            decoration: BoxDecoration(
+              color: selected ? spec.color : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? context.outline : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow: selected
+                  ? [BoxShadow(color: context.outline, offset: const Offset(0, 3))]
+                  : const [],
+            ),
+            child: AnimatedScale(
+              scale: selected ? 1.15 : 1,
+              duration: AppTheme.slow,
+              curve: Curves.elasticOut,
+              child: Icon(
+                spec.icon,
+                size: 24,
+                color: selected ? AppTheme.lightOutline : context.ink54,
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.monetization_on),
-            selectedIcon: Icon(Icons.monetization_on, color: context.accent),
-            label: l.potCalculator,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.person),
-            selectedIcon: Icon(Icons.person, color: context.accent),
-            label: l.myPage,
+          const SizedBox(height: 4),
+          Text(
+            spec.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: AppTheme.display,
+              fontSize: 12,
+              color: selected ? context.ink : context.ink54,
+            ),
           ),
         ],
       ),

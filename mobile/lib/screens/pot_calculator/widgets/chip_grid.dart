@@ -11,7 +11,7 @@ class _ChipGrid extends StatelessWidget {
     final chips = provider.chipValues;
     const spacing = 10.0;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -88,9 +88,11 @@ class _ChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
       onLongPress: onLongPress,
-      child: Container(
+      child: Pressable(
+        scale: 0.9,
+        onTap: onTap,
+        child: Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
@@ -99,31 +101,25 @@ class _ChipButton extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: isCustom
-                ? [const Color(0xFF1565C0), const Color(0xFF0D47A1)]
-                : [const Color(0xFF2E7D32), const Color(0xFF1B5E20)],
+                ? [AppTheme.sky, AppTheme.sky]
+                : [AppTheme.mint, AppTheme.mint],
           ),
-          boxShadow: [
-            BoxShadow(
-              color:
-                  (isCustom ? const Color(0xFF42A5F5) : const Color(0xFF4CAF50))
-                      .withValues(alpha: 0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(color: context.outline, width: 2.5),
+          boxShadow: [BoxShadow(color: context.outline, offset: const Offset(0, 4))],
         ),
         child: Center(
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: size * 0.18,
+              color: AppTheme.lightOutline,
+              fontFamily: AppTheme.display,
+              fontSize: size * 0.2,
               height: 1.1,
             ),
           ),
         ),
+      ),
       ),
     );
   }

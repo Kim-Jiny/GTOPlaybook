@@ -10,7 +10,7 @@ class _BlindStructureBar extends StatelessWidget {
     final provider = context.watch<PotCalculatorProvider>();
     final structure = provider.activeStructure;
 
-    return Card(
+    return PopCard(
       child: InkWell(
         onTap: () => _openStructureSheet(context),
         borderRadius: BorderRadius.circular(12),
@@ -141,7 +141,8 @@ class _StructureSheet extends StatelessWidget {
                   icon: const Icon(Icons.add, size: 18),
                   label: Text(AppLocalizations.of(context)!.newStructure),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
+                    backgroundColor: context.accent,
+                    foregroundColor: context.onAccent,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 8,
@@ -414,8 +415,8 @@ class _BlindStructureEditScreenState extends State<BlindStructureEditScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addLevel,
-        backgroundColor: const Color(0xFF2E7D32),
-        foregroundColor: Colors.white,
+        backgroundColor: context.accent,
+        foregroundColor: context.onAccent,
         child: const Icon(Icons.add),
       ),
       body: Column(

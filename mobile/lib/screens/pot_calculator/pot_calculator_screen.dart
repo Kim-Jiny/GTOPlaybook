@@ -6,6 +6,7 @@ import '../../providers/pot_calculator_provider.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui_kit.dart';
 
 part 'widgets/pot_display.dart';
 part 'widgets/blind_structure.dart';

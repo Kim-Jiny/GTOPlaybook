@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -8,6 +9,7 @@ import '../../services/admin_push_service.dart';
 import '../../services/api_service.dart';
 import '../../services/ad_helper.dart';
 import '../../widgets/banner_ad_widget.dart';
+import '../../widgets/ui_kit.dart';
 import '../inquiry/inquiry_screen.dart';
 import '../inquiry/my_inquiries_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -32,20 +34,33 @@ class ProfileScreen extends StatelessWidget {
           // User info card
           Card(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(color: context.hairline),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundImage: user?.photoURL != null
-                        ? NetworkImage(user!.photoURL!)
-                        : null,
-                    child: user?.photoURL == null
-                        ? const Icon(Icons.person, size: 32)
-                        : null,
+                  Container(
+                    padding: const EdgeInsets.all(2.5),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [context.accent, context.gold],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor: context.card,
+                      backgroundImage: user?.photoURL != null
+                          ? NetworkImage(user!.photoURL!)
+                          : null,
+                      child: user?.photoURL == null
+                          ? const Icon(Icons.person, size: 32)
+                          : null,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -71,7 +86,7 @@ class ProfileScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+          ).staggerIn(0),
           const SizedBox(height: 16),
           const Center(child: BannerAdWidget(placement: AdPlacement.profile)),
           const SizedBox(height: 16),
@@ -212,8 +227,11 @@ class _MenuTile extends StatelessWidget {
       title: Text(title, style: TextStyle(color: context.ink)),
       trailing: Icon(Icons.chevron_right, color: context.ink38, size: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      onTap: onTap,
-    );
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+    ).staggerIn(2);
   }
 }
 
@@ -283,7 +301,7 @@ class _RemoveAdsTile extends StatelessWidget {
       PurchaseNotice.none => null,
     };
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

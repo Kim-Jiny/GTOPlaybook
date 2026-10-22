@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../widgets/ui_kit.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/inquiry.dart';
@@ -143,7 +144,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         provider.inquiriesError != null && provider.allInquiries.isEmpty;
 
     if (provider.isLoading && stats == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoader();
     }
 
     if (hasStatsError && hasInquiryError) {

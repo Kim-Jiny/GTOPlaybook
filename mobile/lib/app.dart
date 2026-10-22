@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
@@ -6,6 +7,7 @@ import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/purchase_provider.dart';
 import 'theme/app_theme.dart';
+import 'widgets/ui_kit.dart';
 import 'providers/gto_provider.dart';
 import 'providers/equity_provider.dart';
 import 'providers/hand_analysis_provider.dart';
@@ -88,9 +90,7 @@ class GtoPlaybookApp extends StatelessWidget {
             home: Consumer<AuthProvider>(
               builder: (context, auth, _) {
                 if (auth.isInitializing) {
-                  return const Scaffold(
-                    body: Center(child: CircularProgressIndicator()),
-                  );
+                  return const _InitSplash();
                 }
                 if (auth.isAuthenticated) {
                   return const HomeScreen();
@@ -148,6 +148,33 @@ class _UnsupportedPlatformScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Shown while auth initializes. Continues the native splash (same logo and
+/// background) so the hand-off from launch screen to app is seamless.
+class _InitSplash extends StatelessWidget {
+  const _InitSplash();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Image.asset('assets/icon/splash_logo.png', width: 288, height: 288)
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .moveY(begin: 0, end: -8, duration: 1100.ms, curve: Curves.easeInOut),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 72),
+            child: AppLoader(),
+          ),
+        ],
       ),
     );
   }

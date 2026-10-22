@@ -256,6 +256,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get categoryIsoRaise => '아이소 레이즈 vs 림프';
 
   @override
+  String get categoryFacingOpen => '오픈 대응';
+
+  @override
+  String get categoryFacingOpenCaller => '오픈 + 콜 대응';
+
+  @override
   String get categoryColdCall => '콜드콜';
 
   @override
@@ -331,6 +337,39 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get noChartsAvailable => '차트가 없습니다';
+
+  @override
+  String get recentCharts => '최근 본 차트';
+
+  @override
+  String get tapSeatHint => '좌석을 눌러 차트를 열어보세요';
+
+  @override
+  String get mySettings => '내 세팅';
+
+  @override
+  String get errorNetworkTitle => '서버에 연결할 수 없어요';
+
+  @override
+  String get errorNetworkMessage => '인터넷 연결을 확인하고 다시 시도해 주세요.';
+
+  @override
+  String get errorServerTitle => '서버에 문제가 생겼어요';
+
+  @override
+  String get errorServerMessage => '잠시 후 다시 시도해 주세요.';
+
+  @override
+  String get errorNotFoundTitle => '차트를 찾을 수 없어요';
+
+  @override
+  String get errorNotFoundMessage => '차트가 업데이트됐을 수 있어요. 뒤로 가서 다시 선택해 주세요.';
+
+  @override
+  String get errorGenericTitle => '문제가 생겼어요';
+
+  @override
+  String get errorGenericMessage => '다시 시도해 주세요. 계속되면 마이페이지의 문의하기로 알려 주세요.';
 
   @override
   String get stackLabel => '스택';

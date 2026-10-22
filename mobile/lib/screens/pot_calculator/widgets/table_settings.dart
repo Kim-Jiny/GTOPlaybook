@@ -17,7 +17,7 @@ class _TableSettingsCard extends StatelessWidget {
     };
     final summary = l.setupSummary(provider.formattedSb, provider.formattedBb, anteText, provider.playerCount);
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -132,7 +132,7 @@ class _LevelDisplay extends StatelessWidget {
     final provider = context.watch<PotCalculatorProvider>();
     final structure = provider.activeStructure;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -227,17 +227,11 @@ class _PreflopButton extends StatelessWidget {
     final provider = context.watch<PotCalculatorProvider>();
     final amount = provider.preflopPot;
 
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: amount > 0 ? provider.addPreflop : null,
-        icon: const Icon(Icons.add_circle_outline, size: 20),
-        label: Text(AppLocalizations.of(context)!.addPreflopPot(provider.chipLabel(amount))),
-        style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFF2E7D32),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-      ),
+    return PopButton(
+      label: AppLocalizations.of(context)!.addPreflopPot(provider.chipLabel(amount)),
+      icon: Icons.add_circle_rounded,
+      color: AppTheme.yellow,
+      onPressed: amount > 0 ? provider.addPreflop : null,
     );
   }
 }
@@ -255,7 +249,7 @@ class _BetPresetSection extends StatelessWidget {
       ('Pot', 1.0),
     ];
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

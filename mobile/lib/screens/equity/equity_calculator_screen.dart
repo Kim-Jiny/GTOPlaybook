@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import '../../models/equity_result.dart';
@@ -9,6 +11,7 @@ import '../../widgets/card_picker.dart';
 import '../../widgets/range_picker.dart';
 import '../../widgets/playing_card_widget.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/ui_kit.dart';
 
 class EquityCalculatorScreen extends StatelessWidget {
   final bool embedded;
@@ -26,10 +29,11 @@ class EquityCalculatorScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _BoardSection(provider: provider),
+              _BoardSection(provider: provider).staggerIn(0),
               const SizedBox(height: 16),
               ...provider.players.asMap().entries.map(
-                    (e) => _PlayerRow(index: e.key, player: e.value, provider: provider),
+                    (e) => _PlayerRow(index: e.key, player: e.value, provider: provider)
+                        .staggerIn(e.key + 1, maxSteps: 6),
                   ),
               const SizedBox(height: 8),
               if (provider.players.length < 9)
@@ -43,31 +47,20 @@ class EquityCalculatorScreen extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 16),
-              SizedBox(
-                height: 52,
-                child: FilledButton(
-                  onPressed: provider.isCalculating
-                      ? null
-                      : () {
-                          if (validationMessage != null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(validationMessage)),
-                            );
-                            return;
-                          }
-                          provider.calculate();
-                        },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF2E7D32),
-                  ),
-                  child: provider.isCalculating
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : Text(l.calculate, style: const TextStyle(fontSize: 18)),
-                ),
+              PopButton(
+                label: l.calculate,
+                icon: Icons.bolt_rounded,
+                loading: provider.isCalculating,
+                onPressed: () {
+                  if (validationMessage != null) {
+                    HapticFeedback.mediumImpact();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(validationMessage)),
+                    );
+                    return;
+                  }
+                  provider.calculate();
+                },
               ),
               if (validationMessage != null) ...[
                 const SizedBox(height: 8),
@@ -94,7 +87,10 @@ class EquityCalculatorScreen extends StatelessWidget {
               ],
               if (provider.result != null) ...[
                 const SizedBox(height: 16),
-                _ResultsBar(result: provider.result!, playerCount: provider.players.length),
+                _ResultsBar(result: provider.result!, playerCount: provider.players.length)
+                    .animate(key: ValueKey(identityHashCode(provider.result)))
+                    .fadeIn(duration: AppTheme.normal)
+                    .slideY(begin: 0.1, end: 0, curve: AppTheme.curve),
               ],
             ],
           ),
@@ -147,7 +143,7 @@ class _BoardSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -238,11 +234,13 @@ class _PlayerRow extends StatelessWidget {
                 final newMode = player.inputMode == InputMode.cards ? InputMode.range : InputMode.cards;
                 provider.setPlayerInputMode(index, newMode);
               },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              child: AnimatedContainer(
+                duration: AppTheme.normal,
+                curve: AppTheme.curve,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: player.inputMode == InputMode.range ? const Color(0xFF1565C0) : const Color(0xFF37474F),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   player.inputMode == InputMode.cards ? 'Cards' : 'Range',
@@ -262,8 +260,10 @@ class _PlayerRow extends StatelessWidget {
               Container(
                 width: 60,
                 alignment: Alignment.centerRight,
-                child: Text(
-                  '${equity.toStringAsFixed(1)}%',
+                child: CountUp(
+                  value: equity,
+                  decimals: 1,
+                  suffix: '%',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
@@ -385,7 +385,7 @@ class _ResultsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
 
-    return Card(
+    return PopCard(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -398,7 +398,7 @@ class _ResultsBar extends StatelessWidget {
             const SizedBox(height: 8),
             // Stacked bar
             ClipRRect(
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
               child: SizedBox(
                 height: 28,
                 child: Row(
@@ -421,7 +421,13 @@ class _ResultsBar extends StatelessWidget {
                   }),
                 ),
               ),
-            ),
+            ).animate().scaleX(
+                  begin: 0,
+                  end: 1,
+                  alignment: Alignment.centerLeft,
+                  duration: AppTheme.slow,
+                  curve: AppTheme.curve,
+                ),
             const SizedBox(height: 8),
             // Legend
             Wrap(

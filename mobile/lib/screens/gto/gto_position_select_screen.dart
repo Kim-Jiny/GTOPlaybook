@@ -1,15 +1,20 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gtoplaybook/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
-import '../../providers/gto_provider.dart';
 import '../../models/position_situations.dart';
+import '../../providers/gto_provider.dart';
 import '../../services/ad_helper.dart';
 import '../../services/interstitial_ad_manager.dart';
-import '../../widgets/banner_ad_widget.dart';
-import 'gto_situation_select_screen.dart';
+import '../../services/recent_charts.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/banner_ad_widget.dart';
+import '../../widgets/ui_kit.dart';
+import 'gto_chart_detail_screen.dart';
+import 'gto_situation_select_screen.dart';
 
 class GtoPositionSelectScreen extends StatefulWidget {
   const GtoPositionSelectScreen({super.key});
@@ -23,7 +28,7 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
   final _chipsController = TextEditingController();
   Timer? _debounce;
 
-  /// Position order per table size
+  /// Position order per table size (action order, BB last).
   static List<String> _positionOrder(int maxPlayers) {
     switch (maxPlayers) {
       case 2: return ['SB', 'BB'];
@@ -39,38 +44,40 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
   }
 
   static const _positionColors = {
-    'UTG': Color(0xFFE53935),
-    'UTG+1': Color(0xFFD81B60),
-    'UTG+2': Color(0xFFAD1457),
-    'MP': Color(0xFFFB8C00),
-    'HJ': Color(0xFFFB8C00),
-    'CO': Color(0xFFFDD835),
-    'BTN': Color(0xFF43A047),
-    'SB': Color(0xFF1E88E5),
-    'BB': Color(0xFF8E24AA),
+    'UTG': AppTheme.coral,
+    'UTG+1': Color(0xFFFF8A80),
+    'UTG+2': Color(0xFFFF9E80),
+    'MP': Color(0xFFFFA94D),
+    'HJ': Color(0xFFFFB84D),
+    'CO': AppTheme.yellow,
+    'BTN': AppTheme.mint,
+    'SB': AppTheme.sky,
+    'BB': AppTheme.grape,
   };
 
-  Map<String, String> _positionDescriptions(AppLocalizations l) => {
-    'UTG': l.positionUTG,
-    'UTG+1': l.positionUTGPlus1,
-    'UTG+2': l.positionUTGPlus2,
-    'MP': l.positionMP,
-    'HJ': l.positionHJ,
-    'CO': l.positionCO,
-    'BTN': l.positionBTN,
-    'SB': l.positionSB,
-    'BB': l.positionBB,
-  };
+  static String _tableLabel(int maxPlayers) => maxPlayers == 2 ? 'HU' : '$maxPlayers-MAX';
 
-  /// Header label for the selected table size
-  static String _tableLabel(int maxPlayers) {
-    if (maxPlayers == 2) return 'HU';
-    return '$maxPlayers-MAX';
+  static Color _tierColor(int tier) {
+    switch (tier) {
+      case 7:
+        return AppTheme.coral;
+      case 15:
+        return const Color(0xFFFF9F43);
+      case 25:
+        return AppTheme.yellow;
+      case 40:
+        return AppTheme.mintLight;
+      case 60:
+        return AppTheme.mint;
+      default:
+        return AppTheme.sky;
+    }
   }
 
   @override
   void initState() {
     super.initState();
+    RecentCharts.load();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final gto = context.read<GtoProvider>();
       if (gto.oneBbValue > 0) _bbController.text = gto.oneBbValue.toString();
@@ -101,253 +108,121 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
     final l = AppLocalizations.of(context)!;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.gtoCharts),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: Text(l.gtoCharts)),
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
         child: gto.isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const SkeletonList(count: 4, itemHeight: 120)
             : gto.error != null
-                ? Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(gto.error!, style: const TextStyle(color: Colors.redAccent)),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () => gto.loadPositionTree(),
-                          child: Text(l.retry),
-                        ),
-                      ],
-                    ),
-                  )
+                ? ErrorState(error: gto.error, onRetry: gto.loadPositionTree)
                 : _buildBody(context, gto, l),
       ),
     );
   }
 
   Widget _buildBody(BuildContext context, GtoProvider gto, AppLocalizations l) {
-    final treeMap = <String, PositionSituations>{};
-    for (final ps in gto.positionTree) {
-      treeMap[ps.position] = ps;
-    }
-
+    final treeMap = {for (final ps in gto.positionTree) ps.position: ps};
     final positions = _positionOrder(gto.selectedPlayerCount);
-    final posDesc = _positionDescriptions(l);
+    final chartCount = gto.positionTree.fold<int>(
+      0,
+      (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length),
+    );
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       children: [
-        _QuickStartCard(
-          playerCount: gto.selectedPlayerCount,
-          stackDepth: gto.selectedTier,
-          effectiveBb: gto.effectiveBb,
-          chartCount: gto.positionTree.fold<int>(
-            0,
-            (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length),
+        _buildSetupCard(gto, l).staggerIn(0),
+        const SizedBox(height: 16),
+        _PokerTable(
+          // Rebuild (and replay the seat pop-in) when the table size changes.
+          key: ValueKey('table-${gto.selectedPlayerCount}'),
+          positions: positions,
+          treeMap: treeMap,
+          colors: _positionColors,
+          centerLabel: _tableLabel(gto.selectedPlayerCount),
+          tier: gto.selectedTier,
+          tierColor: _tierColor(gto.selectedTier),
+          chartCount: chartCount,
+          onSeatTap: (pos) {
+            InterstitialAdManager.instance.maybeShowOnTransition();
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => GtoSituationSelectScreen(positionSituations: treeMap[pos]!),
+              ),
+            );
+          },
+        ).staggerIn(1),
+        const SizedBox(height: 10),
+        Center(
+          child: Text(
+            l.tapSeatHint,
+            style: TextStyle(color: context.ink54, fontWeight: FontWeight.w700),
           ),
         ),
-        const SizedBox(height: 12),
-        // Player count selector
-        _buildPlayerCountSelector(gto, l),
-        const SizedBox(height: 12),
-        _buildBbCalculator(gto, l),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
+        ValueListenableBuilder<List<RecentChart>>(
+          valueListenable: RecentCharts.items,
+          builder: (context, recents, _) {
+            if (recents.isEmpty) return const SizedBox.shrink();
+            return _RecentRow(recents: recents, title: l.recentCharts).staggerIn(2);
+          },
+        ),
         const Center(child: BannerAdWidget(placement: AdPlacement.main)),
-        const SizedBox(height: 12),
-        // Header row
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Row(
-            children: [
-              Text(
-                l.stepChooseSeat,
-                style: TextStyle(
-                  color: context.ink70,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: _tierColor(gto.selectedTier).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${gto.selectedTier}bb',
-                  style: TextStyle(
-                    color: _tierColor(gto.selectedTier),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${_tableLabel(gto.selectedPlayerCount)} · ${l.nCharts(gto.positionTree.fold<int>(0, (sum, ps) => sum + ps.categories.fold<int>(0, (s, c) => s + c.charts.length)))}',
-                style: TextStyle(color: context.ink38, fontSize: 12),
-              ),
-            ],
-          ),
-        ),
-        // Position cards
-        ...positions.map((pos) {
-          final hasSituations = treeMap.containsKey(pos);
-          final ps = treeMap[pos];
-          final chartCount = hasSituations
-              ? ps!.categories.fold<int>(0, (sum, c) => sum + c.charts.length)
-              : 0;
-          final categories = hasSituations
-              ? ps!.categories.map((c) => c.category).toList()
-              : <String>[];
-
-          return _PositionCard(
-            position: pos,
-            description: posDesc[pos] ?? pos,
-            color: _positionColors[pos] ?? const Color(0xFF757575),
-            chartCount: chartCount,
-            categories: categories,
-            onTap: hasSituations
-                ? () {
-                    InterstitialAdManager.instance.maybeShowOnTransition();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => GtoSituationSelectScreen(
-                          positionSituations: treeMap[pos]!,
-                        ),
-                      ),
-                    );
-                  }
-                : null,
-          );
-        }),
       ],
     );
   }
 
-  Widget _buildPlayerCountSelector(GtoProvider gto, AppLocalizations l) {
+  Widget _buildSetupCard(GtoProvider gto, AppLocalizations l) {
     const counts = [2, 3, 4, 5, 6, 7, 8, 9];
+    const tiers = [7, 15, 25, 40, 60, 100];
 
-    return Container(
+    return PopCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.panelDim,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: context.ink.withValues(alpha: 0.06)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const spacing = 8.0;
-          final itemWidth = (constraints.maxWidth - (spacing * 3)) / 4;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                l.tableSize,
-                style: TextStyle(
-                  color: context.ink,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                l.tableSizeDesc,
-                style: TextStyle(
-                  color: context.ink54,
-                  fontSize: 12,
-                  height: 1.35,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: spacing,
-                runSpacing: spacing,
-                children: counts.map((count) {
-                  final isSelected = count == gto.selectedPlayerCount;
-                  final primaryLabel = count == 2 ? 'HU' : '$count-MAX';
-                  final secondaryLabel = count == 2 ? l.headsUp : l.nPlayers(count);
-
-                  return SizedBox(
-                    width: itemWidth,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        onTap: () => gto.selectPlayerCount(count),
-                        borderRadius: BorderRadius.circular(12),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 180),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? const Color(0xFF42A5F5).withValues(alpha: 0.16)
-                                : context.ink.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isSelected
-                                  ? const Color(0xFF42A5F5)
-                                  : context.ink.withValues(alpha: 0.08),
-                              width: isSelected ? 1.4 : 1,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                primaryLabel,
-                                style: TextStyle(
-                                  color: isSelected ? context.ink : context.ink70,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                secondaryLabel,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: isSelected ? context.ink70 : context.ink38,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildBbCalculator(GtoProvider gto, AppLocalizations l) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: context.panel,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: context.ink.withValues(alpha: 0.06),
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Input row
+          _SectionLabel(l.tableSize),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 48,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              itemCount: counts.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => _PopChip(
+                label: counts[i] == 2 ? 'HU' : '${counts[i]}',
+                selected: counts[i] == gto.selectedPlayerCount,
+                color: AppTheme.sky,
+                onTap: () => gto.selectPlayerCount(counts[i]),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _SectionLabel(l.stackLabel),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 48,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(top: 4, bottom: 4),
+              itemCount: tiers.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => _PopChip(
+                label: '${tiers[i]}bb',
+                selected: tiers[i] == gto.selectedTier,
+                color: _tierColor(tiers[i]),
+                onTap: () {
+                  _bbController.clear();
+                  _chipsController.clear();
+                  gto.selectTier(tiers[i]);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -367,188 +242,89 @@ class _GtoPositionSelectScreenState extends State<GtoPositionSelectScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Result row
-          Row(
-            children: [
-              // Effective BB badge
-              if (gto.effectiveBb > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: _tierColor(gto.selectedTier).withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    l.nbbEffective(gto.effectiveBb),
-                    style: TextStyle(
-                      color: _tierColor(gto.selectedTier),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                )
-              else
-                Text(
-                  l.enterValuesToCalculate,
-                  style: TextStyle(color: context.ink30, fontSize: 12),
-                ),
-              const Spacer(),
-            ],
-          ),
           const SizedBox(height: 10),
-          // Tier indicator dots
-          _buildTierDots(gto.selectedTier),
+          AnimatedSwitcher(
+            duration: AppTheme.normal,
+            switchInCurve: AppTheme.bounce,
+            child: gto.effectiveBb > 0
+                ? PopTag(
+                    key: ValueKey(gto.effectiveBb),
+                    label: l.nbbEffective(gto.effectiveBb),
+                    color: _tierColor(gto.selectedTier),
+                    fontSize: 14,
+                  )
+                : Text(
+                    l.enterValuesToCalculate,
+                    key: const ValueKey('hint'),
+                    style: TextStyle(color: context.ink38, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+          ),
         ],
       ),
     );
   }
+}
 
-  Widget _buildTierDots(int selectedTier) {
-    const tiers = [7, 15, 25, 40, 60, 100];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: tiers.map((tier) {
-        final isSelected = tier == selectedTier;
-        return GestureDetector(
-          onTap: () {
-            _bbController.clear();
-            _chipsController.clear();
-            context.read<GtoProvider>().selectTier(tier);
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Column(
-              children: [
-                Container(
-                  width: isSelected ? 10 : 7,
-                  height: isSelected ? 10 : 7,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? _tierColor(tier)
-                        : context.ink.withValues(alpha: 0.15),
-                    boxShadow: isSelected
-                        ? [BoxShadow(color: _tierColor(tier).withValues(alpha: 0.4), blurRadius: 6)]
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${tier}bb',
-                  style: TextStyle(
-                    color: isSelected ? _tierColor(tier) : context.ink30,
-                    fontSize: 10,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontFamily: AppTheme.display,
+        fontSize: 16,
+        color: context.ink,
+      ),
     );
-  }
-
-  Color _tierColor(int tier) {
-    switch (tier) {
-      case 7:
-        return const Color(0xFFB71C1C); // deep red — push/fold zone
-      case 15:
-        return const Color(0xFFE53935); // red — danger zone
-      case 25:
-        return const Color(0xFFFB8C00); // orange
-      case 40:
-        return const Color(0xFFFDD835); // yellow
-      case 60:
-        return const Color(0xFF66BB6A); // light green
-      case 100:
-        return const Color(0xFF42A5F5); // blue
-      default:
-        return const Color(0xFF42A5F5);
-    }
   }
 }
 
-class _QuickStartCard extends StatelessWidget {
-  final int playerCount;
-  final int stackDepth;
-  final int effectiveBb;
-  final int chartCount;
+/// Chunky selectable pill: bounces when picked, lifts with a hard shadow.
+class _PopChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
 
-  const _QuickStartCard({
-    required this.playerCount,
-    required this.stackDepth,
-    required this.effectiveBb,
-    required this.chartCount,
+  const _PopChip({
+    required this.label,
+    required this.selected,
+    required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.panelDim,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.ink.withValues(alpha: 0.06)),
-      ),
-      child: Row(
-        children: [
-          Flexible(
-            flex: 0,
-            child: Text(
-              l.buildYourSpot,
-              style: TextStyle(
-                color: context.ink,
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-              overflow: TextOverflow.ellipsis,
+    return Pressable(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: AppTheme.normal,
+        curve: AppTheme.bounce,
+        transform: Matrix4.translationValues(0, selected ? -2 : 0, 0),
+        constraints: const BoxConstraints(minWidth: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? color : context.panel,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: context.outline, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: context.outline,
+              offset: Offset(0, selected ? 4 : 2),
             ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: AppTheme.display,
+            fontSize: 16,
+            color: selected ? AppTheme.lightOutline : context.ink70,
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _QuickInfoChip(label: playerCount == 2 ? l.headsUp : l.nMax(playerCount)),
-                  const SizedBox(width: 6),
-                  _QuickInfoChip(label: l.nbbView(effectiveBb > 0 ? effectiveBb : stackDepth)),
-                  const SizedBox(width: 6),
-                  _QuickInfoChip(label: l.nCharts(chartCount)),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickInfoChip extends StatelessWidget {
-  final String label;
-
-  const _QuickInfoChip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: context.ink.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: context.ink70,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -573,159 +349,320 @@ class _BbInputField extends StatelessWidget {
       onChanged: onChanged,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      style: TextStyle(color: context.ink, fontSize: 14),
+      style: TextStyle(color: context.ink, fontSize: 15, fontWeight: FontWeight.w800),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: context.ink38, fontSize: 12),
-        filled: true,
-        fillColor: context.ink.withValues(alpha: 0.05),
+        labelStyle: TextStyle(color: context.ink54, fontSize: 13, fontWeight: FontWeight.w700),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: context.ink.withValues(alpha: 0.1)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: context.ink.withValues(alpha: 0.1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Color(0xFF42A5F5)),
-        ),
         isDense: true,
       ),
     );
   }
 }
 
-class _PositionCard extends StatelessWidget {
-  final String position;
-  final String description;
-  final Color color;
+/// Oval felt table with one tappable seat per position.
+class _PokerTable extends StatelessWidget {
+  final List<String> positions;
+  final Map<String, PositionSituations> treeMap;
+  final Map<String, Color> colors;
+  final String centerLabel;
+  final int tier;
+  final Color tierColor;
   final int chartCount;
-  final List<String> categories;
-  final VoidCallback? onTap;
+  final ValueChanged<String> onSeatTap;
 
-  const _PositionCard({
-    required this.position,
-    required this.description,
-    required this.color,
+  const _PokerTable({
+    super.key,
+    required this.positions,
+    required this.treeMap,
+    required this.colors,
+    required this.centerLabel,
+    required this.tier,
+    required this.tierColor,
     required this.chartCount,
-    required this.categories,
-    this.onTap,
+    required this.onSeatTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Ink(
-            decoration: BoxDecoration(
-              color: context.panel,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
-                  // Color accent bar
-                  Container(
-                    width: 4,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(12),
-                        bottomLeft: Radius.circular(12),
-                      ),
-                    ),
+    final n = positions.length;
+    final seatSize = n <= 6 ? 62.0 : 54.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final w = constraints.maxWidth;
+        final h = w * 1.02;
+        final cx = w / 2;
+        final cy = h / 2;
+        final rx = w / 2 - seatSize / 2 - 4;
+        final ry = h / 2 - seatSize / 2 - 4;
+        final step = 2 * math.pi / n;
+
+        return SizedBox(
+          width: w,
+          height: h + 6,
+          child: Stack(
+            children: [
+              // Felt
+              Positioned(
+                left: seatSize * 0.55,
+                right: seatSize * 0.55,
+                top: seatSize * 0.55,
+                bottom: seatSize * 0.55 + 6,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: context.isLight ? const Color(0xFF3FD6A4) : const Color(0xFF16A37C),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: context.outline, width: 3),
+                    boxShadow: [BoxShadow(color: context.outline, offset: const Offset(0, 6))],
                   ),
-                  // Content
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  child: Container(
+                    margin: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.35), width: 2),
+                    ),
+                    child: Center(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                position,
-                                style: TextStyle(
-                                  color: color,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  description,
-                                  style: TextStyle(
-                                    color: context.ink60,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (categories.isNotEmpty) ...[
-                            const SizedBox(height: 8),
-                            Wrap(
-                              spacing: 6,
-                              runSpacing: 4,
-                              children: categories.map((cat) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: color.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                child: Text(
-                                  cat,
-                                  style: TextStyle(
-                                    color: color.withValues(alpha: 0.85),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              )).toList(),
+                          Text(
+                            centerLabel,
+                            style: const TextStyle(
+                              fontFamily: AppTheme.display,
+                              fontSize: 34,
+                              color: Colors.white,
+                              height: 1.1,
+                              shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2))],
                             ),
-                          ],
+                          ),
+                          const SizedBox(height: 6),
+                          PopTag(label: '${tier}bb', color: tierColor, fontSize: 14),
+                          const SizedBox(height: 8),
+                          Text(
+                            '♠ ♥ ♦ ♣',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.55),
+                              fontSize: 18,
+                              letterSpacing: 2,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
-                  // Chart count + arrow
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                ),
+              ),
+              for (var i = 0; i < n; i++)
+                Builder(builder: (context) {
+                  // BB sits at the bottom; action order runs clockwise from there.
+                  final theta = math.pi / 2 - (n - 1 - i) * step;
+                  final pos = positions[i];
+                  final ps = treeMap[pos];
+                  final count = ps == null
+                      ? 0
+                      : ps.categories.fold<int>(0, (s, c) => s + c.charts.length);
+                  return Positioned(
+                    left: cx + rx * math.cos(theta) - seatSize / 2,
+                    top: cy + ry * math.sin(theta) - seatSize / 2,
+                    child: _Seat(
+                      position: pos,
+                      color: colors[pos] ?? AppTheme.grape,
+                      size: seatSize,
+                      count: count,
+                      isDealer: pos == 'BTN',
+                      onTap: ps == null ? null : () => onSeatTap(pos),
+                    )
+                        .animate(delay: (i * 70).ms)
+                        .fadeIn(duration: AppTheme.fast)
+                        .scaleXY(begin: 0, end: 1, duration: 600.ms, curve: Curves.elasticOut),
+                  );
+                }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _Seat extends StatelessWidget {
+  final String position;
+  final Color color;
+  final double size;
+  final int count;
+  final bool isDealer;
+  final VoidCallback? onTap;
+
+  const _Seat({
+    required this.position,
+    required this.color,
+    required this.size,
+    required this.count,
+    required this.isDealer,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: Pressable(
+        onTap: onTap,
+        scale: 0.88,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: size,
+                height: size,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: context.outline, width: 2.5),
+                  boxShadow: [BoxShadow(color: context.outline, offset: const Offset(0, 4))],
+                ),
+                child: FittedBox(
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Text(
+                      position,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.display,
+                        fontSize: 18,
+                        color: AppTheme.lightOutline,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (enabled && count > 0)
+                Positioned(
+                  right: -6,
+                  top: -6,
+                  child: Container(
+                    constraints: const BoxConstraints(minWidth: 22),
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: context.outline, width: 1.8),
+                    ),
+                    child: Text(
+                      '$count',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: AppTheme.display,
+                        fontSize: 12,
+                        color: AppTheme.lightOutline,
+                      ),
+                    ),
+                  ),
+                ),
+              if (isDealer)
+                Positioned(
+                  left: -6,
+                  bottom: -6,
+                  child: Container(
+                    width: 22,
+                    height: 22,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: AppTheme.yellow,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: context.outline, width: 1.8),
+                    ),
+                    child: const Text(
+                      'D',
+                      style: TextStyle(
+                        fontFamily: AppTheme.display,
+                        fontSize: 12,
+                        color: AppTheme.lightOutline,
+                        height: 1.1,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentRow extends StatelessWidget {
+  final List<RecentChart> recents;
+  final String title;
+
+  const _RecentRow({required this.recents, required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionLabel(title),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 56,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.only(bottom: 4),
+              itemCount: recents.length,
+              separatorBuilder: (_, _) => const SizedBox(width: 10),
+              itemBuilder: (context, i) {
+                final c = recents[i];
+                return Pressable(
+                  onTap: () {
+                    InterstitialAdManager.instance.maybeShowOnTransition();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => GtoChartDetailScreen(chartId: c.id)),
+                    );
+                  },
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 220),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.panel,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: context.outline, width: 2),
+                      boxShadow: [BoxShadow(color: context.outline, offset: const Offset(0, 3))],
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          '$chartCount',
-                          style: TextStyle(
-                            color: context.ink38,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        const Text('🃏', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            c.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: context.ink,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.chevron_right,
-                          color: context.ink24,
-                          size: 20,
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
-        ),
+        ],
       ),
     );
   }
